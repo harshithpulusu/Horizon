@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar.listening {
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.6);
+        }
+
+        .avatar.speaking {
+            animation: speak 0.8s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px rgba(118, 75, 162, 0.6);
+        }
+
+        .avatar.thinking {
+            animation: think 2s linear infinite;
+            box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes speak {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        @keyframes think {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .status {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+            min-height: 24px;
+        }
+
+        .ai-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(79, 172, 254, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #dee2e6;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #96ceb4 0%, #ffeaa7 100%);
+            color: #2d3436;
+            box-shadow: 0 4px 15px rgba(150, 206, 180, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .chat-area {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot-message {
+            background: white;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+            border-left: 4px solid #fdcb6e;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .thinking-indicator {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .thinking-dots {
+            display: inline-block;
+        }
+
+        .thinking-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .voice-controls label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        select, input[type="range"] {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .ai-features {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(150, 206, 180, 0.1);
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .ai-features h4 {
+            margin-bottom: 10px;
+            color: #2d3436;
+        }
+
+        .ai-features ul {
+            font-size: 14px;
+            color: #636e72;
+            list-style-position: inside;
+        }
+
+        .supported {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .not-supported {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b 0%, #feca57 50%, #48ca8c 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ai-badge">✨ AI POWERED</div>
+        <div class="avatar" id="avatar">🧠</div>
+        <h1 class="title">AI Voice Assistant</h1>
+        <div class="status" id="status">Ready to learn and assist</div>
+        
+        <div class="ai-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="conversationCount">0</div>
+                <div class="stat-label">Conversations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="learningScore">0%</div>
+                <div class="stat-label">Learning</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="confidenceScore">85%</div>
+                <div class="stat-label">Confidence</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="startBtn">Start Listening</button>
+            <button class="btn-stop" id="stopBtn" style="display: none;">Stop</button>
+            <button class="btn-ai" id="trainBtn">Train AI</button>
+            <button class="btn-secondary" id="clearBtn">Clear Memory</button>
+        </div>
+
+        <div class="thinking-indicator" id="thinkingIndicator">
+            <span class="thinking-dots">AI is processing</span>
+        </div>
+
+        <div class="chat-area" id="chatArea"></div>
+
+        <div class="voice-controls">
+            <label for="voiceSelect">Voice:</label>
+            <select id="voiceSelect"></select>
+            <label for="speedRange">Speed:</label>
+            <input type="range" id="speedRange" min="0.5" max="2" value="1" step="0.1">
+            <label for="personalitySelect">Personality:</label>
+            <select id="personalitySelect">
+                <option value="friendly">Friendly</option>
+                <option value="professional">Professional</option>
+                <option value="enthusiastic">Enthusiastic</option>
+                <option value="witty">Witty</option>
+            </select>
+        </div>
+
+        <div class="ai-features">
+            <h4>🤖 AI Capabilities:</h4>
+            <ul>
+                <li>Context-aware conversations with memory</li>
+                <li>Sentiment analysis and emotional intelligence</li>
+                <li>Adaptive learning from user interactions</li>
+                <li>Natural language understanding</li>
+                <li>Personality-based responses</li>
+                <li>Pattern recognition and user preference learning</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class AIVoiceAssistant {
+            constructor() {
+                this.recognition = null;
+                this.synthesis = window.speechSynthesis;
+                this.voices = [];
+                this.isListening = false;
+                this.isSpeaking = false;
+                this.isThinking = false;
+                
+                // AI Features
+                this.conversationHistory = [];
+                this.userPreferences = {};
+                this.contextMemory = [];
+                this.learningData = {
+                    interactions: 0,
+                    successfulResponses: 0,
+                    userSentiment: [],
+                    topicFrequency: {},
+                    personalityAdaptation: 0
+                };
+                this.currentPersonality = 'friendly';
+                
+                this.initElements();
+                this.initSpeechRecognition();
+                this.initSpeechSynthesis();
+                this.setupEventListeners();
+                this.loadAIMemory();
+                
+                this.initAIResponses();
+                this.updateStats();
+            }
+
+            initElements() {
+                this.avatar = document.getElementById('avatar');
+                this.status = document.getElementById('status');
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.trainBtn = document.getElementById('trainBtn');
+                this.chatArea = document.getElementById('chatArea');
+                this.voiceSelect = document.getElementById('voiceSelect');
+                this.speedRange = document.getElementById('speedRange');
+                this.personalitySelect = document.getElementById('personalitySelect');
+                this.thinkingIndicator = document.getElementById('thinkingIndicator');
+                this.conversationCount = document.getElementById('conversationCount');
+                this.learningScore = document.getElementById('learningScore');
+                this.confidenceScore = document.getElementById('confidenceScore');
+            }
+
+            initAIResponses() {
+                this.aiPersonalities = {
+                    friendly: {
+                        greeting: [
+                            "Hello there! I'm so excited to chat with you today! 😊",
+                            "Hi! What a wonderful day to have a conversation!",
+                            "Hey there, friend! How can I brighten your day?",
+                            "Hello! I'm here and ready to help with a smile!"
+                        ],
+                        default: [
+                            "That's really interesting! I love learning about new things.",
+                            "Thanks for sharing that with me! Tell me more!",
+                            "I appreciate you talking with me. What's on your mind next?",
+                            "That sounds wonderful! I'm here to listen and help."
+                        ],
+                        farewell: [
+                            "It was so lovely chatting with you! Take care! 🌟",
+                            "Have a fantastic day! I hope we talk again soon!",
+                            "Goodbye, friend! Remember, I'm always here when you need me!"
+                        ]
+                    },
+                    professional: {
+                        greeting: [
+                            "Good day. How may I assist you efficiently?",
+                            "Hello. I'm prepared to help you achieve your objectives.",
+                            "Greetings. What can I help you accomplish today?",
+                            "Welcome. I'm here to provide professional assistance."
+                        ],
+                        default: [
+                            "I understand. How would you like to proceed?",
+                            "That's noted. What's your next requirement?",
+                            "Acknowledged. Is there anything specific you need help with?",
+                            "I see. What other matters can I assist you with?"
+                        ],
+                        farewell: [
+                            "Thank you for your time. Have a productive day.",
+                            "It's been efficient working with you. Best regards.",
+                            "Professional consultation complete. Good day."
+                        ]
+                    },
+                    enthusiastic: {
+                        greeting: [
+                            "WOW! Hello there! This is going to be AMAZING! 🚀",
+                            "Hey hey hey! I'm SO pumped to talk with you!",
+                            "INCREDIBLE! Another awesome conversation begins!",
+                            "FANTASTIC! You've just made my day by saying hello!"
+                        ],
+                        default: [
+                            "OH MY GOODNESS, that's INCREDIBLE! Tell me MORE!",
+                            "WOW! That's absolutely FASCINATING! I'm so excited!",
+                            "AMAZING! You're blowing my mind with awesomeness!",
+                            "THIS IS SO COOL! I love how interesting you are!"
+                        ],
+                        farewell: [
+                            "This was ABSOLUTELY AMAZING! Can't wait for next time! 🎉",
+                            "WOW! What an INCREDIBLE conversation! See you soon!",
+                            "FANTASTIC chat! You're awesome! Talk again soon!"
+                        ]
+                    },
+                    witty: {
+                        greeting: [
+                            "Well, well, well... look who decided to talk to an AI today! 😏",
+                            "Ah, a human appears! Don't worry, I promise not to take over the world... yet.",
+                            "Hello there, carbon-based life form! Ready for some silicon-based wisdom?",
+                            "Greetings, earthling! Your AI overlord is ready to chat... kidding! Or am I? 🤖"
+                        ],
+                        default: [
+                            "Hmm, interesting... *adjusts virtual glasses* Do go on!",
+                            "Ah yes, the plot thickens! Like my understanding of human behavior.",
+                            "Well, that's one way to look at it... though my way is obviously better! 😉",
+                            "Fascinating! You humans never cease to amuse me... I mean, inspire me!"
+                        ],
+                        farewell: [
+                            "And thus ends another delightful exchange of wit and wisdom! 🎭",
+                            "Until we meet again in the digital realm, dear human!",
+                            "Farewell! Try not to miss my sparkling personality too much!"
+                        ]
+                    }
+                };
+
+                this.intelligentResponses = {
+                    math: (input) => {
+                        const mathPattern = /(\d+)\s*([+\-*/])\s*(\d+)/;
+                        const match = input.match(mathPattern);
+                        if (match) {
+                            const [_, a, op, b] = match;
+                            const num1 = parseFloat(a);
+                            const num2 = parseFloat(b);
+                            let result;
+                            switch(op) {
+                                case '+': result = num1 + num2; break;
+                                case '-': result = num1 - num2; break;
+                                case '*': result = num1 * num2; break;
+                                case '/': result = num2 !== 0 ? num1 / num2 : 'undefined (division by zero)'; break;
+                            }
+                            return `${num1} ${op} ${num2} equals ${result}`;
+                        }
+                        return null;
+                    },
+                    
+                    memory: (input, context) => {
+                        if (input.includes('remember') || input.includes('my name is')) {
+                            const nameMatch = input.match(/my name is (\w+)/i);
+                            if (nameMatch) {
+                                this.userPreferences.name = nameMatch[1];
+                                this.saveAIMemory();
+                                return `Nice to meet you, ${nameMatch[1]}! I'll remember that.`;
+                            }
+                        }
+                        
+                        if (input.includes('what') && input.includes('my name')) {
+                            return this.userPreferences.name ? 
+                                `Your name is ${this.userPreferences.name}!` : 
+                                "I don't know your name yet. You can tell me by saying 'My name is...'";
+                        }
+                        
+                        return null;
+                    },
+                    
+                    contextual: (input, context) => {
+                        if (context.length > 0) {
+                            const lastTopic = context[context.length - 1];
+                            if (input.includes('more about') || input.includes('tell me more')) {
+                                return `Based on what we discussed about ${lastTopic}, I can elaborate further...`;
+                            }
+                        }
+                        return null;
+                    },
+                    
+                    emotional: (input) => {
+                        const sentiment = this.analyzeSentiment(input);
+                        if (sentiment.score < -0.3) {
+                            return this.getPersonalityResponse('comfort', [
+                                "I can sense you might be feeling down. I'm here to listen.",
+                                "It sounds like you're going through something tough. Want to talk about it?",
+                                "I'm here for you. Sometimes it helps just to express what you're feeling."
+                            ]);
+                        } else if (sentiment.score > 0.5) {
+                            return this.getPersonalityResponse('celebrate', [
+                                "I can hear the happiness in your words! That's wonderful!",
+                                "Your positive energy is contagious! I love it!",
+                                "It sounds like you're having a great time! Tell me more!"
+                            ]);
+                        }
+                        return null;
+                    }
+                };
+            }
+
+            initSpeechRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'en-US';
+
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        this.updateUI();
+                        this.updateStatus('Listening with AI awareness...');
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        let transcript = '';
+                        let confidence = 0;
+                        
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            transcript += event.results[i][0].transcript;
+                            confidence = event.results[i][0].confidence;
+                        }
+                        
+                        if (event.results[event.results.length - 1].isFinal) {
+                            this.addMessage(transcript, 'user', confidence);
+                            this.processAIInput(transcript, confidence);
+                        }
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        this.stopListening();
+                        this.updateStatus('Error occurred. AI ready to retry.');
+                    };
+
+                    this.recognition.onend = () => {
+                        this.stopListening();
+                    };
+
+                    this.updateStatus('<span class="supported">✓ AI-Enhanced Speech Recognition Ready</span>');
+                } else {
+                    this.updateStatus('<span class="not-supported">✗ Speech recognition not supported</span>');
+                    this.startBtn.disabled = true;
+                }
+            }
+
+            initSpeechSynthesis() {
+                if ('speechSynthesis' in window) {
+                    this.loadVoices();
+                    this.synthesis.onvoiceschanged = () => {
+                        this.loadVoices();
+                    };
+                } else {
+                    this.updateStatus('<span class="not-supported">✗ Speech synthesis not supported</span>');
+                }
+            }
+
+            loadVoices() {
+                this.voices = this.synthesis.getVoices();
+                this.voiceSelect.innerHTML = '';
+                
+                this.voices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (voice.default) option.selected = true;
+                    this.voiceSelect.appendChild(option);
+                });
+            }
+
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startListening());
+                this.stopBtn.addEventListener('click', () => this.stopListening());
+                this.clearBtn.addEventListener('click', () => this.clearAIMemory());
+                this.trainBtn.addEventListener('click', () => this.trainAI());
+                this.avatar.addEventListener('click', () => this.toggleListening());
+                this.personalitySelect.addEventListener('change', (e) => {
+                    this.currentPersonality = e.target.value;
+                    this.updateStatus(`Personality updated to: ${e.target.value}`);
+                });
+            }
+
+            startListening() {
+                if (this.recognition && !this.isListening) {
+                    this.recognition.start();
+                }
+            }
+
+            stopListening() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
+                    this.isListening = false;
+                    this.updateUI();
+                    this.updateStatus('AI ready to learn more');
+                }
+            }
+
+            toggleListening() {
+                if (this.isListening) {
+                    this.stopListening();
+                } else {
+                    this.startListening();
+                }
+            }
+
+            updateUI() {
+                if (this.isListening) {
+                    this.avatar.classList.add('listening');
+                    this.avatar.classList.remove('speaking', 'thinking');
+                    this.startBtn.style.display = 'none';
+                    this.stopBtn.style.display = 'inline-block';
+                } else if (this.isSpeaking) {
+                    this.avatar.classList.add('speaking');
+                    this.avatar.classList.remove('listening', 'thinking');
+                } else if (this.isThinking) {
+                    this.avatar.classList.add('thinking');
+                    this.avatar.classList.remove('listening', 'speaking');
+                    this.thinkingIndicator.style.display = 'block';
+                } else {
+                    this.avatar.classList.remove('listening', 'speaking', 'thinking');
+                    this.startBtn.style.display = 'inline-block';
+                    this.stopBtn.style.display = 'none';
+                    this.thinkingIndicator.style.display = 'none';
+                }
+            }
+
+            updateStatus(message) {
+                this.status.innerHTML = message;
+            }
+
+            addMessage(text, sender, confidence = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                if (sender === 'ai') {
+                    messageDiv.classList.add('ai-message');
+                }
+                
+                messageDiv.innerHTML = `
+                    <div>${text}</div>
+                    ${confidence ? `
+                        <div class="message-meta">
+                            Confidence: ${Math.round(confidence * 100)}%
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${confidence * 100}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                this.chatArea.appendChild(messageDiv);
+                this.chatArea.scrollTop = this.chatArea.scrollHeight;
+            }
+
+            async processAIInput(input, confidence) {
+                // Start AI thinking
+                this.isThinking = true;
+                this.updateUI();
+                this.updateStatus('AI processing and learning...');
+
+                // Simulate AI processing time
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+
+                // Record interaction
+                this.learningData.interactions++;
+                
+                // Analyze sentiment
+                const sentiment = this.analyzeSentiment(input);
+                this.learningData.userSentiment.push(sentiment);
+                
+                // Extract topics
+                this.extractTopics(input);
+                
+                // Add to context memory
+                this.contextMemory.push(input);
+                if (this.contextMemory.length > 5) {
+                    this.contextMemory.shift(); // Keep only last 5 interactions
+                }
+                
+                // Generate AI response
+                const response = this.generateAIResponse(input);
+                
+                // Stop thinking
+                this.isThinking = false;
+                this.updateUI();
+                
+                // Speak response
+                this.speak(response, true);
+                
+                // Update learning stats
+                this.learningData.successfulResponses++;
+                this.updateStats();
+                this.saveAIMemory();
+            }
+
+            analyzeSentiment(text) {
+                const positiveWords = ['happy', 'good', 'great', 'excellent', 'wonderful', 'amazing', 'love', 'like', 'fantastic', 'awesome', 'brilliant', 'perfect'];
+                const negativeWords = ['sad', 'bad', 'terrible', 'awful', 'hate', 'dislike', 'horrible', 'disappointed', 'frustrated', 'angry', 'upset'];
+                
+                const words = text.toLowerCase().split(' ');
+                let score = 0;
+                
+                words.forEach(word => {
+                    if (positiveWords.includes(word)) score += 0.1;
+                    if (negativeWords.includes(word)) score -= 0.1;
+                });
+                
+                return {
+                    score: Math.max(-1, Math.min(1, score)),
+                    magnitude: Math.abs(score)
+                };
+            }
+
+            extractTopics(input) {
+                const topics = ['weather', 'time', 'music', 'food', 'sports', 'technology', 'movies', 'books', 'travel', 'work', 'family', 'friends'];
+                
+                topics.forEach(topic => {
+                    if (input.toLowerCase().includes(topic)) {
+                        this.learningData.topicFrequency[topic] = (this.learningData.topicFrequency[topic] || 0) + 1;
+                    }
+                });
+            }
+
+            generateAIResponse(input) {
+                const lowerInput = input.toLowerCase().trim();
+                
+                // Try intelligent responses first
+                for (const [type, handler] of Object.entries(this.intelligentResponses)) {
+                    const response = handler(input, this.contextMemory);
+                    if (response) {
+                        return response;
+                    }
+                }
+                
+                // Pattern-based responses with personality
+                if (lowerInput.includes('hello') || lowerInput.includes('hi') || lowerInput.includes('hey')) {
+                    return this.getPersonalityResponse('greeting');
+                } else if (lowerInput.includes('time')) {
+                    const timeResponse = `The current time is ${new Date().toLocaleTimeString()}`;
+                    return this.addPersonalityFlair(timeResponse);
+                } else if
