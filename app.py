@@ -399,8 +399,149 @@ class AdvancedAIProcessor:
         return random.choice(trivia_facts)
     
     def set_timer(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set timer (mock implementation)"""
-        return "Timer set! Well, in theory. I'm still learning how to actually track time for you. But I'll remember you asked! ⏱️"
+        """Set timer with actual scheduling"""
+        # Extract time duration
+        time_pattern = r'(\d+)\s*(minute|minutes|min|second|seconds|sec|hour|hours|hr)'
+        match = re.search(time_pattern, user_input.lower())
+        
+        if match:
+            duration, unit = match.groups()
+            duration = int(duration)
+            
+            # Convert to seconds
+            if unit.startswith('min'):
+                seconds = duration * 60
+                time_str = f"{duration} minute{'s' if duration > 1 else ''}"
+            elif unit.startswith('sec'):
+                seconds = duration
+                time_str = f"{duration} second{'s' if duration > 1 else ''}"
+            elif unit.startswith('hour') or unit.startswith('hr'):
+                seconds = duration * 3600
+                time_str = f"{duration} hour{'s' if duration > 1 else ''}"
+            else:
+                seconds = duration * 60  # Default to minutes
+                time_str = f"{duration} minute{'s' if duration > 1 else ''}"
+            
+            # Schedule timer
+            timer_id = f"timer_{len(self.active_timers) + 1}"
+            job = self.scheduler.add_job(
+                func=self.timer_callback,
+                trigger="date",
+                run_date=datetime.now() + timedelta(seconds=seconds),
+                args=[timer_id, time_str],
+                id=timer_id
+            )
+            
+            self.active_timers[timer_id] = {
+                'duration': time_str,
+                'start_time': datetime.now(),
+                'end_time': datetime.now() + timedelta(seconds=seconds)
+            }
+            
+            return f"Timer set for {time_str}! I'll let you know when it's done. ⏱️"
+        
+        return "I can set a timer for you! Try saying 'set timer for 5 minutes' or 'timer for 30 seconds'. ⏰"
+    
+    def timer_callback(self, timer_id: str, duration: str):
+        """Called when timer expires"""
+        if timer_id in self.active_timers:
+            del self.active_timers[timer_id]
+            print(f"⏰ TIMER ALERT: Your {duration} timer is done!")
+            # In a real implementation, this would trigger a notification
+    
+    def set_reminder(self, user_input: str, entities: Dict, personality: str) -> str:
+        """Set reminders with scheduling"""
+        reminder_text = entities.get('entity_0', 'something important')
+        
+        # Try to extract time information
+        time_patterns = [
+            r'in (\d+) (minute|minutes|min|hour|hours|hr)',
+            r'at (\d{1,2}):(\d{2})',
+            r'tomorrow',
+            r'in (\d+) days?'
+        ]
+        
+        scheduled = False
+        for pattern in time_patterns:
+            match = re.search(pattern, user_input.lower())
+            if match:
+                scheduled = True
+                reminder_id = f"reminder_{len(self.reminders) + 1}"
+                
+                if 'tomorrow' in user_input.lower():
+                    remind_time = datetime.now().replace(hour=9, minute=0, second=0) + timedelta(days=1)
+                elif ':' in pattern:  # Time format like "at 3:30"
+                    hour, minute = match.groups()
+                    remind_time = datetime.now().replace(hour=int(hour), minute=int(minute), second=0)
+                    if remind_time <= datetime.now():
+                        remind_time += timedelta(days=1)
+                else:  # Duration format like "in 5 minutes"
+                    duration, unit = match.groups()
+                    duration = int(duration)
+                    if unit.startswith('min'):
+                        remind_time = datetime.now() + timedelta(minutes=duration)
+                    elif unit.startswith('hour') or unit.startswith('hr'):
+                        remind_time = datetime.now() + timedelta(hours=duration)
+                    elif unit.startswith('day'):
+                        remind_time = datetime.now() + timedelta(days=duration)
+                
+                job = self.scheduler.add_job(
+                    func=self.reminder_callback,
+                    trigger="date",
+                    run_date=remind_time,
+                    args=[reminder_id, reminder_text],
+                    id=reminder_id
+                )
+                
+                self.reminders.append({
+                    'id': reminder_id,
+                    'text': reminder_text,
+                    'time': remind_time,
+                    'created': datetime.now()
+                })
+                
+                return f"Reminder set! I'll remind you to {reminder_text} at {remind_time.strftime('%I:%M %p on %B %d')}. 📝"
+        
+        if not scheduled:
+            return f"I'll remember that you want to {reminder_text}! Try being more specific about when, like 'remind me in 30 minutes' or 'remind me tomorrow at 9 AM'. 📝"
+    
+    def reminder_callback(self, reminder_id: str, reminder_text: str):
+        """Called when reminder is due"""
+        print(f"📝 REMINDER: Don't forget to {reminder_text}!")
+        # Remove from active reminders
+        self.reminders = [r for r in self.reminders if r['id'] != reminder_id]
+    
+    def get_active_timers_and_reminders(self):
+        """Get currently active timers and reminders"""
+        active = {
+            'timers': [],
+            'reminders': []
+        }
+        
+        current_time = datetime.now()
+        
+        # Format active timers
+        for timer_id, timer_info in self.active_timers.items():
+            remaining = timer_info['end_time'] - current_time
+            if remaining.total_seconds() > 0:
+                active['timers'].append({
+                    'id': timer_id,
+                    'duration': timer_info['duration'],
+                    'remaining_seconds': int(remaining.total_seconds())
+                })
+        
+        # Format active reminders
+        for reminder in self.reminders:
+            if reminder['time'] > current_time:
+                time_until = reminder['time'] - current_time
+                active['reminders'].append({
+                    'id': reminder['id'],
+                    'text': reminder['text'],
+                    'time': reminder['time'].strftime('%I:%M %p on %B %d'),
+                    'time_until_seconds': int(time_until.total_seconds())
+                })
+        
+        return active
     
     def set_alarm(self, user_input: str, entities: Dict, personality: str) -> str:
         """Set alarm (mock implementation)"""
@@ -565,6 +706,31 @@ class AdvancedAIProcessor:
                 'total_feedback': feedback_stats[1] or 0
             }
 
+    def get_database_stats(self):
+        """Get database statistics"""
+        with self.lock:
+            cursor = self.conn.cursor()
+            
+            # Count conversations
+            cursor.execute('SELECT COUNT(*) FROM conversations')
+            conversation_count = cursor.fetchone()[0]
+            
+            # Count feedback entries
+            cursor.execute('SELECT COUNT(*) FROM feedback')
+            feedback_count = cursor.fetchone()[0]
+            
+            # Count user preferences
+            cursor.execute('SELECT COUNT(*) FROM user_preferences')
+            preferences_count = cursor.fetchone()[0]
+            
+            return {
+                'conversations': conversation_count,
+                'feedback_entries': feedback_count,
+                'user_preferences': preferences_count,
+                'active_timers': len(self.active_timers),
+                'active_reminders': len(self.reminders)
+            }
+
 # Initialize AI processor
 ai_processor = AdvancedAIProcessor()
 
@@ -684,6 +850,138 @@ def export_conversations():
         })
     
     return jsonify(export_data)
+
+@app.route('/api/timers-reminders', methods=['GET'])
+def get_timers_reminders():
+    """Get active timers and reminders"""
+    active = ai_processor.get_active_timers_and_reminders()
+    return jsonify(active)
+
+@app.route('/api/cancel-timer', methods=['POST'])
+def cancel_timer():
+    """Cancel a specific timer"""
+    data = request.json
+    timer_id = data.get('timer_id', '')
+    
+    if timer_id in ai_processor.active_timers:
+        try:
+            ai_processor.scheduler.remove_job(timer_id)
+            del ai_processor.active_timers[timer_id]
+            return jsonify({'message': 'Timer cancelled successfully!'})
+        except:
+            return jsonify({'error': 'Failed to cancel timer'}), 400
+    
+    return jsonify({'error': 'Timer not found'}), 404
+
+@app.route('/api/cancel-reminder', methods=['POST'])
+def cancel_reminder():
+    """Cancel a specific reminder"""
+    data = request.json
+    reminder_id = data.get('reminder_id', '')
+    
+    # Find and remove reminder
+    reminder_found = False
+    for i, reminder in enumerate(ai_processor.reminders):
+        if reminder['id'] == reminder_id:
+            try:
+                ai_processor.scheduler.remove_job(reminder_id)
+                ai_processor.reminders.pop(i)
+                reminder_found = True
+                break
+            except:
+                pass
+    
+    if reminder_found:
+        return jsonify({'message': 'Reminder cancelled successfully!'})
+    else:
+        return jsonify({'error': 'Reminder not found'}), 404
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'active_timers': len(ai_processor.active_timers),
+        'active_reminders': len(ai_processor.reminders),
+        'total_conversations': len(ai_processor.conversation_history)
+    })
+
+@app.route('/api/reset-memory', methods=['POST'])
+def reset_memory():
+    """Reset AI memory and conversation history"""
+    with ai_processor.lock:
+        cursor = ai_processor.conn.cursor()
+        cursor.execute('DELETE FROM conversations')
+        cursor.execute('DELETE FROM feedback')
+        ai_processor.conn.commit()
+    
+    ai_processor.conversation_history = []
+    ai_processor.context_memory = {}
+    
+    return jsonify({'message': 'AI memory reset successfully!'})
+
+@app.route('/api/train', methods=['POST'])
+def train_ai():
+    """Train AI with custom responses"""
+    data = request.json
+    pattern = data.get('pattern', '')
+    response = data.get('response', '')
+    intent = data.get('intent', 'custom')
+    
+    if not pattern or not response:
+        return jsonify({'error': 'Pattern and response are required'}), 400
+    
+    # Store custom training data
+    with ai_processor.lock:
+        cursor = ai_processor.conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS custom_training (
+                id INTEGER PRIMARY KEY,
+                pattern TEXT,
+                response TEXT,
+                intent TEXT,
+                created_at TEXT
+            )
+        ''')
+        cursor.execute('''
+            INSERT INTO custom_training (pattern, response, intent, created_at)
+            VALUES (?, ?, ?, ?)
+        ''', (pattern, response, intent, datetime.now().isoformat()))
+        ai_processor.conn.commit()
+    
+    return jsonify({'message': 'AI training data added successfully!'})
+
+@app.route('/api/system-info', methods=['GET'])
+def get_system_info():
+    """Get system information and capabilities"""
+    return jsonify({
+        'name': 'Horizon AI Assistant',
+        'version': '2.0.0',
+        'capabilities': [
+            'Natural Language Processing',
+            'Sentiment Analysis',
+            'Intent Recognition',
+            'Timers and Reminders',
+            'Math Calculations',
+            'Weather Information',
+            'Smart Home Control (Mock)',
+            'Conversation Memory',
+            'Learning from Feedback',
+            'Multiple Personalities',
+            'Voice Command Recognition',
+            'Context Awareness'
+        ],
+        'supported_intents': list(ai_processor.intent_patterns.keys()),
+        'personalities': ['friendly', 'professional', 'enthusiastic', 'witty'],
+        'database_size': ai_processor.get_database_stats()
+    })
+
+@app.route('/api/database-stats', methods=['GET'])
+def get_database_stats():
+    """Get database statistics"""
+    stats = ai_processor.get_database_stats()
+    return jsonify(stats)
 
 @app.route('/api/sentiment', methods=['POST'])
 def analyze_sentiment_endpoint():
