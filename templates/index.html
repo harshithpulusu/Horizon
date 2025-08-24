@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon AI Assistant - Advanced Voice AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            min-height: 100vh;
+        }
+        
+        .main-chat {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .status-indicator {
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #28a745;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .status-indicator.listening {
+            background: #dc3545;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-item .value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-item .label {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            border-color: #667eea;
+        }
+        
+        .personality-selector {
+            margin-bottom: 15px;
+        }
+        
+        .personality-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            margin-left: 50px;
+        }
+        
+        .message.ai {
+            background: #e3f2fd;
+            margin-right: 50px;
+        }
+        
+        .message.system {
+            background: #f1f8e9;
+            margin: 0 20px;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            margin: 0 20px;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .message-content {
+            line-height: 1.6;
+        }
+        
+        .message-metadata {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .timestamp {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
+        .sidebar-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .timer-item, .reminder-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timer-item span, .reminder-item span {
+            font-size: 0.9em;
+            flex: 1;
+        }
+        
+        .cancel-timer-btn, .cancel-reminder-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+        
+        .feedback-container {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .feedback-prompt {
+            text-align: center;
+        }
+        
+        .feedback-prompt p {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .feedback-btn {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+        
+        .feedback-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .feedback-btn.good {
+            background: #28a745;
+            color: white;
+        }
+        
+        .feedback-btn.bad {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .feedback-btn.excellent {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .feedback-thanks {
+            text-align: center;
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .help-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .voice-commands-help h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .voice-commands-help h4 {
+            color: #333;
+            margin: 15px 0 8px 0;
+            font-size: 1em;
+        }
+        
+        .voice-commands-help ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .voice-commands-help li {
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-chat">
+            <div class="header">
+                <h1>🌟 Horizon AI Assistant</h1>
+                <p>Your Advanced Voice-Activated AI Companion</p>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-indicator" id="statusIndicator">Ready</div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="value" id="conversationCount">0</div>
+                        <div class="label">Conversations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="value" id="confidenceScore">85%</div>
+                        <div class="label">Confidence</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="controls">
+                    <button class="btn btn-primary" id="startListening">
+                        🎤 Start Listening
+                    </button>
+                    <button class="btn btn-danger" id="stopListening" disabled>
+                        ⏹️ Stop Listening
+                    </button>
+                    <button class="btn btn-secondary" id="helpBtn">
+                        ❓ Help
+                    </button>
+                </div>
+                
+                <div class="personality-selector">
+                    <label for="personalitySelect">AI Personality:</label>
+                    <select id="personalitySelect">
+                        <option value="friendly">😊 Friendly</option>
+                        <option value="professional">👔 Professional</option>
+                        <option value="enthusiastic">🚀 Enthusiastic</option>
+                        <option value="witty">😏 Witty</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="voiceInput" placeholder="Type your message or use voice input..." />
+                    <button class="btn btn-primary" id="sendMessage">Send</button>
+                </div>
+            </div>
+            
+            <div class="messages" id="messages">
+                <div class="message ai">
+                    <div class="message-header">
+                        <strong>Horizon AI</strong>
+                        <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-content">
+                        Hello! I'm Horizon, your advanced AI assistant. I can help you with timers, reminders, calculations, weather, jokes, and much more! Try saying "What can you do?" or click the microphone to start talking.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="feedback-container" id="feedbackContainer">
+                <!-- Feedback options will appear here -->
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>⏲️ Active Timers</h3>
+                <div id="activeTimers">
+                    <p>No active timers</p>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>📝 Active Reminders</h3>
+                <div id="activeReminders">
+                    <p>No active reminders</p>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>🎯 Quick Commands</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 8px;">🕐 "What time is it?"</li>
+                    <li style="margin-bottom: 8px;">🌤️ "What's the weather?"</li>
+                    <li style="margin-bottom: 8px;">⏱️ "Set timer for 5 minutes"</li>
+                    <li style="margin-bottom: 8px;">📅 "Remind me to call mom"</li>
+                    <li style="margin-bottom: 8px;">🧮 "Calculate 25 times 4"</li>
+                    <li style="margin-bottom: 8px;">😄 "Tell me a joke"</li>
+                </ul>
+            </div>
+            
+            <div class="help-container" id="helpContainer">
+                <!-- Help content will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/enhanced_ai.js"></script>
+</body>
+</html>
