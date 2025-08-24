@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Any
 import sqlite3
 import threading
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +31,11 @@ class AdvancedAIProcessor:
         self.skills = self.init_skills()
         self.intent_patterns = self.init_intent_patterns()
         self.init_database()
+        self.scheduler = BackgroundScheduler()
+        self.scheduler.start()
+        self.active_timers = {}
+        self.reminders = []
+        atexit.register(lambda: self.scheduler.shutdown())
         
     def init_database(self):
         """Initialize SQLite database for persistent memory"""
@@ -444,17 +451,42 @@ class AdvancedAIProcessor:
         }
         return default_responses.get(personality, default_responses['friendly'])
     
+    def init_sentiment_model(self):
+        """Initialize enhanced sentiment analysis"""
+        return {
+            'positive': ['happy', 'good', 'great', 'excellent', 'wonderful', 'amazing', 'love', 'fantastic', 
+                        'awesome', 'brilliant', 'perfect', 'excited', 'thrilled', 'delighted', 'pleased',
+                        'satisfied', 'grateful', 'thankful', 'optimistic', 'cheerful', 'joyful'],
+            'negative': ['sad', 'bad', 'terrible', 'awful', 'hate', 'horrible', 'disappointed', 
+                        'frustrated', 'angry', 'upset', 'annoyed', 'worried', 'stressed', 'depressed',
+                        'anxious', 'confused', 'tired', 'bored', 'lonely', 'overwhelmed']
+        }
+    
     def analyze_sentiment(self, text):
+        """Enhanced sentiment analysis with emotion detection"""
         words = text.lower().split()
-        pos_score = sum(1 for word in words if word in self.sentiment_model['positive'])
-        neg_score = sum(1 for word in words if word in self.sentiment_model['negative'])
+        sentiment_model = self.init_sentiment_model()
+        
+        pos_score = sum(1 for word in words if word in sentiment_model['positive'])
+        neg_score = sum(1 for word in words if word in sentiment_model['negative'])
         
         total_words = len(words)
         if total_words == 0:
-            return {'score': 0, 'magnitude': 0, 'label': 'neutral'}
+            return {'score': 0, 'magnitude': 0, 'label': 'neutral', 'emotion': 'calm'}
             
         sentiment_score = (pos_score - neg_score) / total_words
         magnitude = abs(sentiment_score)
+        
+        # Determine emotion
+        emotion = 'calm'
+        if sentiment_score > 0.2:
+            emotion = 'excited'
+        elif sentiment_score > 0.1:
+            emotion = 'happy'
+        elif sentiment_score < -0.2:
+            emotion = 'upset'
+        elif sentiment_score < -0.1:
+            emotion = 'concerned'
         
         if sentiment_score > 0.1:
             label = 'positive'
@@ -466,11 +498,75 @@ class AdvancedAIProcessor:
         return {
             'score': sentiment_score,
             'magnitude': magnitude,
-            'label': label
+            'label': label,
+            'emotion': emotion,
+            'confidence': min(magnitude * 2, 1.0)
         }
 
+    def learn_from_feedback(self, user_input: str, ai_response: str, feedback: str):
+        """Learn from user feedback to improve responses"""
+        with self.lock:
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY,
+                    timestamp TEXT,
+                    user_input TEXT,
+                    ai_response TEXT,
+                    feedback TEXT,
+                    rating INTEGER
+                )
+            ''')
+            
+            # Simple rating system based on feedback
+            rating = 5 if 'good' in feedback.lower() or 'great' in feedback.lower() else 3
+            if 'bad' in feedback.lower() or 'wrong' in feedback.lower():
+                rating = 1
+            
+            cursor.execute('''
+                INSERT INTO feedback (timestamp, user_input, ai_response, feedback, rating)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (datetime.now().isoformat(), user_input, ai_response, feedback, rating))
+            self.conn.commit()
+
+    def get_learning_insights(self):
+        """Get insights from conversation patterns"""
+        with self.lock:
+            cursor = self.conn.cursor()
+            
+            # Most common intents
+            cursor.execute('''
+                SELECT intent, COUNT(*) as count 
+                FROM conversations 
+                GROUP BY intent 
+                ORDER BY count DESC 
+                LIMIT 5
+            ''')
+            common_intents = cursor.fetchall()
+            
+            # Average sentiment
+            cursor.execute('''
+                SELECT AVG(CAST(json_extract(sentiment, '$.score') AS REAL)) as avg_sentiment
+                FROM conversations
+            ''')
+            avg_sentiment = cursor.fetchone()[0] or 0
+            
+            # Response effectiveness
+            cursor.execute('''
+                SELECT AVG(rating) as avg_rating, COUNT(*) as total_feedback
+                FROM feedback
+            ''')
+            feedback_stats = cursor.fetchone()
+            
+            return {
+                'common_intents': common_intents,
+                'average_sentiment': avg_sentiment,
+                'avg_rating': feedback_stats[0] or 0,
+                'total_feedback': feedback_stats[1] or 0
+            }
+
 # Initialize AI processor
-ai_processor = AIProcessor()
+ai_processor = AdvancedAIProcessor()
 
 @app.route('/')
 def index():
@@ -487,6 +583,107 @@ def process_input():
     
     result = ai_processor.generate_response(user_input, personality)
     return jsonify(result)
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.json
+    user_input = data.get('user_input', '')
+    ai_response = data.get('ai_response', '')
+    feedback = data.get('feedback', '')
+    
+    if not all([user_input, ai_response, feedback]):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    ai_processor.learn_from_feedback(user_input, ai_response, feedback)
+    return jsonify({'message': 'Feedback received! I\'m learning from it.'})
+
+@app.route('/api/insights', methods=['GET'])
+def get_insights():
+    insights = ai_processor.get_learning_insights()
+    return jsonify(insights)
+
+@app.route('/api/voice-commands', methods=['GET'])
+def get_voice_commands():
+    """Get available voice commands for the user"""
+    commands = {
+        'time_date': [
+            "What time is it?",
+            "What's today's date?",
+            "What day is it?"
+        ],
+        'weather': [
+            "What's the weather like?",
+            "Is it raining?",
+            "What's the temperature?"
+        ],
+        'math': [
+            "Calculate 25 times 4",
+            "What's 100 divided by 5?",
+            "Solve 15 plus 30"
+        ],
+        'entertainment': [
+            "Tell me a joke",
+            "Play some music",
+            "Give me a fun fact"
+        ],
+        'reminders': [
+            "Remind me to call mom",
+            "Set a timer for 10 minutes",
+            "Don't forget to buy groceries"
+        ],
+        'smart_home': [
+            "Turn on the lights",
+            "Set temperature to 72",
+            "Dim the living room lights"
+        ],
+        'information': [
+            "Define artificial intelligence",
+            "Search for Python tutorials",
+            "What does 'serendipity' mean?"
+        ]
+    }
+    return jsonify(commands)
+
+@app.route('/api/personality', methods=['POST'])
+def set_personality():
+    data = request.json
+    personality = data.get('personality', 'friendly')
+    
+    # Store user preference
+    with ai_processor.lock:
+        cursor = ai_processor.conn.cursor()
+        cursor.execute('''
+            INSERT OR REPLACE INTO user_preferences (key, value)
+            VALUES (?, ?)
+        ''', ('default_personality', personality))
+        ai_processor.conn.commit()
+    
+    return jsonify({'message': f'Personality set to {personality}!'})
+
+@app.route('/api/conversation-export', methods=['GET'])
+def export_conversations():
+    """Export conversation history"""
+    with ai_processor.lock:
+        cursor = ai_processor.conn.cursor()
+        cursor.execute('''
+            SELECT timestamp, user_input, ai_response, intent, sentiment
+            FROM conversations
+            ORDER BY timestamp DESC
+            LIMIT 100
+        ''')
+        conversations = cursor.fetchall()
+    
+    export_data = []
+    for conv in conversations:
+        export_data.append({
+            'timestamp': conv[0],
+            'user_input': conv[1],
+            'ai_response': conv[2],
+            'intent': conv[3],
+            'sentiment': json.loads(conv[4]) if conv[4] else None
+        })
+    
+    return jsonify(export_data)
 
 @app.route('/api/sentiment', methods=['POST'])
 def analyze_sentiment_endpoint():
