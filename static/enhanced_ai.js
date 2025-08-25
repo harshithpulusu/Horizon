@@ -20,20 +20,7 @@ class EnhancedAIVoiceAssistant {
     }
     
     init() {
-        // Initialize speech recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-            this.recognition = new SpeechRecognition();
-            this.recognition.continuous = false;
-            this.recognition.interimResults = false;
-            this.recognition.lang = 'en-US';
-            
-            this.recognition.onresult = (event) => this.handleSpeechResult(event);
-            this.recognition.onerror = (event) => this.handleSpeechError(event);
-            this.recognition.onend = () => this.handleSpeechEnd();
-        }
-        
-        // Get DOM elements
+        // Get DOM elements first
         this.startBtn = document.getElementById('startListening');
         this.stopBtn = document.getElementById('stopListening');
         this.voiceInput = document.getElementById('voiceInput');
@@ -47,7 +34,60 @@ class EnhancedAIVoiceAssistant {
         this.remindersContainer = document.getElementById('activeReminders');
         this.feedbackContainer = document.getElementById('feedbackContainer');
         
+        // Initialize speech recognition with better error handling
+        this.initSpeechRecognition();
+        
         this.updateStatus('Ready');
+    }
+    
+    initSpeechRecognition() {
+        // Check if we're on HTTPS or localhost (required for speech recognition)
+        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        
+        if (!isSecure) {
+            this.addMessage('System', 'Speech recognition requires HTTPS or localhost. Voice features disabled.', 'error');
+            this.disableVoiceFeatures();
+            return;
+        }
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            try {
+                const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+                this.recognition.maxAlternatives = 1;
+                
+                this.recognition.onstart = () => {
+                    console.log('Speech recognition started');
+                    this.updateStatus('Listening... Speak now!');
+                };
+                
+                this.recognition.onresult = (event) => this.handleSpeechResult(event);
+                this.recognition.onerror = (event) => this.handleSpeechError(event);
+                this.recognition.onend = () => this.handleSpeechEnd();
+                
+                this.addMessage('System', 'Speech recognition initialized successfully! 🎤', 'system');
+            } catch (error) {
+                console.error('Error initializing speech recognition:', error);
+                this.addMessage('System', 'Error initializing speech recognition: ' + error.message, 'error');
+                this.disableVoiceFeatures();
+            }
+        } else {
+            this.addMessage('System', 'Speech recognition not supported in this browser. Try Chrome or Safari.', 'error');
+            this.disableVoiceFeatures();
+        }
+    }
+    
+    disableVoiceFeatures() {
+        if (this.startBtn) {
+            this.startBtn.disabled = true;
+            this.startBtn.textContent = '🎤 Voice Not Available';
+        }
+        if (this.stopBtn) {
+            this.stopBtn.disabled = true;
+        }
     }
     
     initEventListeners() {
@@ -55,6 +95,10 @@ class EnhancedAIVoiceAssistant {
         this.startBtn?.addEventListener('click', () => this.startListening());
         this.stopBtn?.addEventListener('click', () => this.stopListening());
         this.sendBtn?.addEventListener('click', () => this.sendMessage());
+        
+        // Microphone test
+        const testMicBtn = document.getElementById('testMicBtn');
+        testMicBtn?.addEventListener('click', () => this.testMicrophone());
         
         // Text input
         this.voiceInput?.addEventListener('keypress', (e) => {
@@ -82,29 +126,65 @@ class EnhancedAIVoiceAssistant {
     
     async startListening() {
         if (!this.recognition) {
-            this.addMessage('AI', 'Speech recognition not supported in this browser.', 'error');
+            this.addMessage('AI', '❌ Speech recognition not available. Please check browser permissions or try a different browser.', 'error');
+            return;
+        }
+        
+        // Check if already listening
+        if (this.isListening) {
+            this.addMessage('System', 'Already listening...', 'system');
             return;
         }
         
         try {
+            // Request microphone permission explicitly
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    console.log('Microphone permission granted');
+                } catch (permissionError) {
+                    this.addMessage('AI', '❌ Microphone permission denied. Please allow microphone access and try again.', 'error');
+                    return;
+                }
+            }
+            
             this.isListening = true;
-            this.updateStatus('Listening...');
-            this.startBtn.disabled = true;
-            this.stopBtn.disabled = false;
-            this.recognition.start();
+            this.updateStatus('Starting...');
+            
+            // Update UI
+            if (this.startBtn) {
+                this.startBtn.disabled = true;
+                this.startBtn.textContent = '🎤 Listening...';
+            }
+            if (this.stopBtn) {
+                this.stopBtn.disabled = false;
+            }
             
             // Add visual feedback
             this.statusIndicator?.classList.add('listening');
+            
+            // Start recognition
+            this.recognition.start();
+            
+            this.addMessage('System', '🎤 Listening started! Speak now...', 'system');
+            
         } catch (error) {
             console.error('Speech recognition error:', error);
-            this.updateStatus('Error starting speech recognition');
+            this.addMessage('AI', `❌ Error starting speech recognition: ${error.message}`, 'error');
             this.resetListeningState();
         }
     }
     
     stopListening() {
         if (this.recognition && this.isListening) {
-            this.recognition.stop();
+            try {
+                this.recognition.stop();
+                this.addMessage('System', '⏹️ Stopping speech recognition...', 'system');
+            } catch (error) {
+                console.error('Error stopping recognition:', error);
+            }
+        } else {
+            this.addMessage('System', 'Not currently listening.', 'system');
         }
         this.resetListeningState();
     }
@@ -112,25 +192,70 @@ class EnhancedAIVoiceAssistant {
     resetListeningState() {
         this.isListening = false;
         this.updateStatus('Ready');
-        this.startBtn.disabled = false;
-        this.stopBtn.disabled = true;
+        
+        // Reset buttons
+        if (this.startBtn) {
+            this.startBtn.disabled = false;
+            this.startBtn.textContent = '🎤 Start Listening';
+        }
+        if (this.stopBtn) {
+            this.stopBtn.disabled = true;
+        }
+        
+        // Remove visual feedback
         this.statusIndicator?.classList.remove('listening');
     }
     
     handleSpeechResult(event) {
-        const transcript = event.results[0][0].transcript;
-        this.voiceInput.value = transcript;
-        this.addMessage('You', transcript, 'user');
-        this.processInput(transcript);
+        console.log('Speech result received:', event);
+        
+        if (event.results && event.results.length > 0) {
+            const transcript = event.results[0][0].transcript;
+            const confidence = event.results[0][0].confidence;
+            
+            console.log('Transcript:', transcript, 'Confidence:', confidence);
+            
+            this.voiceInput.value = transcript;
+            this.addMessage('You', `🎤 "${transcript}" (${Math.round(confidence * 100)}% confidence)`, 'user');
+            this.processInput(transcript);
+        } else {
+            this.addMessage('System', '❌ No speech detected. Please try again.', 'error');
+        }
+        
+        this.resetListeningState();
     }
     
     handleSpeechError(event) {
-        console.error('Speech recognition error:', event.error);
-        this.updateStatus(`Speech error: ${event.error}`);
+        console.error('Speech recognition error:', event);
+        
+        let errorMessage = 'Speech recognition error: ';
+        switch(event.error) {
+            case 'no-speech':
+                errorMessage += 'No speech detected. Please try again.';
+                break;
+            case 'audio-capture':
+                errorMessage += 'Microphone not available. Please check your microphone settings.';
+                break;
+            case 'not-allowed':
+                errorMessage += 'Microphone permission denied. Please allow microphone access.';
+                break;
+            case 'network':
+                errorMessage += 'Network error. Please check your internet connection.';
+                break;
+            case 'service-not-allowed':
+                errorMessage += 'Speech service not allowed. Try using HTTPS.';
+                break;
+            default:
+                errorMessage += event.error;
+        }
+        
+        this.addMessage('AI', `❌ ${errorMessage}`, 'error');
+        this.updateStatus(`Error: ${event.error}`);
         this.resetListeningState();
     }
     
     handleSpeechEnd() {
+        console.log('Speech recognition ended');
         this.resetListeningState();
     }
     
@@ -440,6 +565,20 @@ class EnhancedAIVoiceAssistant {
         if (this.statusIndicator) {
             this.statusIndicator.textContent = status;
         }
+        console.log('Status:', status);
+    }
+    
+    // Test microphone access
+    async testMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.addMessage('System', '✅ Microphone test successful!', 'system');
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream
+            return true;
+        } catch (error) {
+            this.addMessage('System', `❌ Microphone test failed: ${error.message}`, 'error');
+            return false;
+        }
     }
     
     // Voice commands help
@@ -457,12 +596,26 @@ class EnhancedAIVoiceAssistant {
                     commandsHTML += '</ul>';
                 });
                 
+                commandsHTML += '<p><strong>Troubleshooting:</strong></p>';
+                commandsHTML += '<ul>';
+                commandsHTML += '<li>✅ Make sure you allow microphone access</li>';
+                commandsHTML += '<li>✅ Use Chrome, Safari, or Edge (Firefox may not work)</li>';
+                commandsHTML += '<li>✅ Check that you\'re on localhost or HTTPS</li>';
+                commandsHTML += '<li>✅ Speak clearly and wait for the listening indicator</li>';
+                commandsHTML += '</ul>';
                 commandsHTML += '</div>';
                 
                 // Show in a modal or dedicated area
                 const helpContainer = document.getElementById('helpContainer');
                 if (helpContainer) {
                     helpContainer.innerHTML = commandsHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading voice commands:', error);
+                const helpContainer = document.getElementById('helpContainer');
+                if (helpContainer) {
+                    helpContainer.innerHTML = '<p>Error loading voice commands. Please check your connection.</p>';
                 }
             });
     }

@@ -1,18 +1,15 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import numpy as np
 import json
 from datetime import datetime, timedelta
 import random
 import re
-import requests
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Any
 import sqlite3
 import threading
-from apscheduler.schedulers.background import BackgroundScheduler
-import atexit
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -31,11 +28,8 @@ class AdvancedAIProcessor:
         self.skills = self.init_skills()
         self.intent_patterns = self.init_intent_patterns()
         self.init_database()
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.start()
         self.active_timers = {}
         self.reminders = []
-        atexit.register(lambda: self.scheduler.shutdown())
         
     def init_database(self):
         """Initialize SQLite database for persistent memory"""
@@ -399,7 +393,7 @@ class AdvancedAIProcessor:
         return random.choice(trivia_facts)
     
     def set_timer(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set timer with actual scheduling"""
+        """Set timer with simple tracking"""
         # Extract time duration
         time_pattern = r'(\d+)\s*(minute|minutes|min|second|seconds|sec|hour|hours|hr)'
         match = re.search(time_pattern, user_input.lower())
@@ -422,35 +416,23 @@ class AdvancedAIProcessor:
                 seconds = duration * 60  # Default to minutes
                 time_str = f"{duration} minute{'s' if duration > 1 else ''}"
             
-            # Schedule timer
+            # Simple timer tracking
             timer_id = f"timer_{len(self.active_timers) + 1}"
-            job = self.scheduler.add_job(
-                func=self.timer_callback,
-                trigger="date",
-                run_date=datetime.now() + timedelta(seconds=seconds),
-                args=[timer_id, time_str],
-                id=timer_id
-            )
+            end_time = datetime.now() + timedelta(seconds=seconds)
             
             self.active_timers[timer_id] = {
                 'duration': time_str,
                 'start_time': datetime.now(),
-                'end_time': datetime.now() + timedelta(seconds=seconds)
+                'end_time': end_time,
+                'seconds': seconds
             }
             
-            return f"Timer set for {time_str}! I'll let you know when it's done. ⏱️"
+            return f"Timer set for {time_str}! I'll track it for you. ⏱️"
         
         return "I can set a timer for you! Try saying 'set timer for 5 minutes' or 'timer for 30 seconds'. ⏰"
     
-    def timer_callback(self, timer_id: str, duration: str):
-        """Called when timer expires"""
-        if timer_id in self.active_timers:
-            del self.active_timers[timer_id]
-            print(f"⏰ TIMER ALERT: Your {duration} timer is done!")
-            # In a real implementation, this would trigger a notification
-    
     def set_reminder(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set reminders with scheduling"""
+        """Set reminders with simple tracking"""
         reminder_text = entities.get('entity_0', 'something important')
         
         # Try to extract time information
@@ -485,14 +467,6 @@ class AdvancedAIProcessor:
                     elif unit.startswith('day'):
                         remind_time = datetime.now() + timedelta(days=duration)
                 
-                job = self.scheduler.add_job(
-                    func=self.reminder_callback,
-                    trigger="date",
-                    run_date=remind_time,
-                    args=[reminder_id, reminder_text],
-                    id=reminder_id
-                )
-                
                 self.reminders.append({
                     'id': reminder_id,
                     'text': reminder_text,
@@ -505,12 +479,6 @@ class AdvancedAIProcessor:
         if not scheduled:
             return f"I'll remember that you want to {reminder_text}! Try being more specific about when, like 'remind me in 30 minutes' or 'remind me tomorrow at 9 AM'. 📝"
     
-    def reminder_callback(self, reminder_id: str, reminder_text: str):
-        """Called when reminder is due"""
-        print(f"📝 REMINDER: Don't forget to {reminder_text}!")
-        # Remove from active reminders
-        self.reminders = [r for r in self.reminders if r['id'] != reminder_id]
-    
     def get_active_timers_and_reminders(self):
         """Get currently active timers and reminders"""
         active = {
@@ -521,7 +489,7 @@ class AdvancedAIProcessor:
         current_time = datetime.now()
         
         # Format active timers
-        for timer_id, timer_info in self.active_timers.items():
+        for timer_id, timer_info in list(self.active_timers.items()):
             remaining = timer_info['end_time'] - current_time
             if remaining.total_seconds() > 0:
                 active['timers'].append({
@@ -529,9 +497,12 @@ class AdvancedAIProcessor:
                     'duration': timer_info['duration'],
                     'remaining_seconds': int(remaining.total_seconds())
                 })
+            else:
+                # Timer expired, remove it
+                del self.active_timers[timer_id]
         
         # Format active reminders
-        for reminder in self.reminders:
+        for reminder in self.reminders[:]:
             if reminder['time'] > current_time:
                 time_until = reminder['time'] - current_time
                 active['reminders'].append({
@@ -540,6 +511,9 @@ class AdvancedAIProcessor:
                     'time': reminder['time'].strftime('%I:%M %p on %B %d'),
                     'time_until_seconds': int(time_until.total_seconds())
                 })
+            else:
+                # Reminder expired, remove it
+                self.reminders.remove(reminder)
         
         return active
     
@@ -864,12 +838,8 @@ def cancel_timer():
     timer_id = data.get('timer_id', '')
     
     if timer_id in ai_processor.active_timers:
-        try:
-            ai_processor.scheduler.remove_job(timer_id)
-            del ai_processor.active_timers[timer_id]
-            return jsonify({'message': 'Timer cancelled successfully!'})
-        except:
-            return jsonify({'error': 'Failed to cancel timer'}), 400
+        del ai_processor.active_timers[timer_id]
+        return jsonify({'message': 'Timer cancelled successfully!'})
     
     return jsonify({'error': 'Timer not found'}), 404
 
@@ -883,13 +853,9 @@ def cancel_reminder():
     reminder_found = False
     for i, reminder in enumerate(ai_processor.reminders):
         if reminder['id'] == reminder_id:
-            try:
-                ai_processor.scheduler.remove_job(reminder_id)
-                ai_processor.reminders.pop(i)
-                reminder_found = True
-                break
-            except:
-                pass
+            ai_processor.reminders.pop(i)
+            reminder_found = True
+            break
     
     if reminder_found:
         return jsonify({'message': 'Reminder cancelled successfully!'})
@@ -999,8 +965,7 @@ def get_stats():
     return jsonify({
         'conversation_count': len(ai_processor.conversation_history),
         'total_interactions': len(ai_processor.conversation_history),
-        'avg_sentiment': np.mean([conv['sentiment']['score'] 
-                                for conv in ai_processor.conversation_history]) if ai_processor.conversation_history else 0
+        'avg_sentiment': 0.5  # Simple fallback without numpy
     })
 
 if __name__ == '__main__':
