@@ -10,6 +10,8 @@ from typing import Dict, List, Any
 import sqlite3
 import threading
 import time
+import requests
+from config import WEATHER_API_KEY, WEATHER_API_BASE_URL, DEFAULT_WEATHER_UNITS, DEFAULT_WEATHER_LOCATION
 
 app = Flask(__name__)
 CORS(app)
@@ -267,17 +269,94 @@ class AdvancedAIProcessor:
     
     # Skill implementations
     def get_weather(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get weather information (mock implementation)"""
-        location = entities.get('entity_0', 'your location')
+        """Get real weather information using OpenWeatherMap API"""
+        try:
+            # Extract location from user input or use default
+            location = entities.get('entity_0', DEFAULT_WEATHER_LOCATION)
+            if not location or location == 'your location':
+                location = DEFAULT_WEATHER_LOCATION
+            
+            # Check if we have a valid API key
+            if not WEATHER_API_KEY or WEATHER_API_KEY == "your-openweathermap-api-key-here":
+                return self._get_mock_weather(location, personality)
+            
+            # Make API request to OpenWeatherMap
+            url = f"{WEATHER_API_BASE_URL}/weather"
+            params = {
+                'q': location,
+                'appid': WEATHER_API_KEY,
+                'units': DEFAULT_WEATHER_UNITS
+            }
+            
+            response = requests.get(url, params=params, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return self._format_weather_response(data, location, personality)
+            elif response.status_code == 404:
+                return f"Sorry, I couldn't find weather information for '{location}'. Could you try a different city? 🌍"
+            else:
+                return "I'm having trouble getting weather data right now. Please try again later! 🌤️"
+                
+        except requests.exceptions.Timeout:
+            return "The weather service is taking too long to respond. Please try again! ⏰"
+        except requests.exceptions.ConnectionError:
+            return "I can't connect to the weather service right now. Please check your internet connection! 🌐"
+        except Exception as e:
+            print(f"Weather API error: {e}")
+            return self._get_mock_weather(location, personality)
+    
+    def _format_weather_response(self, data: Dict, location: str, personality: str) -> str:
+        """Format weather API response based on personality"""
+        temp = round(data['main']['temp'])
+        feels_like = round(data['main']['feels_like'])
+        description = data['weather'][0]['description'].title()
+        humidity = data['main']['humidity']
+        wind_speed = round(data['wind']['speed']) if 'wind' in data else 0
+        
+        # Get appropriate emoji for weather condition
+        weather_id = data['weather'][0]['id']
+        emoji = self._get_weather_emoji(weather_id)
+        
+        responses = {
+            'friendly': f"The weather in {location} is {temp}°F and {description.lower()} {emoji}! It feels like {feels_like}°F. Perfect day to enjoy the outdoors! 🌟",
+            'professional': f"Current conditions in {location}: {temp}°F, {description.lower()}, humidity {humidity}%, wind {wind_speed} mph.",
+            'enthusiastic': f"WOW! It's {temp}°F and {description.lower()} in {location}! {emoji} Feels like {feels_like}°F! What an AMAZING day! 🚀",
+            'witty': f"Mother Nature reports {temp}°F and {description.lower()} in {location} {emoji}. She says it feels like {feels_like}°F, but who are we to argue with her? 😎"
+        }
+        
+        return responses.get(personality, responses['friendly'])
+    
+    def _get_weather_emoji(self, weather_id: int) -> str:
+        """Get appropriate emoji based on weather condition ID"""
+        if 200 <= weather_id < 300:  # Thunderstorm
+            return "⛈️"
+        elif 300 <= weather_id < 400:  # Drizzle
+            return "🌦️"
+        elif 500 <= weather_id < 600:  # Rain
+            return "🌧️"
+        elif 600 <= weather_id < 700:  # Snow
+            return "❄️"
+        elif 700 <= weather_id < 800:  # Atmosphere (fog, etc.)
+            return "🌫️"
+        elif weather_id == 800:  # Clear sky
+            return "☀️"
+        elif 801 <= weather_id < 900:  # Clouds
+            return "☁️"
+        else:
+            return "🌤️"
+    
+    def _get_mock_weather(self, location: str, personality: str) -> str:
+        """Fallback mock weather when API is not available"""
         weather_conditions = ['sunny', 'cloudy', 'rainy', 'partly cloudy', 'clear']
         temperature = random.randint(60, 85)
         condition = random.choice(weather_conditions)
         
         responses = {
-            'friendly': f"It's currently {temperature}°F and {condition} in {location}! Perfect weather to go outside! ☀️",
-            'professional': f"The current weather in {location} is {temperature}°F with {condition} conditions.",
-            'enthusiastic': f"WOW! It's a gorgeous {temperature}°F and {condition} in {location}! AMAZING weather! 🌟",
-            'witty': f"Well, Mother Nature says it's {temperature}°F and {condition} in {location}. She's in a good mood today! 😎"
+            'friendly': f"It's currently {temperature}°F and {condition} in {location}! Perfect weather to go outside! ☀️ (Note: This is simulated weather - add your API key for real data!)",
+            'professional': f"The current weather in {location} is {temperature}°F with {condition} conditions. (Simulated data)",
+            'enthusiastic': f"WOW! It's a gorgeous {temperature}°F and {condition} in {location}! AMAZING weather! 🌟 (Demo data)",
+            'witty': f"Well, Mother Nature says it's {temperature}°F and {condition} in {location}. She's in a good mood today! 😎 (Fake news until you add your API key!)"
         }
         
         return responses.get(personality, responses['friendly'])

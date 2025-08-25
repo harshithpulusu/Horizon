@@ -5,6 +5,7 @@ class EnhancedAIVoiceAssistant {
         this.isListening = false;
         this.isSpeaking = false;
         this.recognition = null;
+        this.wakeWordRecognition = null;  // New: separate recognition for wake words
         this.synthesis = window.speechSynthesis;
         this.currentPersonality = 'friendly';
         this.conversationHistory = [];
@@ -12,6 +13,9 @@ class EnhancedAIVoiceAssistant {
         this.activeReminders = [];
         this.lastResponse = '';
         this.lastInput = '';
+        this.isWakeWordMode = false;  // New: wake word listening mode
+        this.wakeWords = ['hey horizon', 'horizon', 'hey assistant', 'assistant'];  // New: wake words
+        this.wakeWordSensitivity = 0.7;  // New: sensitivity threshold
         
         this.init();
         this.initEventListeners();
