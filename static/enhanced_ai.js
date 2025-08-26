@@ -567,7 +567,10 @@ class EnhancedAIVoiceAssistant {
             // Cancel any ongoing speech
             this.synthesis.cancel();
             
-            const utterance = new SpeechSynthesisUtterance(text);
+            // Clean text by removing emojis and extra symbols for speech
+            const cleanText = this.cleanTextForSpeech(text);
+            
+            const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             utterance.volume = 0.8;
@@ -589,6 +592,42 @@ class EnhancedAIVoiceAssistant {
             
             this.synthesis.speak(utterance);
         }
+    }
+    
+    cleanTextForSpeech(text) {
+        // Remove emojis and clean text for better speech synthesis
+        const cleanedText = text
+            // Remove all emoji characters (Unicode ranges for emojis)
+            .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+            .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Symbols & Pictographs
+            .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport & Map
+            .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Regional indicators
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Miscellaneous Symbols
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+            .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Supplemental Symbols
+            .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Extended Pictographs
+            // Remove other symbols that sound awkward when spoken
+            .replace(/[⭐✨🌟⚡🎯🎉🚀]/g, '')
+            .replace(/[📊📈📉📌🔧⚙️🛠️]/g, '')
+            .replace(/[❌✅⚠️ℹ️]/g, '')
+            // Clean up extra spaces and formatting
+            .replace(/\s+/g, ' ')
+            .replace(/^\s+|\s+$/g, '')
+            // Replace some text patterns that don't speak well
+            .replace(/\*([^*]+)\*/g, '$1') // Remove asterisk emphasis
+            .replace(/`([^`]+)`/g, '$1')   // Remove backticks
+            .replace(/\n+/g, '. ')        // Replace newlines with periods
+            .trim();
+        
+        // Debug log to see the cleaning effect
+        if (text !== cleanedText) {
+            console.log('Speech cleaning:', {
+                original: text,
+                cleaned: cleanedText
+            });
+        }
+        
+        return cleanedText;
     }
     
     showFeedbackOptions() {
