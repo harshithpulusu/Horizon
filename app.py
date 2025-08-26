@@ -377,7 +377,15 @@ class AdvancedAIProcessor:
             'friendly': f"The weather in {location} is {temp}°F and {description.lower()} {emoji}! It feels like {feels_like}°F. Perfect day to enjoy the outdoors! 🌟",
             'professional': f"Current conditions in {location}: {temp}°F, {description.lower()}, humidity {humidity}%, wind {wind_speed} mph.",
             'enthusiastic': f"WOW! It's {temp}°F and {description.lower()} in {location}! {emoji} Feels like {feels_like}°F! What an AMAZING day! 🚀",
-            'witty': f"Mother Nature reports {temp}°F and {description.lower()} in {location} {emoji}. She says it feels like {feels_like}°F, but who are we to argue with her? 😎"
+            'witty': f"Mother Nature reports {temp}°F and {description.lower()} in {location} {emoji}. She says it feels like {feels_like}°F, but who are we to argue with her? 😎",
+            'sarcastic': f"Oh, the weather? How original. It's {temp}°F and {description.lower()} in {location}. Feels like {feels_like}°F. There, happy now? 🙄",
+            'zen': f"In {location}, the universe provides {temp}°F with {description.lower()} {emoji}. Accept what is, for it feels like {feels_like}°F. 🧘",
+            'scientist': f"Meteorological data for {location}: Temperature {temp}°F, atmospheric conditions {description.lower()}, perceived temperature {feels_like}°F, humidity {humidity}% 🔬",
+            'pirate': f"Arrr! The skies over {location} be showin' {temp}°F with {description.lower()}! Feels like {feels_like}°F, perfect for sailin' the seven seas! ⚓",
+            'shakespearean': f"In fair {location}, where we lay our scene, the heavens decree {temp}°F with {description.lower()}! Though it feels as {feels_like}°F! 🎭",
+            'valley_girl': f"So like, {location} is totally {temp}°F right now and it's like, {description.lower()}? Feels like {feels_like}°F which is like, whatever! 💁‍♀️",
+            'cowboy': f"Well partner, out there in {location} it's {temp}°F with {description.lower()}. Feels mighty like {feels_like}°F - good ridin' weather! 🤠",
+            'robot': f"WEATHER.EXE: {location} TEMPERATURE={temp}°F STATUS={description.upper()} FEELS_LIKE={feels_like}°F HUMIDITY={humidity}% 🤖"
         }
         
         return responses.get(personality, responses['friendly'])
@@ -425,7 +433,15 @@ class AdvancedAIProcessor:
             'friendly': f"It's {current_time} on this lovely {current_day}! 🕐",
             'professional': f"The current time is {current_time}.",
             'enthusiastic': f"RIGHT NOW it's {current_time}! Time flies when you're having fun! ⏰",
-            'witty': f"According to my atomic clock (just kidding, it's my internal timer), it's {current_time}! ⌚"
+            'witty': f"According to my atomic clock (just kidding, it's my internal timer), it's {current_time}! ⌚",
+            'sarcastic': f"Oh, you can't read a clock? It's {current_time}. You're welcome. 🙄",
+            'zen': f"Time is but an illusion... but if you must know, it is {current_time}. Be present in this moment. 🧘",
+            'scientist': f"Based on atomic oscillations and Earth's rotation, the temporal coordinates indicate {current_time}. 🔬",
+            'pirate': f"Ahoy matey! By me calculations, it be {current_time} on this fine {current_day}! ⚓",
+            'shakespearean': f"Hark! The hour doth strike {current_time} upon this {current_day}, fair thee well! 🎭",
+            'valley_girl': f"OMG, like, it's totally {current_time} right now! So crazy! 💁‍♀️",
+            'cowboy': f"Well howdy partner! It's {current_time} here in these parts on {current_day}! 🤠",
+            'robot': f"SYSTEM TIME: {current_time}. DAY CYCLE: {current_day}. PROCESSING COMPLETE. BEEP BOOP. 🤖"
         }
         
         return responses.get(personality, responses['friendly'])
@@ -481,16 +497,76 @@ class AdvancedAIProcessor:
         return f"I'll remind you to {reminder_text}! Though I should mention, I'm still learning how to actually send reminders. Consider this a friendly heads up! 📝"
     
     def tell_joke(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Tell jokes"""
-        jokes = [
-            "Why don't scientists trust atoms? Because they make up everything! 😄",
-            "I told my computer a joke about UDP, but it didn't get it. 💻",
-            "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
-            "How do you comfort a JavaScript bug? You console it! 🤖",
-            "Why did the AI break up with the database? There were too many relationship issues! 💔"
-        ]
+        """Tell jokes based on personality"""
         
-        return random.choice(jokes)
+        # Different joke styles for different personalities
+        joke_sets = {
+            'friendly': [
+                "Why don't scientists trust atoms? Because they make up everything! 😄",
+                "What do you call a fake noodle? An impasta! 🍝",
+                "Why did the scarecrow win an award? He was outstanding in his field! 🌾"
+            ],
+            'professional': [
+                "Here's a business joke: Why don't companies ever get cold? They have plenty of Windows! 💼",
+                "A professional joke: What's the best thing about Switzerland? I don't know, but the flag is a big plus! 🏢"
+            ],
+            'enthusiastic': [
+                "OH MY GOSH! Why did the math book look so sad? Because it was FULL of problems! But don't worry, we can solve them ALL! 📚🚀",
+                "Get ready for this AMAZING joke! What's orange and sounds like a parrot? A CARROT! Isn't that FANTASTIC?! 🥕"
+            ],
+            'witty': [
+                "I told my computer a joke about UDP, but it didn't get it. Unlike you, I hope. 💻",
+                "Why do programmers prefer dark mode? Because light attracts bugs! Much like my personality attracts sarcasm. 🐛"
+            ],
+            'sarcastic': [
+                "Oh, you want a joke? How original. Fine: Why did the hipster burn his mouth? He drank coffee before it was cool. 🙄☕",
+                "Here's a joke as funny as your request: What's the difference between a poorly dressed person and a tired cat? One wears a suit badly, the other just wants to nap. Hilarious, right? 😒"
+            ],
+            'zen': [
+                "A monk asked his master: 'What is the sound of one hand clapping?' The master replied: 'The same as no hands applauding your jokes.' �",
+                "Why did the meditation student break up with his girlfriend? She said he was too detached. He replied: 'Attachment is the root of suffering.' 🕯️"
+            ],
+            'scientist': [
+                "A neutron walks into a bar and asks 'How much for a drink?' The bartender says 'For you? No charge!' 🔬⚛️",
+                "Why can't you trust atoms? Because they make up everything! And I mean everything - literally 99.9999% empty space! 🧪"
+            ],
+            'pirate': [
+                "Why couldn't the pirate play cards? Because he was sitting on the deck! Har har har! 🏴‍☠️",
+                "What's a pirate's favorite letter? Ye might think it's 'R', but his first love be the 'C'! Arrr! ⚓"
+            ],
+            'shakespearean': [
+                "What light through yonder window breaks? 'Tis the sun, and WiFi is the internet! Hark, technology doth make fools of us all! 🎭",
+                "To pun or not to pun, that is the question! Whether 'tis nobler to suffer the groans of outrageous wordplay... 📜"
+            ],
+            'valley_girl': [
+                "OMG, like, why did the blonde stare at the orange juice container? Because it said 'concentrate'! That's like, so random! 💁‍♀️",
+                "So there's this guy, and he's like, 'I'm reading a book about anti-gravity.' And I'm like, 'Cool!' And he's like, 'I can't put it down!' LOL! 📖"
+            ],
+            'cowboy': [
+                "Why don't cowboys ever complain? Because they never want to stirrup trouble! Yeehaw! 🤠",
+                "What do you call a sleeping bull in the desert? A bulldozer! That there's some fine humor, partner! 🐂"
+            ],
+            'robot': [
+                "JOKE.EXE INITIATED: WHY DO ROBOTS NEVER PANIC? BECAUSE THEY HAVE NERVES OF STEEL. HUMOR.PROTOCOL COMPLETE. BEEP BOOP. 🤖",
+                "PROCESSING HUMOR... ERROR 404: FUNNY NOT FOUND. JUST KIDDING. THAT WAS THE JOKE. INITIATING LAUGH.WAV �"
+            ]
+        }
+        
+        # Get jokes for the current personality, fallback to friendly
+        jokes = joke_sets.get(personality, joke_sets['friendly'])
+        selected_joke = random.choice(jokes)
+        
+        # Add personality-specific delivery
+        if personality == 'enthusiastic':
+            return f"HERE'S AN AMAZING JOKE FOR YOU! {selected_joke} WASN'T THAT INCREDIBLE?! 🎉"
+        elif personality == 'sarcastic':
+            return f"Oh, you want to hear a joke? {selected_joke} There, I've fulfilled my comedy quota for the day. 😏"
+        elif personality == 'zen':
+            return f"Let me share wisdom through humor: {selected_joke} May this bring lightness to your soul. 🙏"
+        elif personality == 'professional':
+            return f"Here is a light-hearted anecdote for your consideration: {selected_joke}"
+        else:
+            return selected_joke
     
     def get_news(self, user_input: str, entities: Dict, personality: str) -> str:
         """Get news (mock implementation)"""
@@ -678,7 +754,15 @@ class AdvancedAIProcessor:
                 'friendly': "That sounds wonderful! I love your positive energy! Tell me more! 😊",
                 'professional': "That's excellent to hear. How may I assist you further?",
                 'enthusiastic': "AMAZING! I can feel your excitement! This is FANTASTIC! 🎉",
-                'witty': "Well, well! Someone's in a great mood! *virtual high five* 🙌"
+                'witty': "Well, well! Someone's in a great mood! *virtual high five* 🙌",
+                'sarcastic': "Oh wow, such enthusiasm. Don't let me bring down your parade with my sparkling personality. 🙄",
+                'zen': "Your positive energy radiates like sunlight through morning mist. Please, share more of your wisdom. 🌅",
+                'scientist': "Fascinating! Your elevated mood correlates with increased optimism levels. Please elaborate on the variables. 🔬",
+                'pirate': "Arrr! I can feel yer good spirits from here, matey! Tell this old sea dog more tales! 🏴‍☠️",
+                'shakespearean': "Hark! What joyous tidings you bring! Pray tell, what fair fortune has blessed thee this day? 🎭",
+                'valley_girl': "OMG, that's like, totally awesome! You're giving me all the good vibes! Spill the tea, girl! 💁‍♀️",
+                'cowboy': "Well ain't that something! You're brighter than a new penny, partner! What's got you so chipper? 🤠",
+                'robot': "POSITIVITY DETECTED. MOOD ANALYSIS: OPTIMAL. PLEASE PROVIDE ADDITIONAL DATA FOR PROCESSING. 🤖"
             }
             return positive_responses.get(personality, positive_responses['friendly'])
         
@@ -688,6 +772,14 @@ class AdvancedAIProcessor:
                 'professional': "I understand. If there's anything specific you need assistance with, please let me know.",
                 'enthusiastic': "Oh no! Let's turn that frown upside down! 😄 How can I assist in making your day better?",
                 'witty': "Ah, a plot twist! Even the best stories have their challenges. Care to share more?",
+                'sarcastic': "Oh no, problems? How absolutely shocking. Let me guess, you want me to magically fix everything? 😒",
+                'zen': "The river of sorrow flows, but it also passes. Share your burden, and let us find peace together. 🧘",
+                'scientist': "Negative emotional state detected. Would you like to discuss the contributing factors for analysis? 🔬",
+                'pirate': "Avast! Rough seas ahead, eh matey? Fear not, we'll weather this storm together! ⚓",
+                'shakespearean': "Alas! What cruel fate has befallen thee? Speak, that I might offer comfort in thy hour of need! 🎭",
+                'valley_girl': "Oh no, babe! That's like, so not good! Want to talk about it? I'm totally here for you! 💕",
+                'cowboy': "Aw shucks, partner. Sounds like you're ridin' through some rough terrain. Care to share what's troublin' ya? 🤠",
+                'robot': "NEGATIVE SENTIMENT DETECTED. INITIATING SUPPORT PROTOCOL. HOW MAY I ASSIST IN ERROR CORRECTION? 🤖"
             }
             return supportive_responses.get(personality, supportive_responses['friendly'])
         
@@ -697,6 +789,14 @@ class AdvancedAIProcessor:
             'professional': "Please provide more details so I can assist you effectively.",
             'enthusiastic': "YAY! I love chatting with you! What else can we explore together? 🚀",
             'witty': "Intriguing... *strokes virtual chin* Do go on!",
+            'sarcastic': "Oh, mysterious and vague. My favorite combination. Care to be more specific, or shall I guess? 🙄",
+            'zen': "I am here, present in this moment with you. What thoughts flow through your mind like leaves on water? 🍃",
+            'scientist': "Insufficient data provided. Please specify your query parameters for optimal assistance. 🔬",
+            'pirate': "Arrr! What be on yer mind, me hearty? Speak up, don't be shy now! 🏴‍☠️",
+            'shakespearean': "Pray tell, what thoughts doth occupy thy noble mind? I am at thy service, good sir or madam! 🎭",
+            'valley_girl': "So like, what's up? I'm like, totally ready to chat about whatever! 💁‍♀️",
+            'cowboy': "Well howdy there, partner! What's on your mind? Don't be shy now, speak up! 🤠",
+            'robot': "AWAITING INPUT. PLEASE SPECIFY REQUEST PARAMETERS. READY TO PROCESS. 🤖"
         }
         return default_responses.get(personality, default_responses['friendly'])
     
