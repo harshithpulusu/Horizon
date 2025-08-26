@@ -7,7 +7,7 @@ An advanced voice-activated AI assistant built with Python Flask and JavaScript,
 ### 🎤 Voice Interaction
 - **Speech Recognition**: Real-time voice input processing
 - **Text-to-Speech**: Natural voice responses
-- **Wake Word Detection**: Always listening mode (configurable)
+- **Wake Word Detection**: "Hey Horizon" always-listening mode 🌟
 - **Multi-language Support**: Expandable language system
 
 ### 🧠 Advanced AI Capabilities
@@ -20,7 +20,7 @@ An advanced voice-activated AI assistant built with Python Flask and JavaScript,
 ### ⚡ Core Skills
 - **Time & Date**: Current time, date, timezone information
 - **Mathematics**: Calculator with complex expression support
-- **Weather**: Real-time weather information (with API integration)
+- **Weather**: Real-time weather information with OpenWeatherMap API 🌤️
 - **Timers & Reminders**: Scheduled notifications and alerts
 - **Smart Home**: Device control simulation
 - **Entertainment**: Jokes, trivia, music control
@@ -83,9 +83,17 @@ python app.py
 - **"Remind me to call mom in 1 hour"** - Schedule reminder
 - **"What's 25 times 4?"** - Mathematical calculations
 - **"Tell me a joke"** - Entertainment
-- **"What's the weather like?"** - Weather information
+- **"What's the weather like?"** - Real weather information 🌤️
+- **"What's the weather in Tokyo?"** - Weather for specific cities
 - **"Turn on the lights"** - Smart home control
 - **"Search for Python tutorials"** - Web search
+
+### Wake Word Activation 🌟
+Enable "Always Listening Mode" in the app:
+- **"Hey Horizon"** - Activate assistant
+- **"Horizon"** - Quick activation
+- **"Hey Assistant"** - Alternative wake phrase
+- **"Assistant"** - Short activation
 
 ### Text Input
 You can also type commands instead of using voice input.
@@ -99,21 +107,42 @@ Switch between different AI personalities:
 
 ## 🔧 Configuration
 
-### API Keys
+### API Keys Setup
+
+#### 🌤️ Weather API (OpenWeatherMap)
+1. **Get your free API key:**
+   - Visit [OpenWeatherMap](https://openweathermap.org/api)
+   - Sign up for a free account
+   - Go to API Keys section
+   - Copy your API key
+
+2. **Add to config.py:**
+```python
+WEATHER_API_KEY = "your-actual-api-key-here"
+```
+
+#### Other API Keys
 Add your API keys to `config.py`:
 ```python
 OPENAI_API_KEY = "your-openai-api-key"
-WEATHER_API_KEY = "your-weather-api-key"
 NEWS_API_KEY = "your-news-api-key"
 ```
 
-### Features Toggle
+### New Features Configuration
 Enable/disable features in `config.py`:
 ```python
 ENABLE_SPEECH_RECOGNITION = True
 ENABLE_TEXT_TO_SPEECH = True
 ENABLE_LEARNING = True
 ENABLE_TIMERS = True
+
+# Wake Word Detection
+WAKE_WORDS = ["hey horizon", "horizon", "hey assistant", "assistant"]
+WAKE_WORD_SENSITIVITY = 0.7  # Sensitivity threshold (0.0 - 1.0)
+
+# Weather Settings
+DEFAULT_WEATHER_LOCATION = "New York"  # Default city for weather
+DEFAULT_WEATHER_UNITS = "imperial"     # imperial, metric, kelvin
 ```
 
 ## 📊 API Endpoints
@@ -286,6 +315,14 @@ CMD ["python", "app.py"]
 - ❌ Internet Explorer (not supported)
 
 ## 🆕 What's New
+
+### Version 2.1.0 - Siri/Alexa Features! 🚀
+- **🌟 Wake Word Detection**: "Hey Horizon" always-listening mode
+- **🌤️ Real Weather API**: Live weather data from OpenWeatherMap
+- **🎯 Enhanced Voice Recognition**: Improved speech processing
+- **🔧 Better Error Handling**: Graceful API failures with fallbacks
+- **📍 Location-Based Weather**: Weather for any city worldwide
+- **⚙️ Advanced Configuration**: More customization options
 
 ### Version 2.0.0
 - Advanced intent recognition

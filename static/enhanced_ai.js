@@ -40,6 +40,7 @@ class EnhancedAIVoiceAssistant {
         
         // Initialize speech recognition with better error handling
         this.initSpeechRecognition();
+        this.initWakeWordDetection();  // New: Initialize wake word detection
         
         this.updateStatus('Ready');
     }
@@ -92,6 +93,179 @@ class EnhancedAIVoiceAssistant {
         if (this.stopBtn) {
             this.stopBtn.disabled = true;
         }
+    }
+    
+    initWakeWordDetection() {
+        // Only initialize if speech recognition is available
+        if (!this.recognition) {
+            return;
+        }
+        
+        try {
+            const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+            this.wakeWordRecognition = new SpeechRecognition();
+            this.wakeWordRecognition.continuous = true;  // Keep listening
+            this.wakeWordRecognition.interimResults = true;  // Get partial results
+            this.wakeWordRecognition.lang = 'en-US';
+            this.wakeWordRecognition.maxAlternatives = 3;
+            
+            this.wakeWordRecognition.onresult = (event) => this.handleWakeWordResult(event);
+            this.wakeWordRecognition.onerror = (event) => {
+                console.log('Wake word detection error:', event.error);
+                // Restart wake word detection on error (unless it's aborted)
+                if (event.error !== 'aborted' && this.isWakeWordMode) {
+                    setTimeout(() => this.startWakeWordDetection(), 1000);
+                }
+            };
+            
+            this.wakeWordRecognition.onend = () => {
+                // Restart wake word detection if it should be running
+                if (this.isWakeWordMode && !this.isListening) {
+                    setTimeout(() => this.startWakeWordDetection(), 100);
+                }
+            };
+            
+            console.log('Wake word detection initialized');
+            this.addWakeWordToggle();  // Add UI toggle for wake word mode
+            
+        } catch (error) {
+            console.error('Error initializing wake word detection:', error);
+        }
+    }
+    
+    addWakeWordToggle() {
+        // Add wake word toggle to the UI
+        const controlsDiv = document.querySelector('.controls');
+        if (controlsDiv && !document.getElementById('wakeWordToggle')) {
+            const wakeWordDiv = document.createElement('div');
+            wakeWordDiv.className = 'wake-word-controls';
+            wakeWordDiv.innerHTML = `
+                <label class="wake-word-label">
+                    <input type="checkbox" id="wakeWordToggle" class="wake-word-checkbox">
+                    <span class="wake-word-text">🌟 Always Listening Mode</span>
+                    <small>Say "Hey Horizon" or "Horizon" to activate</small>
+                </label>
+            `;
+            
+            // Add some CSS for the wake word toggle
+            const style = document.createElement('style');
+            style.textContent = `
+                .wake-word-controls {
+                    margin: 10px 0;
+                    padding: 15px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                .wake-word-label {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                    cursor: pointer;
+                    color: white;
+                }
+                .wake-word-text {
+                    font-weight: 500;
+                    font-size: 14px;
+                }
+                .wake-word-label small {
+                    color: rgba(255, 255, 255, 0.7);
+                    font-size: 12px;
+                }
+                .wake-word-checkbox {
+                    margin-right: 8px;
+                    transform: scale(1.2);
+                }
+            `;
+            document.head.appendChild(style);
+            
+            controlsDiv.appendChild(wakeWordDiv);
+            
+            // Add event listener for the toggle
+            const toggle = document.getElementById('wakeWordToggle');
+            toggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.startWakeWordDetection();
+                } else {
+                    this.stopWakeWordDetection();
+                }
+            });
+        }
+    }
+    
+    startWakeWordDetection() {
+        if (!this.wakeWordRecognition || this.isWakeWordMode) {
+            return;
+        }
+        
+        try {
+            this.isWakeWordMode = true;
+            this.wakeWordRecognition.start();
+            this.updateStatus('👂 Listening for "Hey Horizon"...');
+            console.log('Wake word detection started');
+        } catch (error) {
+            console.error('Error starting wake word detection:', error);
+            this.isWakeWordMode = false;
+        }
+    }
+    
+    stopWakeWordDetection() {
+        if (!this.wakeWordRecognition || !this.isWakeWordMode) {
+            return;
+        }
+        
+        try {
+            this.isWakeWordMode = false;
+            this.wakeWordRecognition.abort();
+            this.updateStatus('Ready');
+            console.log('Wake word detection stopped');
+        } catch (error) {
+            console.error('Error stopping wake word detection:', error);
+        }
+    }
+    
+    handleWakeWordResult(event) {
+        const results = Array.from(event.results);
+        const lastResult = results[results.length - 1];
+        
+        if (lastResult && lastResult[0]) {
+            const transcript = lastResult[0].transcript.toLowerCase().trim();
+            const confidence = lastResult[0].confidence || 0;
+            
+            console.log('Wake word transcript:', transcript, 'Confidence:', confidence);
+            
+            // Check if any wake word was detected
+            const wakeWordDetected = this.wakeWords.some(wakeWord => {
+                return transcript.includes(wakeWord.toLowerCase()) && 
+                       confidence >= this.wakeWordSensitivity;
+            });
+            
+            if (wakeWordDetected && !this.isListening) {
+                console.log('Wake word detected!');
+                this.handleWakeWordDetected(transcript);
+            }
+        }
+    }
+    
+    handleWakeWordDetected(transcript) {
+        // Stop wake word detection temporarily
+        this.wakeWordRecognition.abort();
+        
+        // Visual/audio feedback
+        this.updateStatus('🌟 Wake word detected! Listening...');
+        this.addMessage('System', '🌟 Wake word detected! How can I help?', 'system');
+        
+        // Start regular listening for the actual command
+        setTimeout(() => {
+            this.startListening();
+        }, 500);
+        
+        // Restart wake word detection after the command is processed
+        setTimeout(() => {
+            if (this.isWakeWordMode && !this.isListening) {
+                this.startWakeWordDetection();
+            }
+        }, 10000); // Wait 10 seconds before resuming wake word detection
     }
     
     initEventListeners() {
@@ -261,6 +435,13 @@ class EnhancedAIVoiceAssistant {
     handleSpeechEnd() {
         console.log('Speech recognition ended');
         this.resetListeningState();
+        
+        // Restart wake word detection if it was enabled
+        if (this.isWakeWordMode && !this.isListening) {
+            setTimeout(() => {
+                this.startWakeWordDetection();
+            }, 1000); // Wait 1 second before restarting wake word detection
+        }
     }
     
     async sendMessage() {

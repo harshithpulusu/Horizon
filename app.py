@@ -89,12 +89,14 @@ class AdvancedAIProcessor:
                 r'weather in (.+)',
                 r'is it raining',
                 r'temperature',
-                r'forecast'
+                r'forecast',
+                r'how\'?s the weather'
             ],
             'time': [
                 r'what time is it',
                 r'current time',
-                r'time right now'
+                r'time right now',
+                r'tell me the time'
             ],
             'date': [
                 r'what\'?s today\'?s date',
@@ -112,10 +114,20 @@ class AdvancedAIProcessor:
                 r'set a reminder (.+)',
                 r'don\'?t forget (.+)'
             ],
+            'timer': [
+                r'set timer for (.+)',
+                r'timer for (.+)',
+                r'start timer (.+)',
+                r'set a timer for (.+)',
+                r'countdown (.+)',
+                r'timer (.+) minutes',
+                r'timer (.+) seconds'
+            ],
             'joke': [
                 r'tell me a joke',
                 r'make me laugh',
-                r'something funny'
+                r'something funny',
+                r'another joke'
             ],
             'news': [
                 r'what\'?s in the news',
@@ -123,9 +135,11 @@ class AdvancedAIProcessor:
                 r'news about (.+)'
             ],
             'music': [
-                r'play (.+)',
+                r'play music',
+                r'play some music',
                 r'music by (.+)',
-                r'play some music'
+                r'play song (.+)',
+                r'put on (.+) music'
             ],
             'smart_home': [
                 r'turn (on|off) (.+)',
@@ -148,9 +162,32 @@ class AdvancedAIProcessor:
             ]
         }
     
+    def clean_wake_words(self, user_input: str) -> str:
+        """Remove wake words from user input to avoid confusion with commands"""
+        # Define wake words that should be removed from commands
+        wake_words = [
+            'hey horizon', 'horizon', 'hey assistant', 'assistant',
+            'hey siri', 'siri', 'hey alexa', 'alexa'  # Common wake words
+        ]
+        
+        cleaned_input = user_input.lower().strip()
+        
+        # Remove wake words from the beginning of the input
+        for wake_word in wake_words:
+            if cleaned_input.startswith(wake_word):
+                cleaned_input = cleaned_input[len(wake_word):].strip()
+                # Remove common connecting words
+                if cleaned_input.startswith((',', 'please', 'can you')):
+                    cleaned_input = re.sub(r'^(,|please|can you)\s*', '', cleaned_input)
+                break
+        
+        return cleaned_input if cleaned_input else user_input
+    
     def recognize_intent(self, user_input: str) -> Intent:
         """Advanced intent recognition using pattern matching and ML-like scoring"""
-        user_input_lower = user_input.lower().strip()
+        # Clean wake words first
+        cleaned_input = self.clean_wake_words(user_input)
+        user_input_lower = cleaned_input.lower().strip()
         best_intent = Intent("general", 0.0, {})
         
         for intent_name, patterns in self.intent_patterns.items():
@@ -172,9 +209,11 @@ class AdvancedAIProcessor:
             keyword_intents = {
                 'weather': ['weather', 'rain', 'sunny', 'cloudy', 'temperature', 'forecast'],
                 'time': ['time', 'clock', 'hour', 'minute'],
-                'math': ['calculate', 'plus', 'minus', 'times', 'divided', 'equation'],
+                'math': ['calculate', 'plus', 'minus', 'times', 'divided', 'equation', 'add', 'subtract', 'multiply'],
                 'music': ['play', 'song', 'music', 'artist', 'album'],
-                'joke': ['joke', 'funny', 'laugh', 'humor']
+                'joke': ['joke', 'funny', 'laugh', 'humor'],
+                'timer': ['timer', 'countdown', 'minutes', 'seconds', 'alarm'],
+                'reminder': ['remind', 'reminder', 'remember', 'forget']
             }
             
             for intent_name, keywords in keyword_intents.items():
@@ -188,20 +227,28 @@ class AdvancedAIProcessor:
     
     def generate_response(self, user_input: str, personality: str = 'friendly') -> Dict[str, Any]:
         """Main response generation with context awareness"""
-        intent = self.recognize_intent(user_input)
-        sentiment = self.analyze_sentiment(user_input)
+        # Clean wake words first for better intent recognition
+        cleaned_input = self.clean_wake_words(user_input)
+        print(f"Original input: '{user_input}' -> Cleaned: '{cleaned_input}'")  # Debug log
         
-        # Store conversation in database
+        intent = self.recognize_intent(cleaned_input)
+        print(f"Recognized intent: {intent.name} (confidence: {intent.confidence:.3f})")  # Debug log
+        
+        sentiment = self.analyze_sentiment(cleaned_input)
+        
+        # Store conversation in database (use original input for history)
         self.store_conversation(user_input, intent, sentiment)
         
         # Update context memory
-        self.update_context(user_input, intent)
+        self.update_context(cleaned_input, intent)
         
         # Generate response based on intent
         if intent.name in self.skills and intent.confidence > 0.3:
-            response = self.skills[intent.name](user_input, intent.entities, personality)
+            print(f"Using skill: {intent.name}")  # Debug log
+            response = self.skills[intent.name](cleaned_input, intent.entities, personality)
         else:
-            response = self.generate_conversational_response(user_input, personality, sentiment)
+            print(f"Using conversational response (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
+            response = self.generate_conversational_response(cleaned_input, personality, sentiment)
         
         # Store AI response
         self.store_ai_response(response, intent)
@@ -1048,4 +1095,4 @@ def get_stats():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=8000)
