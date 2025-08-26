@@ -190,6 +190,9 @@ class AdvancedAIProcessor:
         user_input_lower = cleaned_input.lower().strip()
         best_intent = Intent("general", 0.0, {})
         
+        # Debug: Show which patterns we're checking
+        print(f"Checking patterns for: '{user_input_lower}'")
+        
         for intent_name, patterns in self.intent_patterns.items():
             for pattern in patterns:
                 match = re.search(pattern, user_input_lower)
@@ -197,15 +200,19 @@ class AdvancedAIProcessor:
                     confidence = len(match.group(0)) / len(user_input_lower)
                     confidence += 0.3  # Boost for exact pattern match
                     
+                    print(f"Pattern match: '{pattern}' -> {intent_name} (confidence: {confidence:.3f})")
+                    
                     if confidence > best_intent.confidence:
                         entities = {}
                         if match.groups():
                             entities = {f"entity_{i}": group for i, group in enumerate(match.groups())}
                         
                         best_intent = Intent(intent_name, confidence, entities)
+                        print(f"New best intent: {intent_name} with entities: {entities}")
         
         # Fallback intent detection using keywords
         if best_intent.confidence < 0.3:
+            print("Using keyword fallback detection...")
             keyword_intents = {
                 'weather': ['weather', 'rain', 'sunny', 'cloudy', 'temperature', 'forecast'],
                 'time': ['time', 'clock', 'hour', 'minute'],
@@ -220,6 +227,7 @@ class AdvancedAIProcessor:
                 keyword_matches = sum(1 for keyword in keywords if keyword in user_input_lower)
                 if keyword_matches > 0:
                     confidence = keyword_matches / len(keywords) * 0.5
+                    print(f"Keyword match: {intent_name} ({keyword_matches} keywords, confidence: {confidence:.3f})")
                     if confidence > best_intent.confidence:
                         best_intent = Intent(intent_name, confidence, {})
         

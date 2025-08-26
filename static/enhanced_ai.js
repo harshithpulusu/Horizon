@@ -290,7 +290,7 @@ class EnhancedAIVoiceAssistant {
             this.setPersonality(e.target.value);
         });
         
-        // Feedback buttons (will be added dynamically)
+        // Feedback buttons and quick commands (will be added dynamically)
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('feedback-btn')) {
                 this.submitFeedback(e.target.dataset.feedback);
@@ -298,6 +298,9 @@ class EnhancedAIVoiceAssistant {
                 this.cancelTimer(e.target.dataset.timerId);
             } else if (e.target.classList.contains('cancel-reminder-btn')) {
                 this.cancelReminder(e.target.dataset.reminderId);
+            } else if (e.target.classList.contains('quick-cmd-btn')) {
+                // Handle quick command button clicks
+                this.handleQuickCommand(e.target.dataset.command);
             }
         });
     }
@@ -451,6 +454,30 @@ class EnhancedAIVoiceAssistant {
         this.addMessage('You', input, 'user');
         this.voiceInput.value = '';
         await this.processInput(input);
+    }
+    
+    handleQuickCommand(command) {
+        // Handle quick command button clicks
+        console.log('Quick command clicked:', command);
+        
+        // Add visual feedback to the clicked button
+        const clickedBtn = event.target;
+        clickedBtn.style.background = 'rgba(69, 183, 209, 0.3)';
+        clickedBtn.style.transform = 'translateX(8px) scale(0.95)';
+        
+        setTimeout(() => {
+            clickedBtn.style.background = '';
+            clickedBtn.style.transform = '';
+        }, 200);
+        
+        // Add the command to the chat and display it
+        this.addMessage('You', command, 'user');
+        
+        // Process the command
+        this.processInput(command);
+        
+        // Update status
+        this.updateStatus('Processing quick command...');
     }
     
     async processInput(input) {

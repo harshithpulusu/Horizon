@@ -648,6 +648,40 @@
             font-size: 14px;
         }
         
+        .quick-command-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .quick-cmd-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 10px;
+            border-left: 3px solid #4ecdc4;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-cmd-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+            border-left-color: #45b7d1;
+            box-shadow: 0 4px 15px rgba(69, 183, 209, 0.3);
+        }
+        
+        .quick-cmd-btn:active {
+            transform: translateX(8px) scale(0.98);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Legacy styles for compatibility */
         .quick-commands ul {
             list-style: none;
             padding: 0;
@@ -830,14 +864,16 @@
             <div class="sidebar-section">
                 <h3>🎯 Quick Commands</h3>
                 <div class="quick-commands">
-                    <ul style="list-style: none; padding: 0;">
-                        <li>🕐 "What time is it?"</li>
-                        <li>🌤️ "What's the weather?"</li>
-                        <li>⏱️ "Set timer for 5 minutes"</li>
-                        <li>📅 "Remind me to call mom"</li>
-                        <li>🧮 "Calculate 25 times 4"</li>
-                        <li>😄 "Tell me a joke"</li>
-                    </ul>
+                    <div class="quick-command-buttons">
+                        <button class="quick-cmd-btn" data-command="What time is it?">🕐 "What time is it?"</button>
+                        <button class="quick-cmd-btn" data-command="What's the weather?">🌤️ "What's the weather?"</button>
+                        <button class="quick-cmd-btn" data-command="Set timer for 5 minutes">⏱️ "Set timer for 5 minutes"</button>
+                        <button class="quick-cmd-btn" data-command="Set timer for 10 minutes">⏰ "Set timer for 10 minutes"</button>
+                        <button class="quick-cmd-btn" data-command="Remind me to call mom">📅 "Remind me to call mom"</button>
+                        <button class="quick-cmd-btn" data-command="Calculate 25 times 4">🧮 "Calculate 25 times 4"</button>
+                        <button class="quick-cmd-btn" data-command="Tell me a joke">😄 "Tell me a joke"</button>
+                        <button class="quick-cmd-btn" data-command="What's today's date?">📆 "What's today's date?"</button>
+                    </div>
                 </div>
             </div>
             
