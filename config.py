@@ -2,13 +2,13 @@
 
 # API Keys (add your own)
 OPENAI_API_KEY = "your-openai-api-key-here"
-WEATHER_API_KEY = "your-openweathermap-api-key-here"  # Get from openweathermap.org
+WEATHER_API_KEY = "b022593a8152ffc60a41f2015b2a0e3f"  # Paste your actual OpenWeatherMap API key here
 NEWS_API_KEY = "your-news-api-key-here"
 
 # Weather API Settings
 WEATHER_API_BASE_URL = "http://api.openweathermap.org/data/2.5"
-DEFAULT_WEATHER_UNITS = "imperial"  # imperial, metric, kelvin
-DEFAULT_WEATHER_LOCATION = "New York"
+DEFAULT_WEATHER_UNITS = "imperial"  # imperial (°F), metric (°C), kelvin
+DEFAULT_WEATHER_LOCATION = "Chicago, US"  # Default US city
 
 # Wake Word Detection
 WAKE_WORDS = ["hey horizon", "horizon", "hey assistant", "assistant"]

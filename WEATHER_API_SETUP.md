@@ -21,7 +21,7 @@
    ```
    with:
    ```python
-   WEATHER_API_KEY = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"  # Your actual key
+   WEATHER_API_KEY = "b022593a8152ffc60a41f2015b2a0e3f"  # Your actual key
    ```
 
 ### Step 4: Test It!

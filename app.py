@@ -324,17 +324,28 @@ class AdvancedAIProcessor:
     
     # Skill implementations
     def get_weather(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get real weather information using OpenWeatherMap API"""
+        """Get real weather information using OpenWeatherMap API or free fallback"""
         try:
             # Extract location from user input or use default
             location = entities.get('entity_0', DEFAULT_WEATHER_LOCATION)
             if not location or location == 'your location':
                 location = DEFAULT_WEATHER_LOCATION
             
-            # Check if we have a valid API key
-            if not WEATHER_API_KEY or WEATHER_API_KEY == "your-openweathermap-api-key-here":
-                return self._get_mock_weather(location, personality)
-            
+            # Check if we have a valid API key for OpenWeatherMap
+            if WEATHER_API_KEY and WEATHER_API_KEY not in ["your-openweathermap-api-key-here", "PASTE_YOUR_REAL_API_KEY_HERE"]:
+                # Try OpenWeatherMap first (free tier: 1000 calls/day)
+                return self._get_openweathermap_weather(location, personality)
+            else:
+                # Use completely free 7Timer API (no key required)
+                return self._get_7timer_weather(location, personality)
+                
+        except Exception as e:
+            print(f"Weather API error: {e}")
+            return self._get_mock_weather(location, personality)
+    
+    def _get_openweathermap_weather(self, location: str, personality: str) -> str:
+        """Get weather from OpenWeatherMap API (free tier)"""
+        try:
             # Make API request to OpenWeatherMap
             url = f"{WEATHER_API_BASE_URL}/weather"
             params = {
@@ -350,6 +361,9 @@ class AdvancedAIProcessor:
                 return self._format_weather_response(data, location, personality)
             elif response.status_code == 404:
                 return f"Sorry, I couldn't find weather information for '{location}'. Could you try a different city? 🌍"
+            elif response.status_code == 401:
+                print("Invalid API key, falling back to free service")
+                return self._get_7timer_weather(location, personality)
             else:
                 return "I'm having trouble getting weather data right now. Please try again later! 🌤️"
                 
@@ -358,8 +372,151 @@ class AdvancedAIProcessor:
         except requests.exceptions.ConnectionError:
             return "I can't connect to the weather service right now. Please check your internet connection! 🌐"
         except Exception as e:
-            print(f"Weather API error: {e}")
+            print(f"OpenWeatherMap API error: {e}")
+            return self._get_7timer_weather(location, personality)
+    
+    def _get_7timer_weather(self, location: str, personality: str) -> str:
+        """Get weather from completely free 7Timer API (no API key required)"""
+        try:
+            # Get coordinates for the location
+            coords = self._get_city_coordinates(location)
+            if not coords:
+                return f"Sorry, I couldn't find coordinates for '{location}'. Try a major city like New York, London, or Tokyo! 🌍"
+            
+            lat, lon = coords
+            url = "http://www.7timer.info/bin/api.pl"
+            params = {
+                'lon': lon,
+                'lat': lat,
+                'product': 'civil',
+                'output': 'json'
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return self._format_7timer_response(data, location, personality)
+            else:
+                return self._get_mock_weather(location, personality)
+                
+        except Exception as e:
+            print(f"7Timer API error: {e}")
             return self._get_mock_weather(location, personality)
+    
+    def _get_city_coordinates(self, location: str) -> tuple:
+        """Simple city to coordinates mapping for major cities"""
+        city_coords = {
+            'new york': (40.7128, -74.0060),
+            'los angeles': (34.0522, -118.2437),
+            'chicago': (41.8781, -87.6298),
+            'houston': (29.7604, -95.3698),
+            'phoenix': (33.4484, -112.0740),
+            'philadelphia': (39.9526, -75.1652),
+            'san antonio': (29.4241, -98.4936),
+            'san diego': (32.7157, -117.1611),
+            'dallas': (32.7767, -96.7970),
+            'san jose': (37.3382, -121.8863),
+            'austin': (30.2672, -97.7431),
+            'miami': (25.7617, -80.1918),
+            'seattle': (47.6062, -122.3321),
+            'denver': (39.7392, -104.9903),
+            'boston': (42.3601, -71.0589),
+            'london': (51.5074, -0.1278),
+            'paris': (48.8566, 2.3522),
+            'tokyo': (35.6762, 139.6503),
+            'sydney': (-33.8688, 151.2093),
+            'toronto': (43.6532, -79.3832),
+            'montreal': (45.5017, -73.5673),
+            'vancouver': (49.2827, -123.1207),
+            'berlin': (52.5200, 13.4050),
+            'rome': (41.9028, 12.4964),
+            'madrid': (40.4168, -3.7038),
+            'amsterdam': (52.3676, 4.9041),
+            'stockholm': (59.3293, 18.0686),
+            'moscow': (55.7558, 37.6176),
+            'beijing': (39.9042, 116.4074),
+            'shanghai': (31.2304, 121.4737),
+            'mumbai': (19.0760, 72.8777),
+            'delhi': (28.7041, 77.1025),
+            'bangkok': (13.7563, 100.5018),
+            'singapore': (1.3521, 103.8198),
+            'hong kong': (22.3193, 114.1694),
+            'seoul': (37.5665, 126.9780),
+            'melbourne': (-37.8136, 144.9631),
+            'perth': (-31.9505, 115.8605),
+            'auckland': (-36.8485, 174.7633),
+            'cairo': (30.0444, 31.2357),
+            'lagos': (6.5244, 3.3792),
+            'johannesburg': (-26.2041, 28.0473),
+            'sao paulo': (-23.5558, -46.6396),
+            'rio de janeiro': (-22.9068, -43.1729),
+            'mexico city': (19.4326, -99.1332),
+            'buenos aires': (-34.6118, -58.3960)
+        }
+        
+        # Clean location input and try to match
+        location_lower = location.lower().split(',')[0].strip()
+        # Try exact match first
+        if location_lower in city_coords:
+            return city_coords[location_lower]
+        
+        # Try partial matches for common abbreviations
+        for city, coords in city_coords.items():
+            if location_lower in city or city in location_lower:
+                return coords
+        
+        return None
+    
+    def _format_7timer_response(self, data: Dict, location: str, personality: str) -> str:
+        """Format 7Timer API response based on personality"""
+        try:
+            current = data['dataseries'][0]
+            weather_desc = self._decode_7timer_weather(current['weather'])
+            temp_c = current['temp2m']  # Temperature in Celsius
+            temp_f = round((temp_c * 9/5) + 32)  # Convert to Fahrenheit
+            
+            # Format based on personality with "Free Weather Service" note
+            weather_responses = {
+                'friendly': f"The weather in {location} is {weather_desc} with a temperature of {temp_f}°F ({temp_c}°C)! Have a great day! 😊 (via free weather service)",
+                'professional': f"Current conditions in {location}: {weather_desc}, {temp_f}°F ({temp_c}°C). Data provided by 7Timer.",
+                'enthusiastic': f"WOW! {location} has {weather_desc} weather and it's {temp_f}°F! What an AMAZING day! 🌟",
+                'witty': f"Well, well! {location} is serving up {weather_desc} at a crisp {temp_f}°F. Mother Nature's feeling fancy! 🎭",
+                'sarcastic': f"Oh joy, {location} has {weather_desc} weather at {temp_f}°F. How absolutely thrilling. 🙄",
+                'zen': f"In {location}, the universe presents {weather_desc} at {temp_f}°F. Feel the harmony of nature's rhythm. 🧘",
+                'scientist': f"Meteorological analysis for {location}: {weather_desc} conditions, temperature reading {temp_f}°F. Data source: 7Timer. 🔬",
+                'pirate': f"Arrr! The weather be {weather_desc} in {location}, with temperatures at {temp_f}°F! Good sailing weather, matey! 🏴‍☠️",
+                'shakespearean': f"Hark! In fair {location}, the heavens doth present {weather_desc} at {temp_f} degrees! What wondrous conditions! 🎭",
+                'valley_girl': f"OMG! {location} is like, totally {weather_desc} and it's {temp_f}°F! That's like, so perfect! 💁‍♀️",
+                'cowboy': f"Well partner, {location}'s got {weather_desc} weather at {temp_f}°F. Mighty fine conditions! 🤠",
+                'robot': f"WEATHER ANALYSIS COMPLETE. LOCATION: {location}. CONDITIONS: {weather_desc}. TEMPERATURE: {temp_f}°F. SOURCE: 7TIMER. 🤖"
+            }
+            
+            return weather_responses.get(personality, weather_responses['friendly'])
+            
+        except Exception as e:
+            print(f"Error formatting 7Timer response: {e}")
+            return self._get_mock_weather(location, personality)
+    
+    def _decode_7timer_weather(self, weather_code: str) -> str:
+        """Decode 7Timer weather codes to descriptions"""
+        weather_codes = {
+            'clear': 'clear skies',
+            'pcloudy': 'partly cloudy',
+            'mcloudy': 'mostly cloudy',
+            'cloudy': 'cloudy',
+            'humid': 'humid',
+            'lightrain': 'light rain',
+            'oshower': 'occasional showers',
+            'ishower': 'isolated showers',
+            'lightsnow': 'light snow',
+            'rain': 'rainy',
+            'snow': 'snowy',
+            'rainsnow': 'rain and snow',
+            'ts': 'thunderstorms',
+            'tsrain': 'thunderstorms with rain'
+        }
+        return weather_codes.get(weather_code, weather_code)
     
     def _format_weather_response(self, data: Dict, location: str, personality: str) -> str:
         """Format weather API response based on personality"""
