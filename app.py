@@ -14,6 +14,7 @@ import requests
 import spacy
 from spacy.matcher import Matcher
 import numpy as np
+import openai
 
 app = Flask(__name__)
 CORS(app)
@@ -409,8 +410,8 @@ class AdvancedAIProcessor:
             print(f"Using skill: {intent.name}")  # Debug log
             response = self.skills[intent.name](cleaned_input, intent.entities, personality)
         else:
-            print(f"Using conversational response (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
-            response = self.generate_conversational_response(cleaned_input, personality, sentiment)
+            print(f"Using OpenAI fallback (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
+            response = self.ask_openai(cleaned_input, personality)
         
         # Store AI response
         self.store_ai_response(response, intent)
