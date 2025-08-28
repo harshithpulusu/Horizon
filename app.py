@@ -1,0 +1,369 @@
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+import openai
+from datetime import datetime
+import sqlite3
+import json
+import re
+import random
+import time
+import threading
+import os
+from config import Config
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)
+
+# Configure OpenAI with error handling
+try:
+    if hasattr(Config, 'OPENAI_API_KEY') and Config.OPENAI_API_KEY != "your-openai-api-key-here":
+        client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+        OPENAI_AVAILABLE = True
+        print("✅ OpenAI integration ready")
+    else:
+        client = None
+        OPENAI_AVAILABLE = False
+        print("⚠️  OpenAI API key not configured - using fallback responses")
+except Exception as e:
+    client = None
+    OPENAI_AVAILABLE = False
+    print(f"⚠️  OpenAI initialization failed: {e}")
+
+# Global variables
+timers = {}
+reminders = []
+
+# Database setup
+def init_db():
+    """Initialize the SQLite database for conversation storage"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT,
+                user_input TEXT,
+                ai_response TEXT,
+                personality TEXT
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ Database initialized")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+
+def save_conversation(user_input, ai_response, personality):
+    """Save conversation to database"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO conversations (timestamp, user_input, ai_response, personality)
+            VALUES (?, ?, ?, ?)
+        ''', (datetime.now().isoformat(), user_input, ai_response, personality))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error saving conversation: {e}")
+
+# Intent recognition patterns
+INTENT_PATTERNS = {
+    'greeting': [
+        r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b',
+        r'\bhow are you\b',
+        r'\bwhat\'s up\b'
+    ],
+    'time': [
+        r'\b(time|clock)\b',
+        r'\bwhat time is it\b',
+        r'\bcurrent time\b'
+    ],
+    'date': [
+        r'\b(date|today)\b',
+        r'\bwhat day is it\b',
+        r'\bwhat\'s the date\b'
+    ],
+    'joke': [
+        r'\b(joke|funny|humor)\b',
+        r'\btell me a joke\b',
+        r'\bmake me laugh\b'
+    ],
+    'math': [
+        r'\bcalculate\b',
+        r'\bmath\b',
+        r'\bcompute\b',
+        r'\d+\s*[\+\-\*\/]\s*\d+',
+        r'\bwhat is \d+',
+        r'\bsolve\b'
+    ],
+    'timer': [
+        r'\bset timer\b',
+        r'\btimer for\b',
+        r'\balarm\b',
+        r'\bremind me in\b'
+    ],
+    'goodbye': [
+        r'\b(bye|goodbye|see you|farewell)\b',
+        r'\btalk to you later\b'
+    ]
+}
+
+def recognize_intent(text):
+    """Recognize user intent from text using pattern matching"""
+    text_lower = text.lower()
+    
+    for intent, patterns in INTENT_PATTERNS.items():
+        for pattern in patterns:
+            if re.search(pattern, text_lower):
+                return intent
+    
+    return 'general'
+
+# Skill handlers
+def handle_greeting(personality):
+    """Handle greeting intents"""
+    greetings = {
+        'friendly': ["Hello! How can I help you today?", "Hi there! What can I do for you?"],
+        'professional': ["Good day. How may I assist you?", "Hello. What can I help you with?"],
+        'casual': ["Hey! What's up?", "Hi! How's it going?"],
+        'enthusiastic': ["Hello! I'm so excited to help you today!", "Hi there! Ready to have some fun?"]
+    }
+    return random.choice(greetings.get(personality, greetings['friendly']))
+
+def handle_time():
+    """Handle time requests"""
+    current_time = datetime.now().strftime("%I:%M %p")
+    return f"The current time is {current_time}."
+
+def handle_date():
+    """Handle date requests"""
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    return f"Today is {current_date}."
+
+def handle_joke(personality):
+    """Handle joke requests"""
+    jokes = [
+        "Why don't scientists trust atoms? Because they make up everything!",
+        "Why did the math book look so sad? Because it had too many problems!",
+        "Why don't eggs tell jokes? They'd crack each other up!",
+        "What do you call a bear with no teeth? A gummy bear!",
+        "Why did the coffee file a police report? It got mugged!"
+    ]
+    
+    if personality == 'enthusiastic':
+        return "Oh, I love jokes! " + random.choice(jokes) + " 😄"
+    elif personality == 'professional':
+        return "Here's a light-hearted joke: " + random.choice(jokes)
+    else:
+        return random.choice(jokes)
+
+def handle_math(text):
+    """Handle basic math calculations"""
+    try:
+        # Extract math expressions
+        if '+' in text:
+            nums = re.findall(r'\d+', text)
+            if len(nums) >= 2:
+                result = int(nums[0]) + int(nums[1])
+                return f"{nums[0]} + {nums[1]} = {result}"
+        elif '-' in text:
+            nums = re.findall(r'\d+', text)
+            if len(nums) >= 2:
+                result = int(nums[0]) - int(nums[1])
+                return f"{nums[0]} - {nums[1]} = {result}"
+        elif '*' in text or 'times' in text:
+            nums = re.findall(r'\d+', text)
+            if len(nums) >= 2:
+                result = int(nums[0]) * int(nums[1])
+                return f"{nums[0]} × {nums[1]} = {result}"
+        elif '/' in text or 'divided' in text:
+            nums = re.findall(r'\d+', text)
+            if len(nums) >= 2 and int(nums[1]) != 0:
+                result = int(nums[0]) / int(nums[1])
+                return f"{nums[0]} ÷ {nums[1]} = {result}"
+        
+        return "I can help with basic math! Try asking me something like '5 + 3' or 'what is 10 times 2'."
+    except Exception as e:
+        return "Sorry, I couldn't calculate that. Try a simpler math problem!"
+
+def handle_timer(text):
+    """Handle timer requests"""
+    try:
+        # Extract time from text
+        time_match = re.search(r'(\d+)\s*(minute|minutes|min|second|seconds|sec|hour|hours)', text.lower())
+        if time_match:
+            duration = int(time_match.group(1))
+            unit = time_match.group(2)
+            
+            # Convert to seconds
+            if 'hour' in unit:
+                seconds = duration * 3600
+            elif 'minute' in unit or 'min' in unit:
+                seconds = duration * 60
+            else:
+                seconds = duration
+            
+            timer_id = f"timer_{int(time.time())}"
+            timers[timer_id] = {
+                'start_time': time.time(),
+                'duration': seconds,
+                'description': f"{duration} {unit}"
+            }
+            
+            return f"Timer set for {duration} {unit}! I'll let you know when it's done."
+        else:
+            return "Please specify a time, like 'set timer for 5 minutes' or 'timer for 30 seconds'."
+    except Exception as e:
+        return "Sorry, I couldn't set that timer. Try something like 'set timer for 5 minutes'."
+
+def handle_goodbye(personality):
+    """Handle goodbye intents"""
+    goodbyes = {
+        'friendly': ["Goodbye! Have a great day!", "See you later! Take care!"],
+        'professional': ["Goodbye. Have a productive day.", "Thank you. Until next time."],
+        'casual': ["See ya!", "Catch you later!"],
+        'enthusiastic': ["Bye bye! It was so fun talking with you!", "See you soon! Have an amazing day!"]
+    }
+    return random.choice(goodbyes.get(personality, goodbyes['friendly']))
+
+def ask_openai(user_input, personality):
+    """Use OpenAI for general questions and complex interactions"""
+    if not OPENAI_AVAILABLE:
+        return "I'd love to help with that, but I'm currently running in offline mode. I can help with time, date, jokes, math, and timers though!"
+    
+    try:
+        personality_prompts = {
+            'friendly': "You are a friendly and helpful AI assistant. Be warm and conversational.",
+            'professional': "You are a professional AI assistant. Be formal and concise.",
+            'casual': "You are a casual and relaxed AI assistant. Be informal and easy-going.",
+            'enthusiastic': "You are an enthusiastic and energetic AI assistant. Be excited and positive!"
+        }
+        
+        system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"OpenAI API error: {e}")
+        return "I'm having trouble connecting to my knowledge base right now. Please try again in a moment."
+
+def process_user_input(user_input, personality='friendly'):
+    """Process user input and return appropriate response"""
+    if not user_input or not user_input.strip():
+        return "I didn't quite catch that. Could you please say something?"
+    
+    # Recognize intent
+    intent = recognize_intent(user_input)
+    
+    # Handle specific intents
+    if intent == 'greeting':
+        response = handle_greeting(personality)
+    elif intent == 'time':
+        response = handle_time()
+    elif intent == 'date':
+        response = handle_date()
+    elif intent == 'joke':
+        response = handle_joke(personality)
+    elif intent == 'math':
+        response = handle_math(user_input)
+    elif intent == 'timer':
+        response = handle_timer(user_input)
+    elif intent == 'goodbye':
+        response = handle_goodbye(personality)
+    else:
+        # Use OpenAI for general questions
+        response = ask_openai(user_input, personality)
+    
+    # Save conversation
+    save_conversation(user_input, response, personality)
+    
+    return response
+
+# Routes
+@app.route('/')
+def home():
+    """Serve the main page"""
+    return render_template('index.html')
+
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'service': 'Horizon AI Assistant',
+        'openai_available': OPENAI_AVAILABLE
+    })
+
+@app.route('/api/process', methods=['POST'])
+def process_message():
+    """Process incoming messages"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        user_input = data.get('input', '').strip()
+        personality = data.get('personality', 'friendly')
+        
+        if not user_input:
+            return jsonify({'error': 'No input provided'}), 400
+        
+        # Process the input
+        response = process_user_input(user_input, personality)
+        
+        return jsonify({
+            'response': response,
+            'timestamp': datetime.now().isoformat(),
+            'personality': personality
+        })
+        
+    except Exception as e:
+        print(f"Error processing message: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/timers')
+def get_timers():
+    """Get active timers"""
+    active_timers = []
+    current_time = time.time()
+    
+    for timer_id, timer_info in timers.items():
+        elapsed = current_time - timer_info['start_time']
+        remaining = timer_info['duration'] - elapsed
+        
+        if remaining > 0:
+            active_timers.append({
+                'id': timer_id,
+                'description': timer_info['description'],
+                'remaining': int(remaining)
+            })
+        else:
+            # Timer finished, remove it
+            timers.pop(timer_id, None)
+    
+    return jsonify({'active_timers': active_timers})
+
+if __name__ == '__main__':
+    print("🚀 Starting Horizon AI Assistant...")
+    
+    # Initialize database
+    init_db()
+    
+    print("✅ Intent recognition loaded")
+    print("🌐 Server starting on http://127.0.0.1:8080...")
+    
+    app.run(host='127.0.0.1', port=8080, debug=True)
