@@ -11,6 +11,10 @@ import sqlite3
 import threading
 import time
 import requests
+import spacy
+from spacy.matcher import Matcher
+import numpy as np
+import openai
 
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +33,18 @@ class AdvancedAIProcessor:
         self.skills = self.init_skills()
         self.intent_patterns = self.init_intent_patterns()
         self.init_database()
+        
+        # Initialize spaCy for advanced NLP
+        print("Loading spaCy model...")
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+            self.matcher = Matcher(self.nlp.vocab)
+            self.init_spacy_patterns()
+            print("✅ spaCy model loaded successfully!")
+        except OSError:
+            print("❌ spaCy model not found. Using fallback basic NLP.")
+            self.nlp = None
+            self.matcher = None
         self.active_timers = {}
         self.reminders = []
         
@@ -152,6 +168,70 @@ class AdvancedAIProcessor:
             ]
         }
     
+    def init_spacy_patterns(self):
+        """Initialize spaCy patterns for better intent recognition"""
+        if not self.matcher:
+            return
+        
+        # Time patterns
+        time_patterns = [
+            [{"LOWER": {"IN": ["what", "whats"]}}, {"LOWER": "time"}, {"IS_ALPHA": True, "OP": "?"}],
+            [{"LOWER": "current"}, {"LOWER": "time"}],
+            [{"LOWER": "tell"}, {"LOWER": "me"}, {"LOWER": "the"}, {"LOWER": "time"}]
+        ]
+        self.matcher.add("TIME_INTENT", time_patterns)
+        
+        # Timer patterns - enhanced for better recognition
+        timer_patterns = [
+            [{"LOWER": "set"}, {"LOWER": {"IN": ["timer", "alarm"]}}, {"LOWER": "for", "OP": "?"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}],
+            [{"LOWER": "timer"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}],
+            [{"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}, {"LOWER": "timer"}],
+            [{"LOWER": "countdown"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min"]}}]
+        ]
+        self.matcher.add("TIMER_INTENT", timer_patterns)
+        
+        # Math patterns - enhanced
+        math_patterns = [
+            [{"LOWER": {"IN": ["calculate", "compute", "solve"]}}, {"IS_ALPHA": False, "OP": "+"}],
+            [{"LOWER": "what"}, {"LOWER": "is"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["plus", "minus", "times", "divided", "multiplied"]}}, {"LIKE_NUM": True}],
+            [{"LIKE_NUM": True}, {"LOWER": {"IN": ["+", "-", "*", "/", "plus", "minus", "times", "divided", "by", "multiplied"]}}, {"LIKE_NUM": True}],
+            [{"LOWER": "math"}, {"IS_ALPHA": False, "OP": "+"}]
+        ]
+        self.matcher.add("MATH_INTENT", math_patterns)
+        
+        # Reminder patterns - enhanced
+        reminder_patterns = [
+            [{"LOWER": "remind"}, {"LOWER": "me"}, {"LOWER": "to", "OP": "?"}, {"IS_ALPHA": True, "OP": "+"}],
+            [{"LOWER": "set"}, {"LOWER": {"IN": ["reminder", "alert"]}}, {"IS_ALPHA": True, "OP": "+"}],
+            [{"LOWER": "remember"}, {"LOWER": "to"}, {"IS_ALPHA": True, "OP": "+"}],
+            [{"LOWER": "don't"}, {"LOWER": "forget"}, {"IS_ALPHA": True, "OP": "+"}]
+        ]
+        self.matcher.add("REMINDER_INTENT", reminder_patterns)
+        
+        # Joke patterns
+        joke_patterns = [
+            [{"LOWER": "tell"}, {"LOWER": "me"}, {"LOWER": "a"}, {"LOWER": "joke"}],
+            [{"LOWER": {"IN": ["joke", "funny", "laugh"]}}, {"IS_ALPHA": True, "OP": "*"}],
+            [{"LOWER": "make"}, {"LOWER": "me"}, {"LOWER": "laugh"}],
+            [{"LOWER": "something"}, {"LOWER": "funny"}]
+        ]
+        self.matcher.add("JOKE_INTENT", joke_patterns)
+        
+        # Date patterns
+        date_patterns = [
+            [{"LOWER": {"IN": ["what", "whats"]}}, {"LOWER": {"IN": ["date", "day"]}}, {"IS_ALPHA": True, "OP": "?"}],
+            [{"LOWER": "today's"}, {"LOWER": "date"}],
+            [{"LOWER": "what"}, {"LOWER": "day"}, {"LOWER": "is"}, {"LOWER": "it"}]
+        ]
+        self.matcher.add("DATE_INTENT", date_patterns)
+        
+        # Count total patterns
+        total_patterns = sum(len(patterns) for patterns in [
+            time_patterns, timer_patterns, math_patterns, 
+            reminder_patterns, joke_patterns, date_patterns
+        ])
+        print(f"✅ Initialized {total_patterns} spaCy patterns for enhanced NLP")
+
     def clean_wake_words(self, user_input: str) -> str:
         """Remove wake words from user input to avoid confusion with commands"""
         # Define wake words that should be removed from commands
@@ -174,14 +254,26 @@ class AdvancedAIProcessor:
         return cleaned_input if cleaned_input else user_input
     
     def recognize_intent(self, user_input: str) -> Intent:
-        """Advanced intent recognition using pattern matching and ML-like scoring"""
+        """Enhanced intent recognition using spaCy and pattern matching"""
         # Clean wake words first
         cleaned_input = self.clean_wake_words(user_input)
         user_input_lower = cleaned_input.lower().strip()
         best_intent = Intent("general", 0.0, {})
         
-        # Debug: Show which patterns we're checking
-        print(f"Checking patterns for: '{user_input_lower}'")
+        print(f"🧠 NLP Analysis for: '{user_input_lower}'")
+        
+        # First try spaCy-based recognition if available
+        if self.nlp and self.matcher:
+            spacy_intent = self._recognize_with_spacy(cleaned_input)
+            if spacy_intent.confidence > 0.8:
+                print(f"✅ spaCy high-confidence match: {spacy_intent.name} (confidence: {spacy_intent.confidence:.3f})")
+                return spacy_intent
+            elif spacy_intent.confidence > best_intent.confidence:
+                best_intent = spacy_intent
+                print(f"📊 spaCy match: {spacy_intent.name} (confidence: {spacy_intent.confidence:.3f})")
+        
+        # Enhanced pattern matching with better scoring
+        print(f"🔍 Pattern matching for: '{user_input_lower}'")
         
         for intent_name, patterns in self.intent_patterns.items():
             for pattern in patterns:
@@ -222,6 +314,80 @@ class AdvancedAIProcessor:
         
         return best_intent
     
+    def _recognize_with_spacy(self, text: str) -> Intent:
+        """Use spaCy for advanced intent recognition with entity extraction"""
+        if not self.nlp or not self.matcher:
+            return Intent("general", 0.0, {})
+        
+        # Process text with spaCy
+        doc = self.nlp(text)
+        matches = self.matcher(doc)
+        
+        if not matches:
+            return Intent("general", 0.0, {})
+        
+        # Find the best match with highest confidence
+        best_match = None
+        best_confidence = 0.0
+        best_entities = {}
+        
+        for match_id, start, end in matches:
+            intent_name = self.nlp.vocab.strings[match_id].replace("_INTENT", "").lower()
+            
+            # Calculate confidence based on match span and text length
+            match_span = end - start
+            text_length = len(doc)
+            confidence = (match_span / text_length) * 1.2  # Boost spaCy matches
+            
+            # Extract entities from the matched span and surrounding context
+            entities = self._extract_entities_spacy(doc, start, end)
+            
+            if confidence > best_confidence:
+                best_confidence = confidence
+                best_match = intent_name
+                best_entities = entities
+        
+        # Cap confidence at 1.0
+        best_confidence = min(best_confidence, 1.0)
+        
+        return Intent(best_match or "general", best_confidence, best_entities)
+    
+    def _extract_entities_spacy(self, doc, start: int, end: int) -> Dict[str, Any]:
+        """Extract entities using spaCy's NER and linguistic features"""
+        entities = {}
+        entity_count = 0
+        
+        # Look for numbers (for timers, math, etc.)
+        for token in doc:
+            if token.like_num and entity_count < 5:
+                entities[f'number_{entity_count}'] = token.text
+                entity_count += 1
+        
+        # Look for time expressions
+        for ent in doc.ents:
+            if ent.label_ in ["TIME", "DATE", "CARDINAL", "ORDINAL"] and entity_count < 5:
+                entities[f'entity_{entity_count}'] = ent.text
+                entity_count += 1
+        
+        # Extract duration units (minutes, hours, etc.)
+        time_units = ["minute", "minutes", "min", "mins", "hour", "hours", "hr", "hrs", "second", "seconds", "sec", "secs"]
+        for token in doc:
+            if token.lemma_.lower() in time_units and entity_count < 5:
+                entities[f'time_unit_{entity_count}'] = token.text
+                entity_count += 1
+        
+        # For reminders, extract the task
+        if any(token.lemma_.lower() in ["remind", "remember"] for token in doc):
+            # Find text after "to" or "about"
+            for i, token in enumerate(doc):
+                if token.text.lower() in ["to", "about"] and i + 1 < len(doc):
+                    remainder = doc[i+1:].text
+                    if remainder.strip():
+                        entities['task'] = remainder.strip()
+                    break
+        
+        return entities
+
     def generate_response(self, user_input: str, personality: str = 'friendly') -> Dict[str, Any]:
         """Main response generation with context awareness"""
         # Clean wake words first for better intent recognition
@@ -244,8 +410,8 @@ class AdvancedAIProcessor:
             print(f"Using skill: {intent.name}")  # Debug log
             response = self.skills[intent.name](cleaned_input, intent.entities, personality)
         else:
-            print(f"Using conversational response (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
-            response = self.generate_conversational_response(cleaned_input, personality, sentiment)
+            print(f"Using OpenAI fallback (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
+            response = self.ask_openai(cleaned_input, personality)
         
         # Store AI response
         self.store_ai_response(response, intent)
@@ -311,6 +477,50 @@ class AdvancedAIProcessor:
             'recent_topics': list(set([conv['intent'] for conv in self.conversation_history[-3:]]))
         }
     
+    # OpenAI Integration
+    def ask_openai(self, user_input: str, personality: str) -> str:
+        """Use OpenAI to answer questions that built-in skills can't handle"""
+        try:
+            # Set up OpenAI API key
+            openai.api_key = os.getenv('OPENAI_API_KEY') or "your-openai-api-key-here"
+            
+            if openai.api_key == "your-openai-api-key-here":
+                return "I'd love to help you with that! To unlock my full knowledge capabilities, please add your OpenAI API key to the environment variables. For now, I can help with time, timers, math, and jokes! 🤖"
+            
+            # Create personality-aware system prompt
+            personality_prompts = {
+                'friendly': "You are a friendly and helpful AI assistant named Horizon. Be warm, encouraging, and conversational in your responses.",
+                'professional': "You are a professional AI assistant named Horizon. Provide clear, concise, and helpful information in a business-appropriate tone.",
+                'enthusiastic': "You are an enthusiastic and energetic AI assistant named Horizon. Be exciting, positive, and use lots of exclamation points!",
+                'witty': "You are a witty and clever AI assistant named Horizon. Include humor and wordplay in your responses while being helpful.",
+                'sarcastic': "You are a sarcastic but helpful AI assistant named Horizon. Use dry humor and sarcasm while still providing good information.",
+                'zen': "You are a zen and peaceful AI assistant named Horizon. Speak with wisdom, calmness, and mindfulness.",
+                'scientist': "You are a scientific and analytical AI assistant named Horizon. Provide detailed, evidence-based responses with technical accuracy.",
+                'pirate': "You are a pirate-themed AI assistant named Horizon. Use pirate language and expressions while helping users.",
+                'shakespearean': "You are an AI assistant named Horizon who speaks like Shakespeare. Use eloquent, poetic language from the Elizabethan era.",
+                'valley_girl': "You are a valley girl AI assistant named Horizon. Use valley girl speech patterns and expressions.",
+                'cowboy': "You are a cowboy AI assistant named Horizon. Use western expressions and a frontier spirit.",
+                'robot': "You are a robot AI assistant named Horizon. Speak in a mechanical, computational manner."
+            }
+            
+            system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                max_tokens=300,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(f"OpenAI API error: {e}")
+            return f"I'm having trouble accessing my advanced knowledge base right now. But I can still help with time, timers, math, jokes, and reminders! Try asking me something like 'What time is it?' or 'Tell me a joke!' 🤖"
+
     # Skill implementations
     def get_weather(self, user_input: str, entities: Dict, personality: str) -> str:
         """Get real weather information using OpenWeatherMap API or free fallback"""
