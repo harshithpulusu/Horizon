@@ -14,3 +14,7 @@
  * Tip: There are .env files present. Install python-dotenv to use them.
  * Debugger is active!
  * Debugger PIN: 107-431-105
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-lzqxwh5h'}
+  warnings.warn(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-j11w6ouw'}
+  warnings.warn(
