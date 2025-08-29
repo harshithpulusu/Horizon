@@ -458,6 +458,6 @@ if __name__ == '__main__':
     init_db()
     
     print("✅ Intent recognition loaded")
-    print("🌐 Server starting on http://127.0.0.1:8081...")
+    print("🌐 Server starting on http://127.0.0.1:8080...")
     
-    app.run(host='127.0.0.1', port=8081, debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=True)
