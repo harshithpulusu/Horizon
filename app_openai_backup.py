@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+import openai
 from datetime import datetime
 import sqlite3
 import json
@@ -14,87 +15,20 @@ from config import Config
 app = Flask(__name__)
 CORS(app)
 
-# Configure Smart Pattern-Based AI system
+# Configure OpenAI with error handling
 try:
-    print("🧠 Initializing Smart AI Assistant...")
-    
-    # Advanced response patterns for intelligent conversation
-    SMART_RESPONSES = {
-        'questions': {
-            'what': [
-                "That's a great question! Based on what I know, {}",
-                "Let me think about that. {}",
-                "From my understanding, {}"
-            ],
-            'how': [
-                "Here's how you can approach that: {}",
-                "The best way to do that would be: {}",
-                "Let me explain the process: {}"
-            ],
-            'why': [
-                "The reason for that is: {}",
-                "That happens because: {}",
-                "The explanation is: {}"
-            ],
-            'when': [
-                "The timing for that would be: {}",
-                "That typically happens: {}",
-                "You should expect: {}"
-            ],
-            'where': [
-                "You can find that: {}",
-                "The location would be: {}",
-                "That's typically located: {}"
-            ]
-        },
-        'topics': {
-            'weather': [
-                "Weather is fascinating! I wish I could check current conditions for you.",
-                "I'd love to help with weather info, but I don't have access to current data.",
-                "Weather patterns are interesting! You might want to check a weather app."
-            ],
-            'food': [
-                "Food is one of life's great pleasures! What kind of cuisine are you thinking about?",
-                "I love talking about food! Are you looking for recipe ideas or restaurant suggestions?",
-                "Cooking can be so rewarding! What are you in the mood for?"
-            ],
-            'technology': [
-                "Technology is evolving so rapidly these days! What aspect interests you?",
-                "I find tech developments fascinating! What would you like to discuss?",
-                "Technology shapes our world in amazing ways! Tell me more about your interest."
-            ],
-            'music': [
-                "Music is universal! What genre or artist are you interested in?",
-                "I appreciate good music! What kind of sounds move you?",
-                "Music has such power to connect us! What's playing in your heart?"
-            ],
-            'movies': [
-                "Cinema is an incredible art form! What kind of movies do you enjoy?",
-                "I love discussing films! Any particular genre or recent releases?",
-                "Movies can transport us to different worlds! What's caught your attention?"
-            ]
-        },
-        'general': [
-            "That's an interesting perspective! Tell me more about what you think.",
-            "I appreciate you sharing that with me. What's your take on it?",
-            "That sounds important to you. Can you elaborate?",
-            "I'm here to listen and help however I can. What else would you like to explore?",
-            "Thank you for bringing that up. What aspects are most important to you?",
-            "I find that topic fascinating. What drew your interest to it?",
-            "That's worth discussing! What's your experience with that?",
-            "I'm curious about your thoughts on this. What do you think?",
-            "That's a valuable point. How do you see it affecting things?",
-            "I appreciate your insight. What would you like to know more about?"
-        ]
-    }
-    
-    AI_MODEL_AVAILABLE = True
-    print("✅ Smart AI Assistant ready - Pattern-based conversational system loaded")
-    
+    if hasattr(Config, 'OPENAI_API_KEY') and Config.OPENAI_API_KEY != "your-openai-api-key-here":
+        client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+        OPENAI_AVAILABLE = True
+        print("✅ OpenAI integration ready")
+    else:
+        client = None
+        OPENAI_AVAILABLE = False
+        print("⚠️  OpenAI API key not configured - using fallback responses")
 except Exception as e:
-    AI_MODEL_AVAILABLE = False
-    print(f"❌ Failed to initialize AI system: {e}")
-    print("⚠️  Running with basic responses only")
+    client = None
+    OPENAI_AVAILABLE = False
+    print(f"⚠️  OpenAI initialization failed: {e}")
 
 # Global variables
 timers = {}
@@ -295,76 +229,35 @@ def handle_goodbye(personality):
     }
     return random.choice(goodbyes.get(personality, goodbyes['friendly']))
 
-def ask_ai_model(user_input, personality):
-    """Use smart pattern-based AI for general questions and complex interactions"""
-    if not AI_MODEL_AVAILABLE:
-        return "I'd love to help with that, but my AI system isn't available right now. I can help with time, date, jokes, math, and timers though!"
+def ask_openai(user_input, personality):
+    """Use OpenAI for general questions and complex interactions"""
+    if not OPENAI_AVAILABLE:
+        return "I'd love to help with that, but I'm currently running in offline mode. I can help with time, date, jokes, math, and timers though!"
     
     try:
-        user_lower = user_input.lower()
+        personality_prompts = {
+            'friendly': "You are a friendly and helpful AI assistant. Be warm and conversational.",
+            'professional': "You are a professional AI assistant. Be formal and concise.",
+            'casual': "You are a casual and relaxed AI assistant. Be informal and easy-going.",
+            'enthusiastic': "You are an enthusiastic and energetic AI assistant. Be excited and positive!"
+        }
         
-        # Determine question type
-        question_type = None
-        for qtype in ['what', 'how', 'why', 'when', 'where']:
-            if user_lower.startswith(qtype):
-                question_type = qtype
-                break
+        system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
         
-        # Check for topic keywords
-        topic_responses = []
-        for topic, responses in SMART_RESPONSES['topics'].items():
-            if topic in user_lower:
-                topic_responses.extend(responses)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
         
-        # Personality-based response selection
-        if personality == 'enthusiastic':
-            enthusiasm_phrases = ["That's amazing! ", "How exciting! ", "I love this topic! ", "Fantastic question! "]
-            prefix = random.choice(enthusiasm_phrases)
-        elif personality == 'professional':
-            prefix = "I understand your inquiry. "
-        elif personality == 'casual':
-            casual_phrases = ["Cool question! ", "Interesting! ", "Good point! ", "Nice! "]
-            prefix = random.choice(casual_phrases)
-        else:  # friendly
-            prefix = ""
-        
-        # Generate response based on question type and topics
-        if topic_responses:
-            response = random.choice(topic_responses)
-        elif question_type and question_type in SMART_RESPONSES['questions']:
-            # Create contextual response for question types
-            context_responses = {
-                'what': "it depends on the specific context and circumstances",
-                'how': "there are several approaches you could take",
-                'why': "there are multiple factors that contribute to this",
-                'when': "the timing can vary based on different factors",
-                'where': "the location or source would depend on what you're looking for"
-            }
-            template = random.choice(SMART_RESPONSES['questions'][question_type])
-            context = context_responses.get(question_type, "that's a complex topic")
-            response = template.format(context)
-        else:
-            # Use general intelligent responses
-            response = random.choice(SMART_RESPONSES['general'])
-        
-        # Add personality prefix
-        final_response = prefix + response
-        
-        # Ensure response isn't too long
-        if len(final_response) > 200:
-            final_response = final_response[:200] + "..."
-            
-        return final_response
-        
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"AI model error: {e}")
-        fallback_responses = [
-            "That's an interesting question! Let me think about that.",
-            "I understand what you're asking. Can you tell me more?",
-            "That's a good point. What would you like to know specifically?",
-            "I'm here to help! Could you rephrase that question?"
-        ]
-        return random.choice(fallback_responses)
+        print(f"OpenAI API error: {e}")
+        return "I'm having trouble connecting to my knowledge base right now. Please try again in a moment."
 
 def process_user_input(user_input, personality='friendly'):
     """Process user input and return appropriate response"""
@@ -390,8 +283,8 @@ def process_user_input(user_input, personality='friendly'):
     elif intent == 'goodbye':
         response = handle_goodbye(personality)
     else:
-        # Use AI model for general questions
-        response = ask_ai_model(user_input, personality)
+        # Use OpenAI for general questions
+        response = ask_openai(user_input, personality)
     
     # Save conversation
     save_conversation(user_input, response, personality)
@@ -411,7 +304,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'Horizon AI Assistant',
-        'ai_model_available': AI_MODEL_AVAILABLE
+        'openai_available': OPENAI_AVAILABLE
     })
 
 @app.route('/api/process', methods=['POST'])
