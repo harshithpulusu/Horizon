@@ -1,9 +1,14 @@
 # Configuration for Horizon AI Assistant
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
-    # API Keys (add your own)
-    OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"
-    NEWS_API_KEY = "your-news-api-key-here"
+    # API Keys (loaded from environment variables)
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+    NEWS_API_KEY = os.getenv('NEWS_API_KEY', 'your-news-api-key-here')
 
     # Wake Word Detection
     WAKE_WORDS = ["hey horizon", "horizon", "hey assistant", "assistant"]
