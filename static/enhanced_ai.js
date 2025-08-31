@@ -298,9 +298,11 @@ class EnhancedAIVoiceAssistant {
             if (e.target.classList.contains('feedback-btn')) {
                 this.submitFeedback(e.target.dataset.feedback);
             } else if (e.target.classList.contains('cancel-timer-btn')) {
-                this.cancelTimer(e.target.dataset.timerId);
+                const timerId = parseInt(e.target.dataset.timerId);
+                this.cancelTimer(timerId);
             } else if (e.target.classList.contains('cancel-reminder-btn')) {
-                this.cancelReminder(e.target.dataset.reminderId);
+                const reminderId = parseInt(e.target.dataset.reminderId);
+                this.cancelReminder(reminderId);
             }
         });
     }
@@ -722,17 +724,118 @@ class EnhancedAIVoiceAssistant {
     async loadActiveTimersReminders() {
         try {
             const response = await fetch('/api/timers-reminders');
-            if (!response.ok) return;
+            if (!response.ok) {
+                console.error('Failed to load timers/reminders:', response.status);
+                return;
+            }
             
             const data = await response.json();
             this.activeTimers = data.timers || [];
             this.activeReminders = data.reminders || [];
+            
+            console.log('Loaded timers:', this.activeTimers);
+            console.log('Loaded reminders:', this.activeReminders);
             
             this.updateTimersDisplay();
             this.updateRemindersDisplay();
             
         } catch (error) {
             console.error('Error loading timers/reminders:', error);
+        }
+    }
+    
+    updateTimersDisplay() {
+        if (!this.timersContainer) return;
+        
+        if (this.activeTimers.length === 0) {
+            this.timersContainer.innerHTML = '<div class="no-items">No active timers</div>';
+            return;
+        }
+        
+        const timersHtml = this.activeTimers.map(timer => {
+            const minutes = Math.floor(timer.remaining_seconds / 60);
+            const seconds = timer.remaining_seconds % 60;
+            const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            return `
+                <div class="timer-item" data-timer-id="${timer.id}">
+                    <div class="timer-info">
+                        <span class="timer-description">${timer.description}</span>
+                        <span class="timer-time">${timeDisplay}</span>
+                    </div>
+                    <button class="cancel-timer-btn" data-timer-id="${timer.id}">Cancel</button>
+                </div>
+            `;
+        }).join('');
+        
+        this.timersContainer.innerHTML = timersHtml;
+    }
+    
+    updateRemindersDisplay() {
+        if (!this.remindersContainer) return;
+        
+        if (this.activeReminders.length === 0) {
+            this.remindersContainer.innerHTML = '<div class="no-items">No active reminders</div>';
+            return;
+        }
+        
+        const remindersHtml = this.activeReminders.map(reminder => {
+            const minutesUntil = reminder.minutes_until;
+            const timeText = minutesUntil > 0 ? `in ${minutesUntil} minutes` : 'overdue';
+            
+            return `
+                <div class="reminder-item" data-reminder-id="${reminder.id}">
+                    <div class="reminder-info">
+                        <span class="reminder-text">${reminder.text}</span>
+                        <span class="reminder-time">${timeText}</span>
+                    </div>
+                    <button class="cancel-reminder-btn" data-reminder-id="${reminder.id}">Cancel</button>
+                </div>
+            `;
+        }).join('');
+        
+        this.remindersContainer.innerHTML = remindersHtml;
+    }
+    
+    async cancelTimer(timerId) {
+        try {
+            const response = await fetch(`/api/cancel-timer/${timerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                console.log(`Timer ${timerId} cancelled`);
+                // Reload timers to update display
+                await this.loadActiveTimersReminders();
+            } else {
+                console.error('Failed to cancel timer:', response.status);
+            }
+        } catch (error) {
+            console.error('Error cancelling timer:', error);
+        }
+    }
+    
+    async cancelReminder(reminderId) {
+        try {
+            const response = await fetch(`/api/cancel-reminder/${reminderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                console.log(`Reminder ${reminderId} cancelled`);
+                // Reload reminders to update display
+                await this.loadActiveTimersReminders();
+            } else {
+                console.error('Failed to cancel reminder:', response.status);
+            }
+        } catch (error) {
+            console.error('Error cancelling reminder:', error);
         }
     }
     
@@ -781,10 +884,9 @@ class EnhancedAIVoiceAssistant {
     
     async cancelTimer(timerId) {
         try {
-            const response = await fetch('/api/cancel-timer', {
+            const response = await fetch(`/api/cancel-timer/${timerId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ timer_id: timerId })
+                headers: { 'Content-Type': 'application/json' }
             });
             
             if (response.ok) {
@@ -798,10 +900,9 @@ class EnhancedAIVoiceAssistant {
     
     async cancelReminder(reminderId) {
         try {
-            const response = await fetch('/api/cancel-reminder', {
+            const response = await fetch(`/api/cancel-reminder/${reminderId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reminder_id: reminderId })
+                headers: { 'Content-Type': 'application/json' }
             });
             
             if (response.ok) {

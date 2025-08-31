@@ -6,7 +6,7 @@ Clean, fast, and intelligent AI responses using OpenAI's API
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import json
 import re
@@ -113,9 +113,137 @@ TOPIC_KEYWORDS = {
     'learning': ['learn', 'education', 'study', 'school', 'university', 'course', 'tutorial', 'skill', 'knowledge', 'training'],
 }
 
-# Global variables
-timers = {}
-reminders = []
+# Global variables for timer and reminder management
+active_timers = {}  # {timer_id: {'start_time': datetime, 'duration': seconds, 'description': str, 'status': 'active'}}
+active_reminders = []  # [{'id': int, 'text': str, 'created_at': datetime, 'remind_at': datetime, 'status': 'active'}]
+timer_id_counter = 1
+reminder_id_counter = 1
+
+def create_timer(duration_seconds, description="Timer"):
+    """Create a new timer and return timer info"""
+    global timer_id_counter, active_timers
+    
+    timer_id = timer_id_counter
+    timer_id_counter += 1
+    
+    timer_info = {
+        'id': timer_id,
+        'start_time': datetime.now(),
+        'duration': duration_seconds,
+        'description': description,
+        'status': 'active',
+        'end_time': datetime.now() + timedelta(seconds=duration_seconds)
+    }
+    
+    active_timers[timer_id] = timer_info
+    
+    # Start timer in background thread
+    timer_thread = threading.Thread(target=timer_worker, args=(timer_id,))
+    timer_thread.daemon = True
+    timer_thread.start()
+    
+    return timer_info
+
+def timer_worker(timer_id):
+    """Background worker that handles timer completion"""
+    if timer_id not in active_timers:
+        return
+    
+    timer_info = active_timers[timer_id]
+    duration = timer_info['duration']
+    
+    # Wait for the timer duration
+    time.sleep(duration)
+    
+    # Mark timer as completed
+    if timer_id in active_timers:
+        active_timers[timer_id]['status'] = 'completed'
+        active_timers[timer_id]['completed_at'] = datetime.now()
+        print(f"⏰ Timer {timer_id} completed: {timer_info['description']}")
+
+def create_reminder(text, remind_in_minutes=None):
+    """Create a new reminder"""
+    global reminder_id_counter, active_reminders
+    
+    reminder_id = reminder_id_counter
+    reminder_id_counter += 1
+    
+    created_at = datetime.now()
+    # If no specific time given, remind in 1 hour by default
+    remind_at = created_at + timedelta(minutes=remind_in_minutes or 60)
+    
+    reminder_info = {
+        'id': reminder_id,
+        'text': text,
+        'created_at': created_at,
+        'remind_at': remind_at,
+        'status': 'active'
+    }
+    
+    active_reminders.append(reminder_info)
+    
+    # Start reminder in background thread
+    reminder_thread = threading.Thread(target=reminder_worker, args=(reminder_id,))
+    reminder_thread.daemon = True
+    reminder_thread.start()
+    
+    return reminder_info
+
+def reminder_worker(reminder_id):
+    """Background worker that handles reminder notifications"""
+    reminder_info = next((r for r in active_reminders if r['id'] == reminder_id), None)
+    if not reminder_info:
+        return
+    
+    # Calculate wait time
+    wait_seconds = (reminder_info['remind_at'] - datetime.now()).total_seconds()
+    if wait_seconds > 0:
+        time.sleep(wait_seconds)
+    
+    # Mark reminder as triggered
+    for reminder in active_reminders:
+        if reminder['id'] == reminder_id:
+            reminder['status'] = 'triggered'
+            reminder['triggered_at'] = datetime.now()
+            print(f"🔔 Reminder {reminder_id} triggered: {reminder['text']}")
+            break
+
+def get_active_timers():
+    """Get all active timers with remaining time"""
+    current_time = datetime.now()
+    active_list = []
+    
+    for timer_id, timer_info in active_timers.items():
+        if timer_info['status'] == 'active':
+            remaining_seconds = (timer_info['end_time'] - current_time).total_seconds()
+            if remaining_seconds > 0:
+                active_list.append({
+                    'id': timer_id,
+                    'description': timer_info['description'],
+                    'remaining_seconds': int(remaining_seconds),
+                    'end_time': timer_info['end_time'].isoformat()
+                })
+            else:
+                # Timer should be completed
+                timer_info['status'] = 'completed'
+    
+    return active_list
+
+def get_active_reminders():
+    """Get all active reminders"""
+    current_time = datetime.now()
+    active_list = []
+    
+    for reminder in active_reminders:
+        if reminder['status'] == 'active':
+            active_list.append({
+                'id': reminder['id'],
+                'text': reminder['text'],
+                'remind_at': reminder['remind_at'].isoformat(),
+                'minutes_until': int((reminder['remind_at'] - current_time).total_seconds() / 60)
+            })
+    
+    return active_list
 
 def ask_chatgpt(user_input, personality):
     """Use ChatGPT API for intelligent responses"""
@@ -278,6 +406,79 @@ def handle_math(text):
     except Exception as e:
         return "I'm having trouble with that calculation. Try a simpler math problem!"
 
+def handle_timer(text):
+    """Handle timer requests with actual timer functionality"""
+    try:
+        # Extract time duration from text
+        numbers = re.findall(r'\d+', text)
+        if numbers:
+            duration = int(numbers[0])
+            
+            # Determine time unit and convert to seconds
+            if 'hour' in text.lower():
+                unit = 'hours'
+                seconds = duration * 3600
+                unit_text = f"{duration} hour{'s' if duration != 1 else ''}"
+            elif 'second' in text.lower():
+                unit = 'seconds'
+                seconds = duration
+                unit_text = f"{duration} second{'s' if duration != 1 else ''}"
+            else:  # default to minutes
+                unit = 'minutes'
+                seconds = duration * 60
+                unit_text = f"{duration} minute{'s' if duration != 1 else ''}"
+            
+            # Create the actual timer
+            timer_info = create_timer(seconds, f"Timer for {unit_text}")
+            
+            return f"✅ Timer set for {unit_text}! Timer ID: {timer_info['id']}. I'll notify you when it's done."
+        else:
+            return "I can set a timer for you! Try saying something like 'set timer for 5 minutes' or 'timer for 1 hour'."
+    except Exception as e:
+        print(f"Error in handle_timer: {e}")
+        return "I had trouble setting that timer. Please try again!"
+
+def handle_reminder(text):
+    """Handle reminder requests with actual reminder functionality"""
+    try:
+        # Extract reminder content
+        reminder_patterns = [
+            r'remind me to (.+)',
+            r'reminder to (.+)',
+            r'set reminder (.+)',
+            r'remind me (.+)'
+        ]
+        
+        reminder_text = None
+        for pattern in reminder_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                reminder_text = match.group(1)
+                break
+        
+        if reminder_text:
+            # Extract time if specified (default to 60 minutes)
+            time_match = re.search(r'in (\d+) (minute|hour)', text.lower())
+            if time_match:
+                time_value = int(time_match.group(1))
+                time_unit = time_match.group(2)
+                if time_unit == 'hour':
+                    remind_in_minutes = time_value * 60
+                else:
+                    remind_in_minutes = time_value
+            else:
+                remind_in_minutes = 60  # Default to 1 hour
+            
+            # Create the actual reminder
+            reminder_info = create_reminder(reminder_text, remind_in_minutes)
+            
+            return f"📅 Reminder set: {reminder_text}. I'll remind you in {remind_in_minutes} minutes! Reminder ID: {reminder_info['id']}"
+        else:
+            return "I can set reminders for you! Try saying something like 'remind me to call mom' or 'set reminder to buy groceries'."
+    except Exception as e:
+        print(f"Error in handle_reminder: {e}")
+        return "I had trouble setting that reminder. Please try again!"
+
 # Intent recognition
 INTENT_PATTERNS = {
     'greeting': [r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b'],
@@ -315,6 +516,8 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
         'time': 0.98,      # Time queries are very reliable
         'date': 0.98,      # Date queries are very reliable  
         'math': 0.95,      # Math is usually accurate
+        'timer': 0.93,     # Timer setting is pretty reliable
+        'reminder': 0.91,  # Reminder setting is reliable
         'greeting': 0.90,  # Greetings are straightforward
         'joke': 0.85,      # Jokes are subjective
         'general': 0.82    # General queries vary more
@@ -363,6 +566,10 @@ def process_user_input(user_input, personality='friendly'):
         response = handle_joke(personality)
     elif intent == 'math':
         response = handle_math(user_input)
+    elif intent == 'timer':
+        response = handle_timer(user_input)
+    elif intent == 'reminder':
+        response = handle_reminder(user_input)
     elif intent == 'goodbye':
         response = "Thank you for chatting! Have a wonderful day!"
     else:
@@ -433,11 +640,9 @@ def process_message():
 def get_timers_reminders():
     """Return active timers and reminders"""
     try:
-        # For now, return empty arrays since we don't have persistent timer storage
-        # In a real implementation, you'd fetch these from a database or memory store
         return jsonify({
-            'timers': [],
-            'reminders': [],
+            'timers': get_active_timers(),
+            'reminders': get_active_reminders(),
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
@@ -454,9 +659,31 @@ def manage_timers_reminders():
         
         action = data.get('action')  # 'create', 'cancel', 'update'
         item_type = data.get('type')  # 'timer' or 'reminder'
+        item_id = data.get('id')
         
-        # For now, just return success without actually managing timers
-        # In a real implementation, you'd store/manage these in a database or memory store
+        if action == 'cancel':
+            if item_type == 'timer' and item_id:
+                if item_id in active_timers:
+                    active_timers[item_id]['status'] = 'cancelled'
+                    return jsonify({
+                        'success': True,
+                        'message': f'Timer {item_id} cancelled',
+                        'timestamp': datetime.now().isoformat()
+                    })
+                else:
+                    return jsonify({'error': 'Timer not found'}), 404
+            
+            elif item_type == 'reminder' and item_id:
+                for reminder in active_reminders:
+                    if reminder['id'] == item_id:
+                        reminder['status'] = 'cancelled'
+                        return jsonify({
+                            'success': True,
+                            'message': f'Reminder {item_id} cancelled',
+                            'timestamp': datetime.now().isoformat()
+                        })
+                return jsonify({'error': 'Reminder not found'}), 404
+        
         return jsonify({
             'success': True,
             'message': f'{action.capitalize()} {item_type} operation completed',
@@ -465,6 +692,42 @@ def manage_timers_reminders():
         
     except Exception as e:
         print(f"Error managing timers/reminders: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/cancel-timer/<int:timer_id>', methods=['POST'])
+def cancel_timer(timer_id):
+    """Cancel a specific timer"""
+    try:
+        if timer_id in active_timers:
+            active_timers[timer_id]['status'] = 'cancelled'
+            active_timers[timer_id]['cancelled_at'] = datetime.now()
+            return jsonify({
+                'success': True,
+                'message': f'Timer {timer_id} cancelled',
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            return jsonify({'error': 'Timer not found'}), 404
+    except Exception as e:
+        print(f"Error cancelling timer: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/cancel-reminder/<int:reminder_id>', methods=['POST'])
+def cancel_reminder(reminder_id):
+    """Cancel a specific reminder"""
+    try:
+        for reminder in active_reminders:
+            if reminder['id'] == reminder_id:
+                reminder['status'] = 'cancelled'
+                reminder['cancelled_at'] = datetime.now()
+                return jsonify({
+                    'success': True,
+                    'message': f'Reminder {reminder_id} cancelled',
+                    'timestamp': datetime.now().isoformat()
+                })
+        return jsonify({'error': 'Reminder not found'}), 404
+    except Exception as e:
+        print(f"Error cancelling reminder: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
