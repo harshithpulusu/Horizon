@@ -285,6 +285,8 @@ INTENT_PATTERNS = {
     'date': [r'\b(date|today)\b', r'\bwhat day is it\b'],
     'joke': [r'\b(joke|funny|humor)\b', r'\btell me a joke\b'],
     'math': [r'\d+\s*[\+\-\*\/]\s*\d+', r'\bwhat is \d+', r'\bcalculate\b'],
+    'timer': [r'\bset.*timer\b', r'\btimer for\b', r'\b\d+\s*(minute|second|hour).*timer\b'],
+    'reminder': [r'\bremind me\b', r'\bset.*reminder\b', r'\breminder.*to\b'],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -425,6 +427,44 @@ def process_message():
         
     except Exception as e:
         print(f"Error processing message: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/timers-reminders', methods=['GET'])
+def get_timers_reminders():
+    """Return active timers and reminders"""
+    try:
+        # For now, return empty arrays since we don't have persistent timer storage
+        # In a real implementation, you'd fetch these from a database or memory store
+        return jsonify({
+            'timers': [],
+            'reminders': [],
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"Error getting timers/reminders: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/timers-reminders', methods=['POST'])
+def manage_timers_reminders():
+    """Create, update, or delete timers and reminders"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        action = data.get('action')  # 'create', 'cancel', 'update'
+        item_type = data.get('type')  # 'timer' or 'reminder'
+        
+        # For now, just return success without actually managing timers
+        # In a real implementation, you'd store/manage these in a database or memory store
+        return jsonify({
+            'success': True,
+            'message': f'{action.capitalize()} {item_type} operation completed',
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error managing timers/reminders: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':

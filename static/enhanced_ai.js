@@ -310,6 +310,11 @@ class EnhancedAIVoiceAssistant {
         const quickCmdButtons = document.querySelectorAll('.quick-cmd-btn');
         console.log('Found quick command buttons:', quickCmdButtons.length);
         
+        if (quickCmdButtons.length === 0) {
+            console.warn('No quick command buttons found!');
+            return;
+        }
+        
         quickCmdButtons.forEach((button, index) => {
             console.log(`Button ${index}:`, button.dataset.command);
             button.addEventListener('click', (e) => {
