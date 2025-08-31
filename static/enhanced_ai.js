@@ -290,7 +290,10 @@ class EnhancedAIVoiceAssistant {
             this.setPersonality(e.target.value);
         });
         
-        // Feedback buttons and quick commands (will be added dynamically)
+        // Add quick command listeners directly to existing buttons
+        this.initQuickCommandListeners();
+        
+        // Feedback buttons and other dynamic elements
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('feedback-btn')) {
                 this.submitFeedback(e.target.dataset.feedback);
@@ -298,10 +301,22 @@ class EnhancedAIVoiceAssistant {
                 this.cancelTimer(e.target.dataset.timerId);
             } else if (e.target.classList.contains('cancel-reminder-btn')) {
                 this.cancelReminder(e.target.dataset.reminderId);
-            } else if (e.target.classList.contains('quick-cmd-btn')) {
-                // Handle quick command button clicks
-                this.handleQuickCommand(e.target.dataset.command);
             }
+        });
+    }
+    
+    initQuickCommandListeners() {
+        // Add listeners to quick command buttons
+        const quickCmdButtons = document.querySelectorAll('.quick-cmd-btn');
+        console.log('Found quick command buttons:', quickCmdButtons.length);
+        
+        quickCmdButtons.forEach((button, index) => {
+            console.log(`Button ${index}:`, button.dataset.command);
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Quick command button clicked:', button.dataset.command);
+                this.handleQuickCommand(button.dataset.command, button);
+            });
         });
     }
     
@@ -456,19 +471,20 @@ class EnhancedAIVoiceAssistant {
         await this.processInput(input);
     }
     
-    handleQuickCommand(command) {
+    handleQuickCommand(command, buttonElement) {
         // Handle quick command button clicks
         console.log('Quick command clicked:', command);
         
         // Add visual feedback to the clicked button
-        const clickedBtn = event.target;
-        clickedBtn.style.background = 'rgba(69, 183, 209, 0.3)';
-        clickedBtn.style.transform = 'translateX(8px) scale(0.95)';
-        
-        setTimeout(() => {
-            clickedBtn.style.background = '';
-            clickedBtn.style.transform = '';
-        }, 200);
+        if (buttonElement) {
+            buttonElement.style.background = 'rgba(69, 183, 209, 0.3)';
+            buttonElement.style.transform = 'translateX(8px) scale(0.95)';
+            
+            setTimeout(() => {
+                buttonElement.style.background = '';
+                buttonElement.style.transform = '';
+            }, 200);
+        }
         
         // Add the command to the chat and display it
         this.addMessage('You', command, 'user');
