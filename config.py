@@ -2,7 +2,7 @@
 
 class Config:
     # API Keys (add your own)
-    OPENAI_API_KEY = "sk-PASTE-YOUR-ACTUAL-API-KEY-HERE"
+    OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"
     NEWS_API_KEY = "your-news-api-key-here"
 
     # Wake Word Detection
