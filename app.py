@@ -245,38 +245,55 @@ def get_active_reminders():
     
     return active_list
 
-def ask_chatgpt(user_input, personality):
-    """Use ChatGPT API for intelligent responses"""
+def ask_chatgpt(user_input, personality, session_id=None):
+    """Use ChatGPT API for intelligent responses with conversation context"""
     if not AI_MODEL_AVAILABLE or not client:
-        return None
+        return None, False
     
     try:
         # Create personality-specific system prompt
         personality_prompts = {
-            'friendly': "You are a friendly and helpful AI assistant. Respond in a warm, approachable way. Keep responses concise but informative.",
-            'professional': "You are a professional AI assistant. Provide clear, accurate, and well-structured responses. Maintain a formal but helpful tone.",
-            'casual': "You are a casual and relaxed AI assistant. Use conversational language and be approachable. Keep it simple and easy to understand.",
-            'enthusiastic': "You are an enthusiastic and energetic AI assistant. Show excitement about topics and be encouraging. Use positive language and emojis when appropriate."
+            'friendly': "You are Horizon, a friendly and helpful AI assistant. Respond in a warm, approachable way. Keep responses concise but informative. Remember previous parts of our conversation to provide contextual responses.",
+            'professional': "You are Horizon, a professional AI assistant. Provide clear, accurate, and well-structured responses. Maintain a formal but helpful tone. Use conversation history to give relevant, contextual answers.",
+            'casual': "You are Horizon, a casual and relaxed AI assistant. Use conversational language and be approachable. Keep it simple and easy to understand. Reference our previous conversation when relevant.",
+            'enthusiastic': "You are Horizon, an enthusiastic and energetic AI assistant. Show excitement about topics and be encouraging. Use positive language and emojis when appropriate. Build on our previous conversation."
         }
         
         system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
         
-        # Make API call to ChatGPT
+        # Build conversation messages with context
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history if session exists
+        context_used = False
+        if session_id:
+            context_messages = build_conversation_context(session_id, user_input)
+            if context_messages:
+                messages.extend(context_messages)
+                context_used = True
+                
+                # If conversation is getting long, add a summary
+                if len(context_messages) > 10:
+                    summary = summarize_conversation_context(session_id)
+                    if summary:
+                        messages.insert(1, {"role": "system", "content": f"Context summary: {summary}"})
+        
+        # Add current user input
+        messages.append({"role": "user", "content": user_input})
+        
+        # Make API call to ChatGPT with context
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # You can change to "gpt-4" if you have access
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input}
-            ],
-            max_tokens=150,  # Keep responses concise
-            temperature=0.7,  # Balance creativity and consistency
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=200,  # Slightly increased for context-aware responses
+            temperature=0.7,
         )
         
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip(), context_used
         
     except Exception as e:
         print(f"ChatGPT API error: {e}")
-        return None
+        return None, False
 
 def generate_fallback_response(user_input, personality):
     """Generate intelligent fallback responses when API is unavailable"""
@@ -327,34 +344,208 @@ def init_db():
     try:
         conn = sqlite3.connect('ai_memory.db')
         cursor = conn.cursor()
+        
+        # Create main conversations table with session support
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS conversations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
                 timestamp TEXT,
                 user_input TEXT,
                 ai_response TEXT,
-                personality TEXT
+                personality TEXT,
+                intent TEXT,
+                confidence REAL,
+                context_used INTEGER DEFAULT 0
             )
         ''')
+        
+        # Create conversation sessions table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversation_sessions (
+                id TEXT PRIMARY KEY,
+                created_at TEXT,
+                updated_at TEXT,
+                message_count INTEGER DEFAULT 0,
+                personality TEXT,
+                context_summary TEXT,
+                is_active INTEGER DEFAULT 1
+            )
+        ''')
+        
+        # Create conversation context table for storing relevant context
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversation_context (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                context_type TEXT,
+                context_data TEXT,
+                relevance_score REAL,
+                created_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES conversation_sessions (id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
 
-def save_conversation(user_input, ai_response, personality):
-    """Save conversation to database"""
+def save_conversation(user_input, ai_response, personality, session_id=None, intent=None, confidence=0.0, context_used=False):
+    """Save conversation to database with session and context tracking"""
     try:
         conn = sqlite3.connect('ai_memory.db')
         cursor = conn.cursor()
+        
+        # Generate session ID if not provided
+        if not session_id:
+            session_id = generate_session_id()
+            create_conversation_session(session_id, personality)
+        
+        # Save the conversation
         cursor.execute('''
-            INSERT INTO conversations (timestamp, user_input, ai_response, personality)
-            VALUES (?, ?, ?, ?)
-        ''', (datetime.now().isoformat(), user_input, ai_response, personality))
+            INSERT INTO conversations (session_id, timestamp, user_input, ai_response, personality, intent, confidence, context_used)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, datetime.now().isoformat(), user_input, ai_response, personality, intent, confidence, int(context_used)))
+        
+        # Update session info
+        cursor.execute('''
+            UPDATE conversation_sessions 
+            SET updated_at = ?, message_count = message_count + 1
+            WHERE id = ?
+        ''', (datetime.now().isoformat(), session_id))
+        
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"Error saving conversation: {e}")
+
+def generate_session_id():
+    """Generate a unique session ID"""
+    import uuid
+    return str(uuid.uuid4())
+
+def create_conversation_session(session_id, personality):
+    """Create a new conversation session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        now = datetime.now().isoformat()
+        cursor.execute('''
+            INSERT INTO conversation_sessions (id, created_at, updated_at, personality)
+            VALUES (?, ?, ?, ?)
+        ''', (session_id, now, now, personality))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error creating session: {e}")
+
+def get_conversation_history(session_id, limit=10):
+    """Get recent conversation history for a session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT user_input, ai_response, timestamp, intent, confidence
+            FROM conversations 
+            WHERE session_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        ''', (session_id, limit))
+        
+        history = cursor.fetchall()
+        conn.close()
+        
+        # Return in chronological order (oldest first)
+        return list(reversed(history))
+    except Exception as e:
+        print(f"Error getting conversation history: {e}")
+        return []
+
+def build_conversation_context(session_id, current_input):
+    """Build conversation context for AI model"""
+    history = get_conversation_history(session_id, limit=8)
+    
+    if not history:
+        return []
+    
+    messages = []
+    
+    # Add recent conversation history
+    for user_input, ai_response, timestamp, intent, confidence in history:
+        messages.append({"role": "user", "content": user_input})
+        messages.append({"role": "assistant", "content": ai_response})
+    
+    return messages
+
+def get_active_session(user_identifier=None):
+    """Get or create an active session for the user"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # For now, we'll use a simple approach - get the most recent active session
+        # In a real application, you'd want to track sessions per user
+        cursor.execute('''
+            SELECT id, personality FROM conversation_sessions 
+            WHERE is_active = 1 
+            ORDER BY updated_at DESC 
+            LIMIT 1
+        ''')
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return result[0], result[1]
+        else:
+            # Create a new session
+            session_id = generate_session_id()
+            create_conversation_session(session_id, 'friendly')
+            return session_id, 'friendly'
+            
+    except Exception as e:
+        print(f"Error getting active session: {e}")
+        # Fallback to new session
+        session_id = generate_session_id()
+        create_conversation_session(session_id, 'friendly')
+        return session_id, 'friendly'
+
+def summarize_conversation_context(session_id):
+    """Create a summary of conversation context for long conversations"""
+    try:
+        history = get_conversation_history(session_id, limit=20)
+        
+        if len(history) < 5:
+            return None
+            
+        # Extract key topics and themes
+        topics = []
+        for user_input, ai_response, timestamp, intent, confidence in history:
+            if intent and intent not in ['greeting', 'goodbye']:
+                topics.append(intent)
+        
+        # Count topic frequency
+        topic_counts = {}
+        for topic in topics:
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+        
+        # Create summary
+        main_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        if main_topics:
+            topic_summary = ", ".join([f"{topic} ({count}x)" for topic, count in main_topics])
+            return f"Conversation topics: {topic_summary}"
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error summarizing context: {e}")
+        return None
 
 # Quick response handlers
 def handle_time():
