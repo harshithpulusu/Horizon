@@ -282,6 +282,10 @@ class EnhancedAIVoiceAssistant {
         const testMicBtn = document.getElementById('testMicBtn');
         testMicBtn?.addEventListener('click', () => this.testMicrophone());
         
+        // Clear conversation button
+        const clearConversationBtn = document.getElementById('clearConversationBtn');
+        clearConversationBtn?.addEventListener('click', () => this.clearConversation());
+        
         // Text input
         this.voiceInput?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -554,7 +558,15 @@ class EnhancedAIVoiceAssistant {
         // Update statistics with realistic values
         const confidence = Math.round((data.confidence || 0.82) * 100);
         this.confidenceScore.textContent = confidence + '%';
-        this.conversationCount.textContent = (parseInt(this.conversationCount.textContent) + 1);
+        
+        // Update conversation count with session information
+        const conversationCount = data.conversation_length || (parseInt(this.conversationCount.textContent) + 1);
+        this.conversationCount.textContent = conversationCount;
+        
+        // Show context indicator if context was used
+        if (data.context_used && data.has_context) {
+            this.showContextIndicator();
+        }
         
         // Update professional UI metrics if available
         if (window.professionalUI) {
@@ -573,7 +585,19 @@ class EnhancedAIVoiceAssistant {
         this.updateStatus('Ready');
     }
     
-    addMessage(sender, message, type, data = null) {
+    showContextIndicator() {
+        // Add a visual indicator that context was used
+        const lastMessage = this.messagesContainer.lastElementChild;
+        if (lastMessage) {
+            const contextBadge = document.createElement('span');
+            contextBadge.className = 'context-badge';
+            contextBadge.innerHTML = '🧠 Context-aware';
+            contextBadge.title = 'This response used previous conversation context';
+            lastMessage.appendChild(contextBadge);
+        }
+    }
+    
+    addMessage(sender, message, type, data = null, autoScroll = true) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         
@@ -592,6 +616,7 @@ class EnhancedAIVoiceAssistant {
             const aiSource = data.ai_source || 'fallback';
             const responseTime = data.response_time || '0.8s';
             const intent = data.intent || 'general';
+            const contextUsed = data.context_used ? ' | 🧠 Context-aware' : '';
             
             messageContent += `
                 <div class="message-metadata">
@@ -599,7 +624,7 @@ class EnhancedAIVoiceAssistant {
                         Response Time: ${responseTime} | 
                         Confidence: ${Math.round(confidence * 100)}% |
                         Source: ${aiSource === 'chatgpt' ? 'ChatGPT API' : 'Smart Fallback'} |
-                        Intent: ${intent}
+                        Intent: ${intent}${contextUsed}
                     </small>
                 </div>
             `;
@@ -607,7 +632,11 @@ class EnhancedAIVoiceAssistant {
         
         messageDiv.innerHTML = messageContent;
         this.messagesContainer.appendChild(messageDiv);
-        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        
+        // Only auto-scroll for new messages, not historical ones
+        if (autoScroll) {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }
         
         // Store in conversation history
         this.conversationHistory.push({

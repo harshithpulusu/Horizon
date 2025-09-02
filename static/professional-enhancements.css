@@ -275,3 +275,44 @@
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* 11. CONVERSATION CONTEXT INDICATORS */
+.context-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    margin-left: 8px;
+    animation: contextGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes contextGlow {
+    from { box-shadow: 0 0 5px rgba(78, 205, 196, 0.5); }
+    to { box-shadow: 0 0 15px rgba(78, 205, 196, 0.8); }
+}
+
+.message-metadata {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.message-metadata:hover {
+    opacity: 1;
+}
+
+/* Session management button styling */
+.btn-warning {
+    background: linear-gradient(135deg, #ff9f43, #f0932b);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #f0932b, #ff9f43);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(240, 147, 43, 0.4);
+}
