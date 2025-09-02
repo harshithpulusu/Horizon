@@ -322,21 +322,21 @@ def generate_fallback_response(user_input, personality):
     
     return prefix + base_response
 
-def ask_ai_model(user_input, personality):
-    """Main AI function - tries ChatGPT first, falls back to smart responses"""
+def ask_ai_model(user_input, personality, session_id=None):
+    """Main AI function - tries ChatGPT first with context, falls back to smart responses"""
     try:
-        # Try ChatGPT first
-        chatgpt_response = ask_chatgpt(user_input, personality)
+        # Try ChatGPT first with conversation context
+        chatgpt_response, context_used = ask_chatgpt(user_input, personality, session_id)
         
         if chatgpt_response:
-            return chatgpt_response
+            return chatgpt_response, context_used
         else:
             # Fall back to smart responses
-            return generate_fallback_response(user_input, personality)
+            return generate_fallback_response(user_input, personality), False
         
     except Exception as e:
         print(f"AI model error: {e}")
-        return generate_fallback_response(user_input, personality)
+        return generate_fallback_response(user_input, personality), False
 
 # Database setup
 def init_db():
@@ -738,13 +738,21 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
     
     return round(confidence, 3)
 
-def process_user_input(user_input, personality='friendly'):
-    """Process user input and return appropriate response"""
+def process_user_input(user_input, personality='friendly', session_id=None):
+    """Process user input and return appropriate response with conversation context"""
     if not user_input or not user_input.strip():
-        return "I didn't quite catch that. Could you please say something?"
+        return "I didn't quite catch that. Could you please say something?", session_id, False
+    
+    # Get or create session
+    if not session_id:
+        session_id, stored_personality = get_active_session()
+        # Use stored personality if none provided
+        if personality == 'friendly' and stored_personality != 'friendly':
+            personality = stored_personality
     
     # Recognize intent for quick responses
     intent = recognize_intent(user_input)
+    context_used = False
     
     # Handle specific intents
     if intent == 'greeting':
@@ -764,13 +772,16 @@ def process_user_input(user_input, personality='friendly'):
     elif intent == 'goodbye':
         response = "Thank you for chatting! Have a wonderful day!"
     else:
-        # Use AI model (ChatGPT or fallback) for general questions
-        response = ask_ai_model(user_input, personality)
+        # Use AI model (ChatGPT or fallback) for general questions with context
+        response, context_used = ask_ai_model(user_input, personality, session_id)
     
-    # Save conversation
-    save_conversation(user_input, response, personality)
+    # Calculate confidence
+    confidence = calculate_realistic_confidence(user_input, response, 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback', intent)
     
-    return response
+    # Save conversation with context information
+    save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
+    
+    return response, session_id, context_used
 
 # Routes
 @app.route('/')
