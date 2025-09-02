@@ -807,13 +807,14 @@ def process_message():
         
         user_input = data.get('input', '').strip()
         personality = data.get('personality', 'friendly')
+        session_id = data.get('session_id')  # Optional session ID from client
         
         if not user_input:
             return jsonify({'error': 'No input provided'}), 400
         
-        # Process the input
+        # Process the input with conversation context
         start_time = time.time()
-        response = process_user_input(user_input, personality)
+        response, session_id, context_used = process_user_input(user_input, personality, session_id)
         response_time = round(time.time() - start_time, 2)
         
         # Determine AI source and intent for confidence calculation
@@ -823,6 +824,10 @@ def process_message():
         # Calculate realistic confidence
         confidence = calculate_realistic_confidence(user_input, response, ai_source, intent)
         
+        # Get conversation stats
+        history = get_conversation_history(session_id, limit=1)
+        message_count = len(get_conversation_history(session_id, limit=100))
+        
         return jsonify({
             'response': response,
             'timestamp': datetime.now().isoformat(),
@@ -831,7 +836,11 @@ def process_message():
             'confidence': confidence,
             'response_time': f"{response_time}s",
             'intent': intent,
-            'word_count': len(user_input.split())
+            'word_count': len(user_input.split()),
+            'session_id': session_id,
+            'context_used': context_used,
+            'conversation_length': message_count,
+            'has_context': message_count > 1
         })
         
     except Exception as e:
@@ -849,6 +858,116 @@ def get_timers_reminders():
         })
     except Exception as e:
         print(f"Error getting timers/reminders: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/conversation/history', methods=['GET'])
+def get_conversation_history_api():
+    """Get conversation history for a session"""
+    try:
+        session_id = request.args.get('session_id')
+        limit = int(request.args.get('limit', 20))
+        
+        if not session_id:
+            # Get current active session
+            session_id, _ = get_active_session()
+        
+        history = get_conversation_history(session_id, limit)
+        
+        # Format history for frontend
+        formatted_history = []
+        for user_input, ai_response, timestamp, intent, confidence in history:
+            formatted_history.append({
+                'user_input': user_input,
+                'ai_response': ai_response,
+                'timestamp': timestamp,
+                'intent': intent,
+                'confidence': confidence
+            })
+        
+        return jsonify({
+            'session_id': session_id,
+            'history': formatted_history,
+            'message_count': len(formatted_history)
+        })
+        
+    except Exception as e:
+        print(f"Error getting conversation history: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/conversation/sessions', methods=['GET'])
+def get_conversation_sessions():
+    """Get list of conversation sessions"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, created_at, updated_at, message_count, personality, is_active
+            FROM conversation_sessions 
+            ORDER BY updated_at DESC 
+            LIMIT 10
+        ''')
+        
+        sessions = []
+        for row in cursor.fetchall():
+            sessions.append({
+                'id': row[0],
+                'created_at': row[1],
+                'updated_at': row[2],
+                'message_count': row[3],
+                'personality': row[4],
+                'is_active': bool(row[5])
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'sessions': sessions,
+            'total': len(sessions)
+        })
+        
+    except Exception as e:
+        print(f"Error getting sessions: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/conversation/new-session', methods=['POST'])
+def create_new_session():
+    """Create a new conversation session"""
+    try:
+        data = request.get_json() or {}
+        personality = data.get('personality', 'friendly')
+        
+        # Mark current sessions as inactive
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE conversation_sessions SET is_active = 0')
+        conn.commit()
+        conn.close()
+        
+        # Create new session
+        session_id = generate_session_id()
+        create_conversation_session(session_id, personality)
+        
+        return jsonify({
+            'session_id': session_id,
+            'personality': personality,
+            'created_at': datetime.now().isoformat(),
+            'message': 'New conversation session created'
+        })
+        
+    except Exception as e:
+        print(f"Error creating new session: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/conversation/clear', methods=['POST'])
+def clear_conversation():
+    """Clear conversation history (create new session)"""
+    try:
+        # This is the same as creating a new session
+        return create_new_session()
+        
+    except Exception as e:
+        print(f"Error clearing conversation: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/timers-reminders', methods=['POST'])

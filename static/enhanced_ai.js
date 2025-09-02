@@ -16,11 +16,15 @@ class EnhancedAIVoiceAssistant {
         this.isWakeWordMode = false;  // New: wake word listening mode
         this.wakeWords = ['hey horizon', 'horizon', 'hey assistant', 'assistant'];  // New: wake words
         this.wakeWordSensitivity = 0.7;  // New: sensitivity threshold
+        this.sessionId = null;  // New: conversation session tracking
+        this.conversationLength = 0;  // New: track conversation length
+        this.contextUsed = false;  // New: track if context was used in responses
         
         this.init();
         this.initEventListeners();
         this.loadActiveTimersReminders();
         this.startPeriodicUpdates();
+        this.initializeSession();  // New: initialize conversation session
     }
     
     init() {
@@ -513,13 +517,26 @@ class EnhancedAIVoiceAssistant {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     input: input,
-                    personality: this.currentPersonality
+                    personality: this.currentPersonality,
+                    session_id: this.sessionId
                 })
             });
             
             if (!response.ok) throw new Error('Network response was not ok');
             
             const data = await response.json();
+            
+            // Update session information from response
+            if (data.session_id) {
+                this.sessionId = data.session_id;
+            }
+            if (data.conversation_length !== undefined) {
+                this.conversationLength = data.conversation_length;
+            }
+            if (data.context_used !== undefined) {
+                this.contextUsed = data.context_used;
+            }
+            
             this.handleAIResponse(data);
             
         } catch (error) {
@@ -952,6 +969,118 @@ class EnhancedAIVoiceAssistant {
             this.statusIndicator.textContent = status;
         }
         console.log('Status:', status);
+    }
+    
+    // New: Session management functions
+    async initializeSession() {
+        try {
+            // Check if we have an existing active session
+            const response = await fetch('/api/conversation/sessions');
+            const data = await response.json();
+            
+            if (data.sessions && data.sessions.length > 0) {
+                const activeSession = data.sessions.find(s => s.is_active);
+                if (activeSession) {
+                    this.sessionId = activeSession.id;
+                    this.conversationLength = activeSession.message_count;
+                    this.currentPersonality = activeSession.personality;
+                    
+                    // Update personality selector
+                    if (this.personalitySelect) {
+                        this.personalitySelect.value = this.currentPersonality;
+                    }
+                    
+                    // Load conversation history
+                    this.loadConversationHistory();
+                    return;
+                }
+            }
+            
+            // Create new session if no active session exists
+            this.createNewSession();
+            
+        } catch (error) {
+            console.error('Error initializing session:', error);
+            // Continue without session if there's an error
+        }
+    }
+    
+    async createNewSession() {
+        try {
+            const response = await fetch('/api/conversation/new-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    personality: this.currentPersonality
+                })
+            });
+            
+            const data = await response.json();
+            this.sessionId = data.session_id;
+            this.conversationLength = 0;
+            this.contextUsed = false;
+            
+            console.log('New conversation session created:', this.sessionId);
+            
+        } catch (error) {
+            console.error('Error creating new session:', error);
+        }
+    }
+    
+    async loadConversationHistory() {
+        try {
+            if (!this.sessionId) return;
+            
+            const response = await fetch(`/api/conversation/history?session_id=${this.sessionId}&limit=10`);
+            const data = await response.json();
+            
+            // Clear current messages and load history
+            if (this.messagesContainer) {
+                this.messagesContainer.innerHTML = '';
+            }
+            
+            // Add historical messages
+            for (const msg of data.history) {
+                this.addMessage('You', msg.user_input, 'user', null, false);
+                this.addMessage('AI', msg.ai_response, 'ai', {
+                    confidence: msg.confidence,
+                    intent: msg.intent,
+                    timestamp: msg.timestamp
+                }, false);
+            }
+            
+            // Update conversation count
+            this.conversationLength = data.message_count;
+            if (this.conversationCount) {
+                this.conversationCount.textContent = this.conversationLength;
+            }
+            
+        } catch (error) {
+            console.error('Error loading conversation history:', error);
+        }
+    }
+    
+    async clearConversation() {
+        try {
+            await this.createNewSession();
+            
+            // Clear messages
+            if (this.messagesContainer) {
+                this.messagesContainer.innerHTML = '';
+            }
+            
+            // Reset counters
+            this.conversationLength = 0;
+            if (this.conversationCount) {
+                this.conversationCount.textContent = '0';
+            }
+            
+            // Add welcome message
+            this.addMessage('AI', 'Hello! I\'m Horizon, your AI assistant. How can I help you today?', 'ai');
+            
+        } catch (error) {
+            console.error('Error clearing conversation:', error);
+        }
     }
     
     // Test microphone access
