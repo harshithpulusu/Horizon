@@ -1125,43 +1125,93 @@ class EnhancedAIVoiceAssistant {
         }
     }
     
-    // Voice commands help
-    showVoiceCommands() {
-        fetch('/api/voice-commands')
-            .then(response => response.json())
-            .then(commands => {
-                let commandsHTML = '<div class="voice-commands-help"><h3>Voice Commands</h3>';
+    // Simple Horizon explanation help
+    showHorizonHelp() {
+        const helpContainer = document.getElementById('helpContainer');
+        if (!helpContainer) return;
+        
+        const horizonHelpHTML = `
+            <div class="horizon-help">
+                <h3>🌟 What is Horizon AI?</h3>
                 
-                Object.entries(commands).forEach(([category, commandList]) => {
-                    commandsHTML += `<h4>${category.replace('_', ' ').toUpperCase()}</h4><ul>`;
-                    commandList.forEach(command => {
-                        commandsHTML += `<li>"${command}"</li>`;
-                    });
-                    commandsHTML += '</ul>';
+                <p><strong>Horizon</strong> is not just another chatbot - it's your intelligent AI companion that combines the best of both worlds:</p>
+                
+                <div class="unique-features">
+                    <div class="feature">
+                        <h4>⚡ Lightning-Fast Local Commands</h4>
+                        <p>Math calculations, timers, reminders, time/date queries, and jokes are processed instantly on your device - no waiting for AI responses!</p>
+                        <small>Try: "What is 25 × 4?" or "Set timer for 5 minutes"</small>
+                    </div>
+                    
+                    <div class="feature">
+                        <h4>🧠 Smart AI for Complex Questions</h4>
+                        <p>For complex discussions, creative writing, or detailed questions, Horizon seamlessly switches to ChatGPT with full conversation memory.</p>
+                        <small>Try: "Explain quantum physics" or "Help me write a story"</small>
+                    </div>
+                    
+                    <div class="feature">
+                        <h4>🎭 12 Unique Personalities</h4>
+                        <p>From Pirate to Scientist, each personality has its own speaking style and responses - making every conversation unique and fun!</p>
+                        <small>Switch personalities anytime using the dropdown above</small>
+                    </div>
+                    
+                    <div class="feature">
+                        <h4>🎤 Advanced Voice Control</h4>
+                        <p>Full speech recognition with "Hey Horizon" wake words, voice responses, and hands-free operation.</p>
+                        <small>Enable "Always Listening Mode" for true hands-free experience</small>
+                    </div>
+                    
+                    <div class="feature">
+                        <h4>💾 Conversation Memory</h4>
+                        <p>Horizon remembers your conversation context and provides contextually aware responses throughout your session.</p>
+                        <small>Reference previous topics naturally in your conversation</small>
+                    </div>
+                </div>
+                
+                <div class="why-unique">
+                    <h4>🚀 Why Horizon is Unique</h4>
+                    <ul>
+                        <li><strong>Hybrid Intelligence:</strong> Instant local responses + powerful AI when needed</li>
+                        <li><strong>Zero Lag Math:</strong> Complex calculations solved locally in milliseconds</li>
+                        <li><strong>Real Personalities:</strong> Not just different wordings - truly distinct speaking styles</li>
+                        <li><strong>Smart Routing:</strong> Automatically knows when to use local vs AI processing</li>
+                        <li><strong>Practical Tools:</strong> Real timers, reminders, and productivity features</li>
+                    </ul>
+                </div>
+                
+                <div class="get-started">
+                    <h4>🎯 Quick Start</h4>
+                    <p><strong>Try these to see Horizon in action:</strong></p>
+                    <div class="example-commands">
+                        <button class="example-btn" data-command="What time is it?">🕐 "What time is it?"</button>
+                        <button class="example-btn" data-command="Calculate sqrt(144) + 25">🧮 "Calculate sqrt(144) + 25"</button>
+                        <button class="example-btn" data-command="Set timer for 2 minutes">⏰ "Set timer for 2 minutes"</button>
+                        <button class="example-btn" data-command="Tell me about artificial intelligence">🤖 "Tell me about AI"</button>
+                    </div>
+                </div>
+                
+                <button class="help-close-btn" onclick="document.getElementById('helpContainer').innerHTML = ''">
+                    Got it! Let's chat! 💬
+                </button>
+            </div>
+        `;
+        
+        helpContainer.innerHTML = horizonHelpHTML;
+        helpContainer.scrollTop = 0;
+        
+        // Add click handlers for example buttons
+        setTimeout(() => {
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            exampleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const command = btn.dataset.command;
+                    if (window.aiAssistant) {
+                        window.aiAssistant.voiceInput.value = command;
+                        window.aiAssistant.sendMessage();
+                    }
                 });
-                
-                commandsHTML += '<p><strong>Troubleshooting:</strong></p>';
-                commandsHTML += '<ul>';
-                commandsHTML += '<li>✅ Make sure you allow microphone access</li>';
-                commandsHTML += '<li>✅ Use Chrome, Safari, or Edge (Firefox may not work)</li>';
-                commandsHTML += '<li>✅ Check that you\'re on localhost or HTTPS</li>';
-                commandsHTML += '<li>✅ Speak clearly and wait for the listening indicator</li>';
-                commandsHTML += '</ul>';
-                commandsHTML += '</div>';
-                
-                // Show in a modal or dedicated area
-                const helpContainer = document.getElementById('helpContainer');
-                if (helpContainer) {
-                    helpContainer.innerHTML = commandsHTML;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading voice commands:', error);
-                const helpContainer = document.getElementById('helpContainer');
-                if (helpContainer) {
-                    helpContainer.innerHTML = '<p>Error loading voice commands. Please check your connection.</p>';
-                }
             });
+        }, 100);
     }
 }
 
@@ -1173,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const helpBtn = document.getElementById('helpBtn');
     if (helpBtn) {
         helpBtn.addEventListener('click', () => {
-            window.aiAssistant.showVoiceCommands();
+            window.aiAssistant.showHorizonHelp();
         });
     }
 });

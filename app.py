@@ -1097,7 +1097,26 @@ def process_user_input(user_input, personality='friendly', session_id=None):
 # Routes
 @app.route('/')
 def home():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Horizon AI - Template Error</title>
+        </head>
+        <body>
+            <h1>Horizon AI</h1>
+            <p>Template rendering error: {str(e)}</p>
+            <p><a href="/test">Test simple route</a></p>
+        </body>
+        </html>
+        '''
+
+@app.route('/test')
+def test():
+    return "Server is working!"
 
 @app.route('/api/health')
 def health_check():
@@ -1386,4 +1405,4 @@ if __name__ == '__main__':
     print("✅ Intent recognition loaded")
     print("🌐 Server starting on http://127.0.0.1:8080...")
     
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=False)
