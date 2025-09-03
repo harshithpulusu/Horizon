@@ -276,43 +276,67 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* 11. CONVERSATION CONTEXT INDICATORS */
+/* 11. CONVERSATION CONTEXT MEMORY STYLING */
 .context-badge {
     display: inline-block;
     background: linear-gradient(135deg, #4ecdc4, #45b7d1);
     color: white;
-    padding: 4px 8px;
+    padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.75em;
+    font-size: 0.7em;
     font-weight: 500;
     margin-left: 8px;
-    animation: contextGlow 2s ease-in-out infinite alternate;
+    opacity: 0.9;
+    cursor: help;
+    transition: all 0.3s ease;
 }
 
-@keyframes contextGlow {
-    from { box-shadow: 0 0 5px rgba(78, 205, 196, 0.5); }
-    to { box-shadow: 0 0 15px rgba(78, 205, 196, 0.8); }
-}
-
-.message-metadata {
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
-}
-
-.message-metadata:hover {
+.context-badge:hover {
     opacity: 1;
+    transform: scale(1.05);
 }
 
-/* Session management button styling */
 .btn-warning {
-    background: linear-gradient(135deg, #ff9f43, #f0932b);
+    background: linear-gradient(135deg, #ff9f43, #ffa726);
     border: none;
     color: white;
     transition: all 0.3s ease;
 }
 
 .btn-warning:hover {
-    background: linear-gradient(135deg, #f0932b, #ff9f43);
+    background: linear-gradient(135deg, #ff8a00, #ff9500);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(240, 147, 43, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 159, 67, 0.4);
+}
+
+.session-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 5px 0;
+    font-size: 0.8em;
+    color: #999;
+    border-left: 3px solid #4ecdc4;
+}
+
+.conversation-context-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(78, 205, 196, 0.8);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.6; transform: scale(1); }
 }
