@@ -952,7 +952,15 @@ INTENT_PATTERNS = {
     'time': [r'\b(time|clock)\b', r'\bwhat time is it\b'],
     'date': [r'\b(date|today)\b', r'\bwhat day is it\b'],
     'joke': [r'\b(joke|funny|humor)\b', r'\btell me a joke\b'],
-    'math': [r'\d+\s*[\+\-\*\/]\s*\d+', r'\bwhat is \d+', r'\bcalculate\b'],
+    'math': [
+        r'\d+\s*[\+\-\*×÷\/\^]\s*\d+',  # Basic operations: 5+3, 10*2, etc.
+        r'\bwhat is \d+', r'\bcalculate\b', r'\bsolve\b',
+        r'\b(sqrt|square root)', r'\b(sin|cos|tan)\b', r'\blog\b',
+        r'\d+\s*(squared|cubed)', r'\d+\s*factorial', r'\d+!',
+        r'\d+\s*percent.*of', r'\d+.*%.*of', r'percent', r'percentage',
+        r'is \d+.*prime', r'\d+.*binary', r'\d+.*hex',
+        r'(increase|decrease).*\d+.*percent'
+    ],
     'timer': [r'\bset.*timer\b', r'\btimer for\b', r'\b\d+\s*(minute|second|hour).*timer\b'],
     'reminder': [r'\bremind me\b', r'\bset.*reminder\b', r'\breminder.*to\b'],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
@@ -1115,20 +1123,28 @@ def process_message():
         if not user_input:
             return jsonify({'error': 'No input provided'}), 400
         
-        # Process the input with conversation context
+        # Process the input (quick commands bypass ChatGPT entirely)
         start_time = time.time()
         response, session_id, context_used = process_user_input(user_input, personality, session_id)
         response_time = round(time.time() - start_time, 2)
         
-        # Determine AI source and intent for confidence calculation
-        ai_source = 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback'
+        # Determine if this was a quick command or AI-powered response
         intent = recognize_intent(user_input)
+        is_quick = is_quick_command(intent)
         
-        # Calculate realistic confidence
-        confidence = calculate_realistic_confidence(user_input, response, ai_source, intent)
+        # Determine AI source
+        if is_quick:
+            ai_source = 'quick_command'  # Local processing, no AI needed
+        else:
+            ai_source = 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback'
+        
+        # Calculate confidence based on processing type
+        if is_quick:
+            confidence = 0.95  # Quick commands are deterministic and highly reliable
+        else:
+            confidence = calculate_realistic_confidence(user_input, response, ai_source, intent)
         
         # Get conversation stats
-        history = get_conversation_history(session_id, limit=1)
         message_count = len(get_conversation_history(session_id, limit=100))
         
         return jsonify({
@@ -1136,6 +1152,7 @@ def process_message():
             'timestamp': datetime.now().isoformat(),
             'personality': personality,
             'ai_source': ai_source,
+            'is_quick_command': is_quick,
             'confidence': confidence,
             'response_time': f"{response_time}s",
             'intent': intent,
@@ -1143,7 +1160,8 @@ def process_message():
             'session_id': session_id,
             'context_used': context_used,
             'conversation_length': message_count,
-            'has_context': message_count > 1
+            'has_context': message_count > 1,
+            'processing_type': 'local' if is_quick else 'ai_powered'
         })
         
     except Exception as e:
