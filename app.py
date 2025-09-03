@@ -650,22 +650,228 @@ def handle_joke(personality):
         return random.choice(jokes)
 
 def handle_math(text):
-    """Handle basic math calculations"""
+    """Handle advanced math calculations without ChatGPT"""
     try:
-        # Extract and evaluate simple math expressions
+        import math
         import operator
-        ops = {'+': operator.add, '-': operator.sub, '*': operator.mul, '/': operator.truediv}
+        import re
         
-        for op_symbol, op_func in ops.items():
-            if op_symbol in text:
-                nums = re.findall(r'\d+', text)
-                if len(nums) >= 2:
-                    result = op_func(int(nums[0]), int(nums[1]))
-                    return f"{nums[0]} {op_symbol} {nums[1]} = {result}"
+        # Clean and normalize the input
+        text = text.lower().replace("what is", "").replace("calculate", "").replace("solve", "").strip()
         
-        return "I can help with basic math! Try asking me something like '5 + 3' or 'what is 10 times 2'."
+        # Handle word replacements
+        word_replacements = {
+            'plus': '+', 'add': '+', 'added to': '+',
+            'minus': '-', 'subtract': '-', 'take away': '-',
+            'times': '*', 'multiply': '*', 'multiplied by': '*',
+            'divide': '/', 'divided by': '/',
+            'squared': '**2', 'cubed': '**3',
+            'square root of': 'sqrt(',
+            'sin': 'sin(', 'cos': 'cos(', 'tan': 'tan(',
+            'log': 'log(', 'ln': 'log('
+        }
+        
+        for word, symbol in word_replacements.items():
+            text = text.replace(word, symbol)
+        
+        # Handle percentage calculations
+        if '%' in text or 'percent' in text:
+            return handle_percentage(text)
+        
+        # Handle square root specially
+        sqrt_match = re.search(r'sqrt\((\d+(?:\.\d+)?)\)', text)
+        if sqrt_match:
+            number = float(sqrt_match.group(1))
+            result = math.sqrt(number)
+            return f"√{number} = {result:.4f}".rstrip('0').rstrip('.')
+        
+        # Handle trigonometric functions
+        trig_pattern = r'(sin|cos|tan)\((\d+(?:\.\d+)?)\)'
+        trig_match = re.search(trig_pattern, text)
+        if trig_match:
+            func_name = trig_match.group(1)
+            angle = float(trig_match.group(2))
+            # Convert to radians for calculation
+            angle_rad = math.radians(angle)
+            
+            if func_name == 'sin':
+                result = math.sin(angle_rad)
+            elif func_name == 'cos':
+                result = math.cos(angle_rad)
+            elif func_name == 'tan':
+                result = math.tan(angle_rad)
+            
+            return f"{func_name}({angle}°) = {result:.4f}".rstrip('0').rstrip('.')
+        
+        # Handle logarithms
+        log_match = re.search(r'log\((\d+(?:\.\d+)?)\)', text)
+        if log_match:
+            number = float(log_match.group(1))
+            result = math.log10(number)
+            return f"log({number}) = {result:.4f}".rstrip('0').rstrip('.')
+        
+        # Handle basic arithmetic with multiple operations
+        # Support parentheses and order of operations
+        try:
+            # Clean expression - only allow safe mathematical operations
+            safe_chars = set('0123456789+-*/.() ')
+            if all(c in safe_chars for c in text):
+                # Use eval safely with restricted context
+                safe_dict = {
+                    "__builtins__": {},
+                    "abs": abs, "round": round, "pow": pow,
+                    "sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan,
+                    "log": math.log10, "ln": math.log, "pi": math.pi, "e": math.e
+                }
+                
+                result = eval(text, safe_dict)
+                
+                # Format the result nicely
+                if isinstance(result, float):
+                    if result.is_integer():
+                        result = int(result)
+                    else:
+                        result = round(result, 6)
+                        # Remove trailing zeros
+                        result_str = f"{result:.6f}".rstrip('0').rstrip('.')
+                        result = float(result_str) if '.' in result_str else int(float(result_str))
+                
+                return f"{text} = {result}"
+        except:
+            pass
+        
+        # Handle simple two-number operations with words
+        patterns = [
+            r'(\d+(?:\.\d+)?)\s*[\+]\s*(\d+(?:\.\d+)?)',
+            r'(\d+(?:\.\d+)?)\s*[\-]\s*(\d+(?:\.\d+)?)', 
+            r'(\d+(?:\.\d+)?)\s*[\*×]\s*(\d+(?:\.\d+)?)',
+            r'(\d+(?:\.\d+)?)\s*[\/÷]\s*(\d+(?:\.\d+)?)',
+            r'(\d+(?:\.\d+)?)\s*[\^]\s*(\d+(?:\.\d+)?)'
+        ]
+        
+        ops = ['+', '-', '*', '/', '^']
+        
+        for i, pattern in enumerate(patterns):
+            match = re.search(pattern, text)
+            if match:
+                num1 = float(match.group(1))
+                num2 = float(match.group(2))
+                op = ops[i]
+                
+                if op == '+':
+                    result = num1 + num2
+                elif op == '-':
+                    result = num1 - num2
+                elif op == '*':
+                    result = num1 * num2
+                elif op == '/':
+                    if num2 == 0:
+                        return "Error: Cannot divide by zero!"
+                    result = num1 / num2
+                elif op == '^':
+                    result = num1 ** num2
+                
+                # Format result
+                if isinstance(result, float) and result.is_integer():
+                    result = int(result)
+                elif isinstance(result, float):
+                    result = round(result, 6)
+                
+                op_symbol = op if op != '^' else '**'
+                return f"{num1} {op_symbol} {num2} = {result}"
+        
+        # Handle number conversions
+        if 'to binary' in text or 'in binary' in text:
+            nums = re.findall(r'\d+', text)
+            if nums:
+                number = int(nums[0])
+                binary = bin(number)[2:]  # Remove '0b' prefix
+                return f"{number} in binary = {binary}"
+        
+        if 'to hex' in text or 'in hexadecimal' in text:
+            nums = re.findall(r'\d+', text)
+            if nums:
+                number = int(nums[0])
+                hex_val = hex(number)[2:].upper()  # Remove '0x' prefix
+                return f"{number} in hexadecimal = {hex_val}"
+        
+        # Factorial
+        if 'factorial' in text:
+            nums = re.findall(r'\d+', text)
+            if nums:
+                number = int(nums[0])
+                if number > 20:
+                    return f"Factorial of {number} is too large to calculate!"
+                result = math.factorial(number)
+                return f"{number}! = {result}"
+        
+        # Prime number check
+        if 'prime' in text:
+            nums = re.findall(r'\d+', text)
+            if nums:
+                number = int(nums[0])
+                is_prime = check_prime(number)
+                return f"{number} is {'a prime' if is_prime else 'not a prime'} number."
+        
+        return "I can solve math problems! Try: '5 + 3', 'sqrt(16)', 'sin(30)', '2^8', '5!', 'is 17 prime?', '42 to binary'"
+        
     except Exception as e:
-        return "I'm having trouble with that calculation. Try a simpler math problem!"
+        print(f"Math calculation error: {e}")
+        return "I had trouble with that calculation. Try a simpler math expression!"
+
+def handle_percentage(text):
+    """Handle percentage calculations"""
+    try:
+        # What is X% of Y
+        match = re.search(r'(\d+(?:\.\d+)?)\s*%?\s*of\s*(\d+(?:\.\d+)?)', text)
+        if match:
+            percent = float(match.group(1))
+            number = float(match.group(2))
+            result = (percent / 100) * number
+            return f"{percent}% of {number} = {result}"
+        
+        # X is what percent of Y
+        match = re.search(r'(\d+(?:\.\d+)?)\s*is.*percent.*of\s*(\d+(?:\.\d+)?)', text)
+        if match:
+            part = float(match.group(1))
+            whole = float(match.group(2))
+            if whole == 0:
+                return "Error: Cannot calculate percentage of zero!"
+            percent = (part / whole) * 100
+            return f"{part} is {percent:.2f}% of {whole}"
+        
+        # Increase/decrease by percentage
+        if 'increase' in text or 'decrease' in text:
+            match = re.search(r'(\d+(?:\.\d+)?)\s*(increase|decrease).*?(\d+(?:\.\d+)?)\s*%', text)
+            if match:
+                number = float(match.group(1))
+                operation = match.group(2)
+                percent = float(match.group(3))
+                
+                if operation == 'increase':
+                    result = number * (1 + percent / 100)
+                    return f"{number} increased by {percent}% = {result}"
+                else:
+                    result = number * (1 - percent / 100)
+                    return f"{number} decreased by {percent}% = {result}"
+        
+        return "Try: '25% of 80', '15 is what percent of 60', '100 increase by 20%'"
+    except Exception as e:
+        return "I had trouble with that percentage calculation."
+
+def check_prime(n):
+    """Check if a number is prime"""
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+    
+    for i in range(3, int(n**0.5) + 1, 2):
+        if n % i == 0:
+            return False
+    return True
 
 def handle_timer(text):
     """Handle timer requests with actual timer functionality"""
@@ -808,50 +1014,77 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
     
     return round(confidence, 3)
 
+def is_quick_command(intent):
+    """Check if this is a quick command that shouldn't use ChatGPT"""
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke']
+    return intent in quick_commands
+
 def process_user_input(user_input, personality='friendly', session_id=None):
     """Process user input and return appropriate response with conversation context"""
     if not user_input or not user_input.strip():
         return "I didn't quite catch that. Could you please say something?", session_id, False
     
-    # Get or create session
-    if not session_id:
-        session_id, stored_personality = get_active_session()
-        # Use stored personality if none provided
-        if personality == 'friendly' and stored_personality != 'friendly':
-            personality = stored_personality
-    
-    # Recognize intent for quick responses
+    # Recognize intent first
     intent = recognize_intent(user_input)
     context_used = False
     
-    # Handle specific intents
-    if intent == 'greeting':
-        response = handle_greeting(personality)
-    elif intent == 'time':
-        response = handle_time()
-    elif intent == 'date':
-        response = handle_date()
-    elif intent == 'joke':
-        response = handle_joke(personality)
-    elif intent == 'math':
-        response = handle_math(user_input)
-    elif intent == 'timer':
-        response = handle_timer(user_input)
-    elif intent == 'reminder':
-        response = handle_reminder(user_input)
-    elif intent == 'goodbye':
-        response = "Thank you for chatting! Have a wonderful day!"
+    # Handle quick commands WITHOUT ChatGPT - completely local processing
+    if is_quick_command(intent):
+        print(f"🚀 Quick command detected: {intent} - bypassing ChatGPT")
+        
+        # Handle specific quick commands locally
+        if intent == 'greeting':
+            response = handle_greeting(personality)
+        elif intent == 'time':
+            response = handle_time()
+        elif intent == 'date':
+            response = handle_date()
+        elif intent == 'joke':
+            response = handle_joke(personality)
+        elif intent == 'math':
+            response = handle_math(user_input)
+        elif intent == 'timer':
+            response = handle_timer(user_input)
+        elif intent == 'reminder':
+            response = handle_reminder(user_input)
+        elif intent == 'goodbye':
+            response = "Thank you for chatting! Have a wonderful day!"
+        else:
+            response = "Quick command processed locally!"
+        
+        # For quick commands, use a simple session or create one
+        if not session_id:
+            session_id = generate_session_id()
+        
+        # Quick commands get high confidence since they're deterministic
+        confidence = 0.95
+        
+        # Save conversation but mark as quick command (no ChatGPT used)
+        save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
+        
+        return response, session_id, context_used
+    
+    # For non-quick commands, use full AI processing with conversation context
     else:
-        # Use AI model (ChatGPT or fallback) for general questions with context
+        print(f"🤖 Complex query detected: {intent} - using ChatGPT with context")
+        
+        # Get or create session for context-aware conversations
+        if not session_id:
+            session_id, stored_personality = get_active_session()
+            # Use stored personality if none provided
+            if personality == 'friendly' and stored_personality != 'friendly':
+                personality = stored_personality
+        
+        # Use AI model (ChatGPT or fallback) for complex questions with full context
         response, context_used = ask_ai_model(user_input, personality, session_id)
-    
-    # Calculate confidence
-    confidence = calculate_realistic_confidence(user_input, response, 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback', intent)
-    
-    # Save conversation with context information
-    save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
-    
-    return response, session_id, context_used
+        
+        # Calculate confidence for AI responses
+        confidence = calculate_realistic_confidence(user_input, response, 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback', intent)
+        
+        # Save conversation with full context information
+        save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
+        
+        return response, session_id, context_used
 
 # Routes
 @app.route('/')
