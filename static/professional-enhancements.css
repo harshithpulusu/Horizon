@@ -711,6 +711,109 @@
     100% { opacity: 0.6; transform: scale(1); }
 }
 
+/* AI Capabilities Grid Styling */
+.ai-capabilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.capability-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.capability-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(78, 205, 196, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(78, 205, 196, 0.5);
+}
+
+.capability-icon {
+    font-size: 2.5em;
+    margin-bottom: 12px;
+    display: block;
+    line-height: 1;
+}
+
+.capability-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+}
+
+.capability-content h4 {
+    color: #4ecdc4;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+    word-wrap: break-word;
+    hyphens: auto;
+}
+
+.capability-content p {
+    color: #cccccc;
+    font-size: 0.85em;
+    line-height: 1.4;
+    margin: 0;
+    word-wrap: break-word;
+    hyphens: auto;
+    overflow-wrap: break-word;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .ai-capabilities-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+    }
+    
+    .capability-card {
+        padding: 15px;
+        min-height: 100px;
+    }
+    
+    .capability-icon {
+        font-size: 2em;
+        margin-bottom: 8px;
+    }
+    
+    .capability-content h4 {
+        font-size: 1em;
+    }
+    
+    .capability-content p {
+        font-size: 0.8em;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .ai-capabilities-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .capability-card {
+        padding: 12px;
+        min-height: 90px;
+    }
+}
+
 /* Simple Horizon Help Styles */
 .horizon-help {
     max-width: 800px;
