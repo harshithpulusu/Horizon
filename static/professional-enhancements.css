@@ -551,34 +551,59 @@
 
 .feature-item {
     text-align: center;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 25px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
     transition: all 0.3s ease;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .feature-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(78, 205, 196, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(78, 205, 196, 0.5);
 }
 
 .feature-icon {
     font-size: 2.5em;
     margin-bottom: 15px;
     display: block;
+    line-height: 1;
 }
 
 .feature-title {
     font-weight: 600;
     color: #4ecdc4;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+    text-align: center;
+    line-height: 1.2;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    word-break: keep-all;
 }
 
 .feature-description {
     font-size: 0.9em;
-    color: #ccc;
+    color: #cccccc;
     line-height: 1.5;
+    text-align: center;
+    margin: 0;
+    padding: 0 5px;
+    word-wrap: break-word;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    overflow-wrap: break-word;
 }
 
 /* 8. PROFESSIONAL FOOTER */
@@ -617,8 +642,28 @@
     }
     
     .feature-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 15px;
+    }
+    
+    .feature-item {
+        padding: 20px 15px;
+        min-height: 140px;
+    }
+    
+    .feature-icon {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+    }
+    
+    .feature-title {
+        font-size: 1em;
+        margin-bottom: 10px;
+    }
+    
+    .feature-description {
+        font-size: 0.85em;
+        padding: 0 3px;
     }
     
     .metrics-grid {
@@ -628,6 +673,23 @@
     .footer-links {
         flex-direction: column;
         gap: 10px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .feature-item {
+        padding: 18px 12px;
+        min-height: 120px;
+    }
+    
+    .feature-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
     }
 }
 

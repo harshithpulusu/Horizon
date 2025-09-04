@@ -11,7 +11,7 @@ class ProfessionalUIEnhancements {
         this.addTypingIndicator();
         this.addConfidenceIndicators();
         this.addResponseSourceBadges();
-        // this.addFeaturesShowcase(); // Removed AI Capabilities section
+        this.addFeaturesShowcase();
         this.addMetricsDashboard();
         this.addProfessionalFooter();
         this.enhanceMessageAppearance();
