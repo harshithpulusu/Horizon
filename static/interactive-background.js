@@ -72,8 +72,7 @@ class InteractiveBackground {
             this.mouseX = e.clientX;
             this.mouseY = e.clientY;
             
-            this.updateGlowOrbs();
-            this.createCursorTrail();
+            // Removed updateGlowOrbs() and createCursorTrail()
             this.updateBackgroundGradient();
         });
 
@@ -85,10 +84,7 @@ class InteractiveBackground {
             this.deactivateInteractiveElements();
         });
 
-        // Add click effects
-        document.addEventListener('click', (e) => {
-            this.createClickRipple(e.clientX, e.clientY);
-        });
+        // Removed click effects
     }
 
     updateGlowOrbs() {
