@@ -56,30 +56,6 @@ body {
     }
 }
 
-/* Interactive cursor trail */
-.cursor-trail {
-    position: fixed;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(78, 205, 196, 0.8), rgba(69, 183, 209, 0.4));
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: all 0.1s ease;
-    opacity: 0;
-}
-
-.cursor-trail.active {
-    opacity: 1;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.2); }
-}
-
 /* Enhanced animated background with mouse interaction */
 body::before {
     content: '';
@@ -132,29 +108,6 @@ body::before {
 @keyframes gridPulse {
     0%, 100% { opacity: 0.03; }
     50% { opacity: 0.08; }
-}
-
-/* Glowing orbs that follow mouse */
-.glow-orb {
-    position: fixed;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(78, 205, 196, 0.1), transparent);
-    pointer-events: none;
-    z-index: -1;
-    transition: all 0.3s ease;
-    opacity: 0;
-}
-
-.glow-orb.active {
-    opacity: 1;
-    animation: orbGlow 3s ease-in-out infinite;
-}
-
-@keyframes orbGlow {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
 }
 
 /* 1. LOGO AND BRAND IDENTITY */
@@ -1212,5 +1165,676 @@ body::before {
     .example-btn {
         width: 80%;
         text-align: center;
+    }
+}
+
+/* ===== ADVANCED UI COMPONENTS ===== */
+
+/* 1. TOAST NOTIFICATIONS */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.toast {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(30, 30, 50, 0.95));
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 300px;
+    pointer-events: all;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateX(400px);
+    opacity: 0;
+}
+
+.toast::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+    border-radius: 2px 0 0 2px;
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.toast-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #4ecdc4;
+    font-size: 0.95em;
+}
+
+.toast-icon {
+    font-size: 1.2em;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.toast-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.toast-message {
+    color: #ccc;
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+    transition: width linear;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Toast Types */
+.toast.success::before {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.toast.success .toast-title {
+    color: #2ecc71;
+}
+
+.toast.error::before {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.toast.error .toast-title {
+    color: #e74c3c;
+}
+
+.toast.warning::before {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.toast.warning .toast-title {
+    color: #f39c12;
+}
+
+.toast.info::before {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.toast.info .toast-title {
+    color: #3498db;
+}
+
+/* 2. PROFESSIONAL MODALS/DIALOGS */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    padding: 20px;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.98), rgba(30, 30, 50, 0.98));
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    transform: scale(0.7) translateY(50px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.modal-overlay.show .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal-header {
+    padding: 25px 30px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(69, 183, 209, 0.1));
+}
+
+.modal-title {
+    color: #4ecdc4;
+    font-size: 1.4em;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.5em;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 30px;
+    color: #ccc;
+    line-height: 1.6;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+    border-radius: 3px;
+}
+
+.modal-footer {
+    padding: 20px 30px 30px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.modal-btn.primary {
+    background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+    color: #000;
+}
+
+.modal-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+.modal-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* 3. IMPROVED TOOLTIPS */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-content {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(30, 30, 50, 0.95));
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 250px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(30, 30, 50, 0.95);
+}
+
+.tooltip:hover .tooltip-content {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-8px);
+}
+
+/* Tooltip variations */
+.tooltip-right .tooltip-content {
+    bottom: auto;
+    left: 125%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tooltip-right .tooltip-content::after {
+    top: 50%;
+    left: -6px;
+    transform: translateY(-50%);
+    border-top-color: transparent;
+    border-right-color: rgba(30, 30, 50, 0.95);
+}
+
+.tooltip-right:hover .tooltip-content {
+    transform: translateY(-50%) translateX(8px);
+}
+
+.tooltip-left .tooltip-content {
+    bottom: auto;
+    right: 125%;
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tooltip-left .tooltip-content::after {
+    top: 50%;
+    right: -6px;
+    left: auto;
+    transform: translateY(-50%);
+    border-top-color: transparent;
+    border-left-color: rgba(30, 30, 50, 0.95);
+}
+
+.tooltip-left:hover .tooltip-content {
+    transform: translateY(-50%) translateX(-8px);
+}
+
+/* 4. STATUS INDICATORS WITH ANIMATIONS */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+}
+
+.status-dot::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: pulse-ring 2s infinite;
+}
+
+/* Status types */
+.status-online {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.3);
+}
+
+.status-online .status-dot {
+    background: #2ecc71;
+}
+
+.status-online .status-dot::before {
+    background: rgba(46, 204, 113, 0.7);
+}
+
+.status-busy {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.status-busy .status-dot {
+    background: #e74c3c;
+}
+
+.status-busy .status-dot::before {
+    background: rgba(231, 76, 60, 0.7);
+}
+
+.status-away {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+    border-color: rgba(243, 156, 18, 0.3);
+}
+
+.status-away .status-dot {
+    background: #f39c12;
+}
+
+.status-away .status-dot::before {
+    background: rgba(243, 156, 18, 0.7);
+}
+
+.status-processing {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
+.status-processing .status-dot {
+    background: #3498db;
+    animation: spin 1s linear infinite;
+}
+
+.status-processing .status-dot::before {
+    background: rgba(52, 152, 219, 0.7);
+}
+
+/* Animated status indicators */
+.status-thinking {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+    border-color: rgba(155, 89, 182, 0.3);
+}
+
+.status-thinking .status-dot {
+    background: #9b59b6;
+    animation: thinking 1.5s ease-in-out infinite;
+}
+
+.status-thinking .status-dot::before {
+    background: rgba(155, 89, 182, 0.7);
+}
+
+/* Status animations */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.33);
+        opacity: 1;
+    }
+    80%, 100% {
+        transform: scale(2.33);
+        opacity: 0;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes thinking {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+}
+
+/* Connection status bar */
+.connection-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9990;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(30, 30, 50, 0.95));
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 25px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.connection-status:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.connection-icon {
+    font-size: 1.1em;
+}
+
+.connection-text {
+    color: #ccc;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Loading spinner component */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(78, 205, 196, 0.3);
+    border-radius: 50%;
+    border-top-color: #4ecdc4;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.loading-spinner.large {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+
+/* Progress bars */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.progress-fill.animated {
+    overflow: hidden;
+}
+
+.progress-fill.animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 50px 50px;
+    animation: progress-stripes 1s linear infinite;
+}
+
+@keyframes progress-stripes {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 50px 50px;
+    }
+}
+
+/* Responsive adjustments for advanced components */
+@media (max-width: 768px) {
+    .toast-container {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .modal {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 20px;
+    }
+    
+    .connection-status {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        justify-content: center;
+    }
+    
+    .tooltip-content {
+        max-width: 200px;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .toast,
+    .modal,
+    .tooltip-content,
+    .status-indicator,
+    .loading-spinner,
+    .progress-fill {
+        animation: none;
+        transition: none;
+    }
+    
+    .status-dot::before {
+        animation: none;
     }
 }

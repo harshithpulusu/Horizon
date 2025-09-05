@@ -4,8 +4,6 @@ class InteractiveBackground {
     constructor() {
         this.mouseX = 0;
         this.mouseY = 0;
-        this.cursorTrails = [];
-        this.glowOrbs = [];
         this.particles = [];
         this.init();
     }
@@ -13,7 +11,6 @@ class InteractiveBackground {
     init() {
         this.createFloatingParticles();
         this.createGridOverlay();
-        this.createGlowOrbs();
         this.setupMouseInteraction();
         this.setupResizeHandler();
     }
@@ -50,15 +47,7 @@ class InteractiveBackground {
         document.body.appendChild(gridOverlay);
     }
 
-    createGlowOrbs() {
-        // Create 3 glow orbs
-        for (let i = 0; i < 3; i++) {
-            const orb = document.createElement('div');
-            orb.className = 'glow-orb';
-            document.body.appendChild(orb);
-            this.glowOrbs.push(orb);
-        }
-    }
+
 
     setupMouseInteraction() {
         let lastTime = 0;
@@ -87,79 +76,7 @@ class InteractiveBackground {
         // Removed click effects
     }
 
-    updateGlowOrbs() {
-        this.glowOrbs.forEach((orb, index) => {
-            const delay = index * 100;
-            const offsetX = (index - 1) * 50;
-            const offsetY = (index - 1) * 30;
-            
-            setTimeout(() => {
-                orb.style.left = `${this.mouseX + offsetX - 100}px`;
-                orb.style.top = `${this.mouseY + offsetY - 100}px`;
-                orb.classList.add('active');
-            }, delay);
-        });
-    }
 
-    createCursorTrail() {
-        const trail = document.createElement('div');
-        trail.className = 'cursor-trail active';
-        trail.style.left = `${this.mouseX}px`;
-        trail.style.top = `${this.mouseY}px`;
-        
-        document.body.appendChild(trail);
-        
-        // Remove trail after animation
-        setTimeout(() => {
-            trail.classList.remove('active');
-            setTimeout(() => {
-                if (trail.parentNode) {
-                    trail.parentNode.removeChild(trail);
-                }
-            }, 1000);
-        }, 200);
-    }
-
-    createClickRipple(x, y) {
-        const ripple = document.createElement('div');
-        ripple.style.position = 'fixed';
-        ripple.style.left = `${x}px`;
-        ripple.style.top = `${y}px`;
-        ripple.style.width = '0px';
-        ripple.style.height = '0px';
-        ripple.style.border = '2px solid rgba(78, 205, 196, 0.6)';
-        ripple.style.borderRadius = '50%';
-        ripple.style.transform = 'translate(-50%, -50%)';
-        ripple.style.pointerEvents = 'none';
-        ripple.style.zIndex = '9998';
-        ripple.style.animation = 'rippleEffect 0.6s ease-out forwards';
-        
-        document.body.appendChild(ripple);
-        
-        // Add ripple animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes rippleEffect {
-                0% {
-                    width: 0px;
-                    height: 0px;
-                    opacity: 1;
-                }
-                100% {
-                    width: 100px;
-                    height: 100px;
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        setTimeout(() => {
-            if (ripple.parentNode) {
-                ripple.parentNode.removeChild(ripple);
-            }
-        }, 600);
-    }
 
     updateBackgroundGradient() {
         const xPercent = (this.mouseX / window.innerWidth) * 100;
@@ -185,11 +102,6 @@ class InteractiveBackground {
     }
 
     deactivateInteractiveElements() {
-        // Hide glow orbs when mouse leaves
-        this.glowOrbs.forEach(orb => {
-            orb.classList.remove('active');
-        });
-
         // Reset grid overlay
         const gridOverlay = document.querySelector('.grid-overlay');
         if (gridOverlay) {
@@ -210,8 +122,7 @@ class InteractiveBackground {
 
     setupResizeHandler() {
         window.addEventListener('resize', () => {
-            // Reposition elements on resize
-            this.updateGlowOrbs();
+            // Reposition elements on resize if needed
         });
     }
 
