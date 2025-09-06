@@ -946,6 +946,91 @@ def handle_reminder(text):
         print(f"Error in handle_reminder: {e}")
         return "I had trouble setting that reminder. Please try again!"
 
+def handle_image_generation(text):
+    """Handle AI image generation requests using DALL-E API"""
+    try:
+        if not AI_MODEL_AVAILABLE or not client:
+            return "🎨 I'd love to generate images for you! However, I need an OpenAI API key to access DALL-E. Please check your configuration and try again."
+        
+        # Extract the image description from the text
+        image_patterns = [
+            r'generate.*image.*of (.+)',
+            r'create.*image.*of (.+)', 
+            r'make.*image.*of (.+)',
+            r'draw.*image.*of (.+)',
+            r'generate.*picture.*of (.+)',
+            r'create.*picture.*of (.+)',
+            r'make.*picture.*of (.+)',
+            r'draw.*picture.*of (.+)',
+            r'image of (.+)',
+            r'picture of (.+)',
+            r'photo of (.+)',
+            r'draw me (.+)',
+            r'create (.+)',
+            r'generate (.+)',
+            r'visualize (.+)'
+        ]
+        
+        prompt = None
+        for pattern in image_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                prompt = match.group(1).strip()
+                break
+        
+        if not prompt:
+            # If no specific pattern matched, use the whole text as prompt
+            # Remove common trigger words
+            trigger_words = ['generate', 'create', 'make', 'draw', 'image', 'picture', 'photo', 'of', 'me', 'a', 'an']
+            words = text.lower().split()
+            filtered_words = [word for word in words if word not in trigger_words]
+            prompt = ' '.join(filtered_words).strip()
+        
+        if not prompt or len(prompt) < 3:
+            return "🎨 I can generate images for you! Please describe what you'd like me to create. For example: 'generate an image of a sunset over mountains' or 'create a picture of a cute cat wearing a hat'."
+        
+        print(f"🎨 Generating image with prompt: {prompt}")
+        
+        # Generate image using DALL-E
+        try:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            
+            image_url = response.data[0].url
+            
+            return f"""🎨 **Image Generated Successfully!**
+
+**Prompt:** {prompt}
+
+**Image URL:** {image_url}
+
+The image has been generated and is ready to view! The link will be valid for a limited time. You can save the image by right-clicking and selecting "Save image as..." when viewing it in your browser.
+
+*Generated using DALL-E 3 AI*"""
+            
+        except Exception as api_error:
+            print(f"DALL-E API error: {api_error}")
+            
+            # Check for specific error types
+            error_message = str(api_error).lower()
+            if "content_policy" in error_message or "safety" in error_message:
+                return f"🚫 I can't generate an image for '{prompt}' as it may violate content policies. Please try a different, more appropriate description."
+            elif "billing" in error_message or "quota" in error_message:
+                return "💳 Image generation is currently unavailable due to API quota limits. Please try again later or check your OpenAI billing status."
+            elif "rate_limit" in error_message:
+                return "⏳ Too many image generation requests. Please wait a moment and try again."
+            else:
+                return f"🎨 I encountered an issue generating the image: {api_error}. Please try rephrasing your request or try again later."
+        
+    except Exception as e:
+        print(f"Error in handle_image_generation: {e}")
+        return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
+
 # Intent recognition
 INTENT_PATTERNS = {
     'greeting': [r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b'],
@@ -1002,6 +1087,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
         'math': 0.95,      # Math is usually accurate
         'timer': 0.93,     # Timer setting is pretty reliable
         'reminder': 0.91,  # Reminder setting is reliable
+        'image_generation': 0.89,  # Image generation depends on API and prompt clarity
         'greeting': 0.90,  # Greetings are straightforward
         'joke': 0.85,      # Jokes are subjective
         'general': 0.82    # General queries vary more
@@ -1033,7 +1119,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None):
@@ -1064,6 +1150,8 @@ def process_user_input(user_input, personality='friendly', session_id=None):
             response = handle_timer(user_input)
         elif intent == 'reminder':
             response = handle_reminder(user_input)
+        elif intent == 'image_generation':
+            response = handle_image_generation(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
