@@ -963,6 +963,15 @@ INTENT_PATTERNS = {
     ],
     'timer': [r'\bset.*timer\b', r'\btimer for\b', r'\b\d+\s*(minute|second|hour).*timer\b'],
     'reminder': [r'\bremind me\b', r'\bset.*reminder\b', r'\breminder.*to\b'],
+    'image_generation': [
+        r'\b(generate|create|make|draw|paint).*image\b',
+        r'\b(generate|create|make|draw|paint).*picture\b',
+        r'\b(generate|create|make|draw|paint).*photo\b',
+        r'\bimage of\b', r'\bpicture of\b', r'\bphoto of\b',
+        r'\bdraw me\b', r'\bcreate.*visual\b', r'\bgenerate.*art\b',
+        r'\bai.*image\b', r'\bai.*picture\b', r'\bdall.*e\b',
+        r'\bshow me.*image\b', r'\bvisualize\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
