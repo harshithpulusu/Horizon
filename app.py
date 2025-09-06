@@ -1488,6 +1488,76 @@ def cancel_reminder(reminder_id):
         print(f"Error cancelling reminder: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/generate-image', methods=['POST'])
+def generate_image_api():
+    """Dedicated API endpoint for image generation"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        prompt = data.get('prompt', '').strip()
+        if not prompt:
+            return jsonify({'error': 'No prompt provided'}), 400
+        
+        if not AI_MODEL_AVAILABLE or not client:
+            return jsonify({
+                'error': 'Image generation unavailable',
+                'message': 'OpenAI API key required for DALL-E image generation'
+            }), 503
+        
+        start_time = time.time()
+        
+        try:
+            # Generate image using DALL-E
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            
+            image_url = response.data[0].url
+            response_time = round(time.time() - start_time, 2)
+            
+            return jsonify({
+                'success': True,
+                'image_url': image_url,
+                'prompt': prompt,
+                'response_time': f"{response_time}s",
+                'timestamp': datetime.now().isoformat(),
+                'model': 'dall-e-3',
+                'size': '1024x1024'
+            })
+            
+        except Exception as api_error:
+            error_message = str(api_error).lower()
+            if "content_policy" in error_message or "safety" in error_message:
+                return jsonify({
+                    'error': 'Content policy violation',
+                    'message': f"Cannot generate image for '{prompt}' due to content policy restrictions"
+                }), 400
+            elif "billing" in error_message or "quota" in error_message:
+                return jsonify({
+                    'error': 'Quota exceeded',
+                    'message': 'API quota limit reached. Please try again later.'
+                }), 429
+            elif "rate_limit" in error_message:
+                return jsonify({
+                    'error': 'Rate limited',
+                    'message': 'Too many requests. Please wait and try again.'
+                }), 429
+            else:
+                return jsonify({
+                    'error': 'Generation failed',
+                    'message': f'Failed to generate image: {api_error}'
+                }), 500
+                
+    except Exception as e:
+        print(f"Error in generate_image_api: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
     

@@ -602,6 +602,11 @@ class EnhancedAIVoiceAssistant {
         messageDiv.className = `message ${type}`;
         
         const timestamp = new Date().toLocaleTimeString();
+        
+        // Check if message contains image URL
+        const imageUrlPattern = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp)/gi;
+        const imageUrls = message.match(imageUrlPattern);
+        
         let messageContent = `
             <div class="message-header">
                 <strong>${sender}</strong>
@@ -609,6 +614,36 @@ class EnhancedAIVoiceAssistant {
             </div>
             <div class="message-content">${message}</div>
         `;
+        
+        // Add image display if image URLs are found
+        if (imageUrls && imageUrls.length > 0) {
+            messageContent += '<div class="image-gallery">';
+            imageUrls.forEach(url => {
+                messageContent += `
+                    <div class="generated-image-container">
+                        <img src="${url}" 
+                             alt="Generated AI Image" 
+                             class="generated-image"
+                             onclick="this.classList.toggle('fullscreen')"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                             onload="professionalUI.showToast('🎨 Image loaded successfully!', 'success', 3000);">
+                        <div class="image-error" style="display: none;">
+                            <p>❌ Failed to load image</p>
+                            <a href="${url}" target="_blank">View original link</a>
+                        </div>
+                        <div class="image-actions">
+                            <button onclick="window.open('${url}', '_blank')" class="action-btn">
+                                🔗 Open in New Tab
+                            </button>
+                            <button onclick="navigator.clipboard.writeText('${url}')" class="action-btn">
+                                📋 Copy URL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            messageContent += '</div>';
+        }
         
         // Add enhanced metadata for AI responses
         if (data && type === 'ai') {
