@@ -16,7 +16,7 @@ class Config:
 
     # Features
     ENABLE_SPEECH_RECOGNITION = True
-    ENABLE_TEXT_TO_SPEECH = True
+    ENABLE_TEXT_TO_SPEECH = False
     ENABLE_LEARNING = True
     ENABLE_TIMERS = True
     ENABLE_REMINDERS = True

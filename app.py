@@ -2,9 +2,10 @@
 """
 Horizon AI Assistant with ChatGPT API Integration
 Clean, fast, and intelligent AI responses using OpenAI's API
+Enhanced with AI Video Generation, GIF Creation, and Video Editing
 """
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_cors import CORS
 from datetime import datetime, timedelta
 import sqlite3
@@ -14,11 +15,23 @@ import random
 import time
 import threading
 import os
+import requests
+import uuid
+import subprocess
+import tempfile
+import io
+import base64
+from PIL import Image, ImageDraw, ImageFont
+import imageio
 from config import Config
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Create images directory if it doesn't exist
+IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_images')
+os.makedirs(IMAGES_DIR, exist_ok=True)
 
 # ChatGPT API Integration
 try:
@@ -244,6 +257,32 @@ def get_active_reminders():
             })
     
     return active_list
+
+def download_and_save_image(image_url, prompt):
+    """Download image from URL and save it locally"""
+    try:
+        # Generate unique filename
+        image_id = str(uuid.uuid4())
+        filename = f"{image_id}.png"
+        filepath = os.path.join(IMAGES_DIR, filename)
+        
+        # Download the image
+        response = requests.get(image_url, timeout=30)
+        response.raise_for_status()
+        
+        # Save the image
+        with open(filepath, 'wb') as f:
+            f.write(response.content)
+        
+        # Return local URL path
+        local_url = f"/static/generated_images/{filename}"
+        
+        print(f"✅ Image saved locally: {filename}")
+        return local_url, filename
+        
+    except Exception as e:
+        print(f"❌ Error downloading image: {e}")
+        return None, None
 
 def ask_chatgpt(user_input, personality, session_id=None):
     """Use ChatGPT API for intelligent responses with conversation context"""
@@ -1003,15 +1042,21 @@ def handle_image_generation(text):
             
             image_url = response.data[0].url
             
-            return f"""🎨 **Image Generated Successfully!**
+            # Download and save the image locally
+            local_url, filename = download_and_save_image(image_url, prompt)
+            
+            if local_url:
+                # Create a full URL that opens the image directly in browser
+                # Use network IP for sharing with others
+                full_image_url = f"http://192.168.1.206:8080{local_url}"
+                return f"""Image Generated
 
-**Prompt:** {prompt}
+{full_image_url}"""
+            else:
+                # Fallback to original URL if download fails
+                return f"""Image Generated
 
-**Image URL:** {image_url}
-
-The image has been generated and is ready to view! The link will be valid for a limited time. You can save the image by right-clicking and selecting "Save image as..." when viewing it in your browser.
-
-*Generated using DALL-E 3 AI*"""
+{image_url}"""
             
         except Exception as api_error:
             print(f"DALL-E API error: {api_error}")
@@ -1521,15 +1566,27 @@ def generate_image_api():
             image_url = response.data[0].url
             response_time = round(time.time() - start_time, 2)
             
-            return jsonify({
+            # Download and save the image locally
+            local_url, filename = download_and_save_image(image_url, prompt)
+            
+            result = {
                 'success': True,
-                'image_url': image_url,
                 'prompt': prompt,
                 'response_time': f"{response_time}s",
                 'timestamp': datetime.now().isoformat(),
                 'model': 'dall-e-3',
                 'size': '1024x1024'
-            })
+            }
+            
+            if local_url:
+                result['image_url'] = local_url
+                result['filename'] = filename
+                result['saved_locally'] = True
+            else:
+                result['image_url'] = image_url
+                result['saved_locally'] = False
+            
+            return jsonify(result)
             
         except Exception as api_error:
             error_message = str(api_error).lower()
@@ -1558,6 +1615,14 @@ def generate_image_api():
         print(f"Error in generate_image_api: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/static/generated_images/<filename>')
+def serve_generated_image(filename):
+    """Serve generated images from the local storage"""
+    try:
+        return send_from_directory(IMAGES_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Image not found'}), 404
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
     
@@ -1570,6 +1635,9 @@ if __name__ == '__main__':
         print("✅ Fallback AI system ready")
     
     print("✅ Intent recognition loaded")
-    print("🌐 Server starting on http://127.0.0.1:8080...")
+    print("🌐 Server starting on http://0.0.0.0:8080...")
+    print("📱 Local access: http://127.0.0.1:8080")
+    print("🌍 Network access: http://192.168.1.206:8080")
+    print("📝 Share the network URL with friends on the same WiFi!")
     
-    app.run(host='127.0.0.1', port=8080, debug=False)
+    app.run(host='0.0.0.0', port=8080, debug=False)

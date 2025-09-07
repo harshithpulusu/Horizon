@@ -1877,11 +1877,13 @@ body::before {
     display: block;
     margin: 0 auto;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(78, 205, 196, 0.2);
 }
 
 .generated-image:hover {
     transform: scale(1.02);
-    box-shadow: 0 12px 35px rgba(78, 205, 196, 0.2);
+    box-shadow: 0 12px 35px rgba(78, 205, 196, 0.3);
+    border-color: rgba(78, 205, 196, 0.5);
 }
 
 .generated-image.fullscreen {
@@ -1894,10 +1896,22 @@ body::before {
     max-height: none;
     object-fit: contain;
     z-index: 10001;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     cursor: zoom-out;
     border-radius: 0;
     transform: none;
+    border: none;
+}
+
+/* Add a subtle glow effect for locally saved images */
+.generated-image-container:has([src*="/static/generated_images/"]) {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(69, 183, 209, 0.15));
+    border-color: rgba(78, 205, 196, 0.4);
+}
+
+.generated-image-container:has([src*="/static/generated_images/"]):hover {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(69, 183, 209, 0.2));
+    border-color: rgba(78, 205, 196, 0.6);
 }
 
 .image-error {

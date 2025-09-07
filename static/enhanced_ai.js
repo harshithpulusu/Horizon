@@ -46,6 +46,11 @@ class EnhancedAIVoiceAssistant {
         this.initSpeechRecognition();
         this.initWakeWordDetection();  // New: Initialize wake word detection
         
+        // Ensure personality selector is set to friendly by default
+        if (this.personalitySelect) {
+            this.personalitySelect.value = this.currentPersonality;
+        }
+        
         this.updateStatus('Ready');
     }
     
@@ -553,7 +558,8 @@ class EnhancedAIVoiceAssistant {
     handleAIResponse(data) {
         this.lastResponse = data.response;
         this.addMessage('AI', data.response, 'ai', data);
-        this.speak(data.response);
+        // Text-to-speech disabled
+        // this.speak(data.response);
         
         // Update statistics with realistic values
         const confidence = Math.round((data.confidence || 0.82) * 100);
@@ -603,16 +609,57 @@ class EnhancedAIVoiceAssistant {
         
         const timestamp = new Date().toLocaleTimeString();
         
-        // Check if message contains image URL
-        const imageUrlPattern = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp)/gi;
-        const imageUrls = message.match(imageUrlPattern);
+        // Check if message contains image URL (both external and local)
+        const imageUrlPattern = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp)|\/static\/generated_images\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp))/gi;
+        
+        // Check for full localhost URLs pointing to images
+        const fullLocalUrlPattern = /(http:\/\/127\.0\.0\.1:8080\/static\/generated_images\/[^\s]+\.(png|jpg|jpeg|gif|webp))/gi;
+        
+        // Check for markdown image syntax: ![alt](url)
+        const markdownImagePattern = /!\[.*?\]\((\/static\/generated_images\/[^)]+\.(png|jpg|jpeg|gif|webp))\)/gi;
+        
+        // Also check for image paths that might be on their own line with more flexible matching
+        const localImagePattern = /\/static\/generated_images\/[\w\-\.]+\.(png|jpg|jpeg|gif|webp)/gi;
+        
+        // Even more specific pattern for the exact format we're generating
+        const specificImagePattern = /\/static\/generated_images\/[a-f0-9\-]+\.png/gi;
+        
+        let imageUrls = message.match(imageUrlPattern) || [];
+        const fullLocalUrls = message.match(fullLocalUrlPattern) || [];
+        const localImages = message.match(localImagePattern) || [];
+        const specificImages = message.match(specificImagePattern) || [];
+        
+        // Extract URLs from markdown image syntax
+        let markdownMatch;
+        const markdownImages = [];
+        while ((markdownMatch = markdownImagePattern.exec(message)) !== null) {
+            markdownImages.push(markdownMatch[1]);
+        }
+        
+        // Combine all patterns and remove duplicates
+        imageUrls = [...imageUrls, ...fullLocalUrls, ...localImages, ...specificImages, ...markdownImages].filter((url, index, self) => self.indexOf(url) === index);
+        
+        // Remove image URLs from the message text if they will be displayed as images
+        let displayMessage = message;
+        if (imageUrls && imageUrls.length > 0) {
+            // Remove markdown image syntax
+            displayMessage = displayMessage.replace(/!\[.*?\]\([^)]+\)/gi, '');
+            
+            // Remove plain image URLs
+            imageUrls.forEach(url => {
+                displayMessage = displayMessage.replace(url, '').trim();
+            });
+            
+            // Clean up any extra line breaks
+            displayMessage = displayMessage.replace(/\n\s*\n/g, '\n').trim();
+        }
         
         let messageContent = `
             <div class="message-header">
                 <strong>${sender}</strong>
                 <span class="timestamp">${timestamp}</span>
             </div>
-            <div class="message-content">${message}</div>
+            <div class="message-content">${displayMessage}</div>
         `;
         
         // Add image display if image URLs are found
@@ -680,35 +727,8 @@ class EnhancedAIVoiceAssistant {
     }
     
     speak(text) {
-        if (this.synthesis && !this.isSpeaking) {
-            // Cancel any ongoing speech
-            this.synthesis.cancel();
-            
-            // Clean text by removing emojis and extra symbols for speech
-            const cleanText = this.cleanTextForSpeech(text);
-            
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.rate = 0.9;
-            utterance.pitch = 1.0;
-            utterance.volume = 0.8;
-            
-            utterance.onstart = () => {
-                this.isSpeaking = true;
-                this.updateStatus('Speaking...');
-            };
-            
-            utterance.onend = () => {
-                this.isSpeaking = false;
-                this.updateStatus('Ready');
-            };
-            
-            utterance.onerror = () => {
-                this.isSpeaking = false;
-                this.updateStatus('Ready');
-            };
-            
-            this.synthesis.speak(utterance);
-        }
+        // Text-to-speech is disabled
+        return;
     }
     
     cleanTextForSpeech(text) {
