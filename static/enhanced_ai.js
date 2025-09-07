@@ -612,8 +612,20 @@ class EnhancedAIVoiceAssistant {
         // Check if message contains image URL (both external and local)
         const imageUrlPattern = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp)|\/static\/generated_images\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp))/gi;
         
+        // Check for video URLs
+        const videoUrlPattern = /(https?:\/\/[^\s]+\.(mp4|avi|mov|webm|mkv)|\/static\/videos\/[^\s]+\.(mp4|avi|mov|webm|mkv))/gi;
+        
+        // Check for GIF URLs (animated GIFs)
+        const gifUrlPattern = /(https?:\/\/[^\s]+\.gif|\/static\/gifs\/[^\s]+\.gif)/gi;
+        
         // Check for full localhost URLs pointing to images
         const fullLocalUrlPattern = /(http:\/\/127\.0\.0\.1:8080\/static\/generated_images\/[^\s]+\.(png|jpg|jpeg|gif|webp))/gi;
+        
+        // Check for full localhost URLs pointing to videos
+        const fullLocalVideoPattern = /(http:\/\/127\.0\.0\.1:8080\/static\/videos\/[^\s]+\.(mp4|avi|mov|webm|mkv))/gi;
+        
+        // Check for full localhost URLs pointing to GIFs
+        const fullLocalGifPattern = /(http:\/\/127\.0\.0\.1:8080\/static\/gifs\/[^\s]+\.gif)/gi;
         
         // Check for markdown image syntax: ![alt](url)
         const markdownImagePattern = /!\[.*?\]\((\/static\/generated_images\/[^)]+\.(png|jpg|jpeg|gif|webp))\)/gi;

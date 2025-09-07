@@ -1410,7 +1410,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None):
@@ -1443,6 +1443,10 @@ def process_user_input(user_input, personality='friendly', session_id=None):
             response = handle_reminder(user_input)
         elif intent == 'image_generation':
             response = handle_image_generation(user_input)
+        elif intent == 'video_generation':
+            response = handle_video_generation(user_input)
+        elif intent == 'gif_generation':
+            response = handle_gif_generation(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
