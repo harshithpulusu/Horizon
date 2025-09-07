@@ -630,16 +630,31 @@ class EnhancedAIVoiceAssistant {
         // Check for markdown image syntax: ![alt](url)
         const markdownImagePattern = /!\[.*?\]\((\/static\/generated_images\/[^)]+\.(png|jpg|jpeg|gif|webp))\)/gi;
         
-        // Also check for image paths that might be on their own line with more flexible matching
+        // Also check for video and gif paths that might be on their own line
         const localImagePattern = /\/static\/generated_images\/[\w\-\.]+\.(png|jpg|jpeg|gif|webp)/gi;
+        const localVideoPattern = /\/static\/videos\/[\w\-\.]+\.(mp4|avi|mov|webm|mkv)/gi;
+        const localGifPattern = /\/static\/gifs\/[\w\-\.]+\.gif/gi;
         
         // Even more specific pattern for the exact format we're generating
         const specificImagePattern = /\/static\/generated_images\/[a-f0-9\-]+\.png/gi;
+        const specificVideoPattern = /\/static\/videos\/[a-f0-9\-]+\.mp4/gi;
+        const specificGifPattern = /\/static\/gifs\/[a-f0-9\-]+\.gif/gi;
         
         let imageUrls = message.match(imageUrlPattern) || [];
+        let videoUrls = message.match(videoUrlPattern) || [];
+        let gifUrls = message.match(gifUrlPattern) || [];
+        
         const fullLocalUrls = message.match(fullLocalUrlPattern) || [];
+        const fullLocalVideos = message.match(fullLocalVideoPattern) || [];
+        const fullLocalGifs = message.match(fullLocalGifPattern) || [];
+        
         const localImages = message.match(localImagePattern) || [];
+        const localVideos = message.match(localVideoPattern) || [];
+        const localGifs = message.match(localGifPattern) || [];
+        
         const specificImages = message.match(specificImagePattern) || [];
+        const specificVideos = message.match(specificVideoPattern) || [];
+        const specificGifs = message.match(specificGifPattern) || [];
         
         // Extract URLs from markdown image syntax
         let markdownMatch;
@@ -650,15 +665,20 @@ class EnhancedAIVoiceAssistant {
         
         // Combine all patterns and remove duplicates
         imageUrls = [...imageUrls, ...fullLocalUrls, ...localImages, ...specificImages, ...markdownImages].filter((url, index, self) => self.indexOf(url) === index);
+        videoUrls = [...videoUrls, ...fullLocalVideos, ...localVideos, ...specificVideos].filter((url, index, self) => self.indexOf(url) === index);
+        gifUrls = [...gifUrls, ...fullLocalGifs, ...localGifs, ...specificGifs].filter((url, index, self) => self.indexOf(url) === index);
+        
+        // Combine all media URLs for message cleaning
+        const allMediaUrls = [...imageUrls, ...videoUrls, ...gifUrls];
         
         // Remove image URLs from the message text if they will be displayed as images
         let displayMessage = message;
-        if (imageUrls && imageUrls.length > 0) {
+        if (allMediaUrls && allMediaUrls.length > 0) {
             // Remove markdown image syntax
             displayMessage = displayMessage.replace(/!\[.*?\]\([^)]+\)/gi, '');
             
-            // Remove plain image URLs
-            imageUrls.forEach(url => {
+            // Remove plain media URLs
+            allMediaUrls.forEach(url => {
                 displayMessage = displayMessage.replace(url, '').trim();
             });
             
@@ -691,6 +711,67 @@ class EnhancedAIVoiceAssistant {
                             <a href="${url}" target="_blank">View original link</a>
                         </div>
                         <div class="image-actions">
+                            <button onclick="window.open('${url}', '_blank')" class="action-btn">
+                                🔗 Open in New Tab
+                            </button>
+                            <button onclick="navigator.clipboard.writeText('${url}')" class="action-btn">
+                                📋 Copy URL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            messageContent += '</div>';
+        }
+
+        // Add video display if video URLs are found
+        if (videoUrls && videoUrls.length > 0) {
+            messageContent += '<div class="video-gallery">';
+            videoUrls.forEach(url => {
+                messageContent += `
+                    <div class="generated-video-container">
+                        <video controls class="generated-video"
+                               onloadstart="professionalUI.showToast('🎥 Video loading...', 'info', 2000);"
+                               oncanplay="professionalUI.showToast('🎥 Video ready to play!', 'success', 3000);"
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <source src="${url}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="video-error" style="display: none;">
+                            <p>❌ Failed to load video</p>
+                            <a href="${url}" target="_blank">View original link</a>
+                        </div>
+                        <div class="video-actions">
+                            <button onclick="window.open('${url}', '_blank')" class="action-btn">
+                                🔗 Open in New Tab
+                            </button>
+                            <button onclick="navigator.clipboard.writeText('${url}')" class="action-btn">
+                                📋 Copy URL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            messageContent += '</div>';
+        }
+
+        // Add GIF display if GIF URLs are found
+        if (gifUrls && gifUrls.length > 0) {
+            messageContent += '<div class="gif-gallery">';
+            gifUrls.forEach(url => {
+                messageContent += `
+                    <div class="generated-gif-container">
+                        <img src="${url}" 
+                             alt="Generated AI GIF" 
+                             class="generated-gif"
+                             onclick="this.classList.toggle('fullscreen')"
+                             onload="professionalUI.showToast('🎞️ GIF loaded successfully!', 'success', 3000);"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="gif-error" style="display: none;">
+                            <p>❌ Failed to load GIF</p>
+                            <a href="${url}" target="_blank">View original link</a>
+                        </div>
+                        <div class="gif-actions">
                             <button onclick="window.open('${url}', '_blank')" class="action-btn">
                                 🔗 Open in New Tab
                             </button>
