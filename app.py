@@ -21,17 +21,33 @@ import subprocess
 import tempfile
 import io
 import base64
-from PIL import Image, ImageDraw, ImageFont
-import imageio
 from config import Config
+
+# Video generation imports
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    import imageio
+    import cv2
+    import numpy as np
+    VIDEO_FEATURES_AVAILABLE = True
+    print("🎥 Video generation features loaded successfully")
+except ImportError as e:
+    VIDEO_FEATURES_AVAILABLE = False
+    print(f"⚠️ Video features not available: {e}")
+    print("💡 Install with: pip install Pillow imageio imageio-ffmpeg opencv-python")
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Create images directory if it doesn't exist
+# Create media directories if they don't exist
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_images')
+VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_videos')
+GIFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_gifs')
+
 os.makedirs(IMAGES_DIR, exist_ok=True)
+os.makedirs(VIDEOS_DIR, exist_ok=True)
+os.makedirs(GIFS_DIR, exist_ok=True)
 
 # ChatGPT API Integration
 try:
@@ -1076,6 +1092,219 @@ def handle_image_generation(text):
         print(f"Error in handle_image_generation: {e}")
         return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
 
+# ===============================================
+# 🎥 AI VIDEO GENERATION FUNCTIONS
+# ===============================================
+
+def generate_text_video(text_prompt, duration=3, fps=24):
+    """Generate a simple animated text video"""
+    if not VIDEO_FEATURES_AVAILABLE:
+        return None, "Video features not available. Please install required packages."
+    
+    try:
+        # Create frames for the video
+        width, height = 1920, 1080
+        frames = []
+        total_frames = duration * fps
+        
+        # Create background gradient
+        for frame_num in range(total_frames):
+            # Create a frame
+            frame = np.zeros((height, width, 3), dtype=np.uint8)
+            
+            # Add gradient background
+            for y in range(height):
+                color_value = int(255 * (y / height) * (frame_num / total_frames))
+                frame[y, :] = [color_value % 100 + 50, (color_value + 50) % 255, (color_value + 100) % 255]
+            
+            # Convert to PIL for text
+            pil_frame = Image.fromarray(frame)
+            draw = ImageDraw.Draw(pil_frame)
+            
+            # Try to load a font, fallback to default
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 72)
+            except:
+                font = ImageFont.load_default()
+            
+            # Calculate text position for centering
+            bbox = draw.textbbox((0, 0), text_prompt, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            x = (width - text_width) // 2
+            y = (height - text_height) // 2
+            
+            # Add text with animation effect
+            alpha = int(255 * min(1.0, frame_num / (total_frames * 0.3)))
+            text_color = (255, 255, 255, alpha) if frame_num < total_frames * 0.8 else (255, 255, 255, 255 - int(255 * (frame_num - total_frames * 0.8) / (total_frames * 0.2)))
+            
+            draw.text((x, y), text_prompt, fill=(255, 255, 255), font=font)
+            
+            frames.append(np.array(pil_frame))
+        
+        # Save as video
+        video_id = str(uuid.uuid4())
+        video_filename = f"{video_id}.mp4"
+        video_path = os.path.join(VIDEOS_DIR, video_filename)
+        
+        # Write video using imageio
+        with imageio.get_writer(video_path, fps=fps, codec='libx264') as writer:
+            for frame in frames:
+                writer.append_data(frame)
+        
+        return video_filename, None
+        
+    except Exception as e:
+        return None, f"Error generating video: {str(e)}"
+
+def generate_animated_gif(text_prompt, duration=2, fps=10):
+    """Generate an animated GIF from text prompt"""
+    if not VIDEO_FEATURES_AVAILABLE:
+        return None, "GIF features not available. Please install required packages."
+    
+    try:
+        # Create frames for the GIF
+        width, height = 800, 600
+        frames = []
+        total_frames = duration * fps
+        
+        for frame_num in range(total_frames):
+            # Create animated background
+            frame = Image.new('RGB', (width, height), color=(50, 50, 100))
+            draw = ImageDraw.Draw(frame)
+            
+            # Animated circles
+            for i in range(5):
+                angle = (frame_num + i * 10) * 0.1
+                x = int(width/2 + 200 * np.cos(angle))
+                y = int(height/2 + 100 * np.sin(angle))
+                color = (100 + i * 30, 150 + i * 20, 200 + i * 10)
+                draw.ellipse([x-30, y-30, x+30, y+30], fill=color)
+            
+            # Add text
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 48)
+            except:
+                font = ImageFont.load_default()
+            
+            bbox = draw.textbbox((0, 0), text_prompt, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            x = (width - text_width) // 2
+            y = (height - text_height) // 2
+            
+            draw.text((x, y), text_prompt, fill=(255, 255, 255), font=font)
+            frames.append(frame)
+        
+        # Save as GIF
+        gif_id = str(uuid.uuid4())
+        gif_filename = f"{gif_id}.gif"
+        gif_path = os.path.join(GIFS_DIR, gif_filename)
+        
+        frames[0].save(
+            gif_path, 
+            save_all=True, 
+            append_images=frames[1:], 
+            duration=int(1000/fps), 
+            loop=0
+        )
+        
+        return gif_filename, None
+        
+    except Exception as e:
+        return None, f"Error generating GIF: {str(e)}"
+
+def handle_video_generation(text):
+    """Handle video generation requests"""
+    # Extract the prompt from the text
+    prompt_patterns = [
+        r'generate.*video.*[of|about|showing]\s*(.+)',
+        r'create.*video.*[of|about|showing]\s*(.+)',
+        r'make.*video.*[of|about|showing]\s*(.+)',
+        r'video.*[of|about|showing]\s*(.+)',
+        r'generate.*video\s*(.+)',
+        r'create.*video\s*(.+)',
+        r'make.*video\s*(.+)'
+    ]
+    
+    prompt = None
+    for pattern in prompt_patterns:
+        match = re.search(pattern, text.lower())
+        if match:
+            prompt = match.group(1).strip()
+            break
+    
+    if not prompt:
+        return "🎥 I can generate videos for you! Please describe what you'd like me to create. For example: 'generate a video of dancing robots' or 'create a video about space exploration'."
+    
+    print(f"🎥 Generating video with prompt: {prompt}")
+    
+    try:
+        # Generate the video
+        video_filename, error = generate_text_video(prompt)
+        
+        if error:
+            return f"🎥 I encountered an issue generating the video: {error}"
+        
+        if video_filename:
+            # Create full URL for the video
+            full_video_url = f"http://192.168.1.206:8080/static/generated_videos/{video_filename}"
+            return f"""🎥 Video Generated
+
+{full_video_url}"""
+        else:
+            return "🎥 I had trouble generating that video. Please try a different description."
+            
+    except Exception as e:
+        print(f"Error in video generation: {e}")
+        return "🎥 I had trouble generating that video. Please make sure your request is clear and try again!"
+
+def handle_gif_generation(text):
+    """Handle animated GIF generation requests"""
+    # Extract the prompt from the text
+    prompt_patterns = [
+        r'generate.*gif.*[of|about|showing]\s*(.+)',
+        r'create.*gif.*[of|about|showing]\s*(.+)',
+        r'make.*gif.*[of|about|showing]\s*(.+)',
+        r'gif.*[of|about|showing]\s*(.+)',
+        r'generate.*gif\s*(.+)',
+        r'create.*gif\s*(.+)',
+        r'make.*gif\s*(.+)',
+        r'animate.*(.+)'
+    ]
+    
+    prompt = None
+    for pattern in prompt_patterns:
+        match = re.search(pattern, text.lower())
+        if match:
+            prompt = match.group(1).strip()
+            break
+    
+    if not prompt:
+        return "🎬 I can create animated GIFs for you! Please describe what you'd like me to animate. For example: 'generate a gif of bouncing balls' or 'animate a spinning logo'."
+    
+    print(f"🎬 Generating GIF with prompt: {prompt}")
+    
+    try:
+        # Generate the GIF
+        gif_filename, error = generate_animated_gif(prompt)
+        
+        if error:
+            return f"🎬 I encountered an issue generating the GIF: {error}"
+        
+        if gif_filename:
+            # Create full URL for the GIF
+            full_gif_url = f"http://192.168.1.206:8080/static/generated_gifs/{gif_filename}"
+            return f"""🎬 Animated GIF Generated
+
+{full_gif_url}"""
+        else:
+            return "🎬 I had trouble generating that GIF. Please try a different description."
+            
+    except Exception as e:
+        print(f"Error in GIF generation: {e}")
+        return "🎬 I had trouble generating that GIF. Please make sure your request is clear and try again!"
+
 # Intent recognition
 INTENT_PATTERNS = {
     'greeting': [r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b'],
@@ -1101,6 +1330,23 @@ INTENT_PATTERNS = {
         r'\bdraw me\b', r'\bcreate.*visual\b', r'\bgenerate.*art\b',
         r'\bai.*image\b', r'\bai.*picture\b', r'\bdall.*e\b',
         r'\bshow me.*image\b', r'\bvisualize\b'
+    ],
+    'video_generation': [
+        r'\b(generate|create|make|produce).*video\b',
+        r'\b(generate|create|make|produce).*movie\b',
+        r'\b(generate|create|make|produce).*film\b',
+        r'\bvideo of\b', r'\bmovie of\b', r'\bfilm of\b',
+        r'\bai.*video\b', r'\btext.*to.*video\b',
+        r'\bshow me.*video\b', r'\bvideo.*about\b',
+        r'\brecord.*video\b', r'\bvideo.*clip\b'
+    ],
+    'gif_generation': [
+        r'\b(generate|create|make|produce).*gif\b',
+        r'\b(generate|create|make|produce).*animation\b',
+        r'\bgif of\b', r'\banimate\b', r'\banimated\b',
+        r'\bai.*gif\b', r'\bmoving.*image\b',
+        r'\bshow me.*gif\b', r'\bgif.*about\b',
+        r'\bloop.*animation\b', r'\bshort.*animation\b'
     ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
