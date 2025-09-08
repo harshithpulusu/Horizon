@@ -1106,6 +1106,226 @@ def handle_image_generation(text):
 # 🎥 AI VIDEO GENERATION FUNCTIONS
 # ===============================================
 
+def generate_text_video(text_prompt, duration=5, fps=30, quality="high", method="auto"):
+    """Enhanced video generation with hybrid DALL-E + Runway ML support"""
+    
+    # Check if Runway ML is available
+    runway_available = bool(Config.RUNWAY_API_KEY)
+    
+    # Determine best method
+    if method == "auto":
+        chosen_method = determine_best_video_method(text_prompt, runway_available)
+    else:
+        chosen_method = method
+    
+    # Validate method availability
+    if chosen_method == 'runway' and not runway_available:
+        print("⚠️ Runway ML not available, falling back to DALL-E")
+        chosen_method = 'dalle'
+    
+    print(f"🎬 Generating video using {chosen_method.upper()} method...")
+    print(f"   📝 Prompt: {text_prompt}")
+    print(f"   ⚙️ Quality: {quality}")
+    
+    # Generate video based on chosen method
+    if chosen_method == 'runway' and runway_available:
+        return generate_runway_video(text_prompt, duration, quality)
+    else:
+        # Call existing DALL-E function and ensure we return a tuple
+        result = generate_dalle_only_video(text_prompt, duration, fps, quality)
+        if isinstance(result, tuple):
+            return result
+        else:
+            # If it returns just a filename, create tuple
+            return (result, None) if result else (None, "Failed to generate video")
+
+def determine_best_video_method(prompt, runway_available):
+    """Intelligently choose between DALL-E and Runway based on prompt"""
+    
+    if not runway_available:
+        return 'dalle'
+    
+    # Analyze prompt for cinematic keywords
+    cinematic_keywords = [
+        'cinematic', 'movie', 'film', 'dramatic', 'realistic', 'professional',
+        'motion', 'movement', 'action', 'flowing', 'dynamic', 'smooth',
+        'hollywood', 'epic', 'scene', 'sequence', 'camera', 'shot'
+    ]
+    
+    prompt_lower = prompt.lower()
+    
+    # Check for cinematic keywords
+    if any(keyword in prompt_lower for keyword in cinematic_keywords):
+        return 'runway'
+    
+    # Check for complex scenes that benefit from true video
+    complex_keywords = [
+        'dancing', 'running', 'flying', 'swimming', 'walking', 'moving',
+        'jumping', 'rotating', 'spinning', 'flowing', 'waves', 'fire',
+        'smoke', 'water', 'wind', 'explosion', 'growing', 'transforming'
+    ]
+    
+    if any(keyword in prompt_lower for keyword in complex_keywords):
+        return 'runway'
+    
+    # Default to DALL-E for static or simple scenes
+    return 'dalle'
+
+def generate_runway_video(prompt, duration=5, quality="high"):
+    """Generate video using Runway ML for cinematic quality"""
+    
+    try:
+        import requests
+        import time
+        import uuid
+        
+        # Enhanced prompt for Runway ML
+        runway_prompt = enhance_prompt_for_runway(prompt, quality)
+        
+        # Runway ML API call
+        headers = {
+            "Authorization": f"Bearer {Config.RUNWAY_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Video generation request
+        generation_data = {
+            "text_prompt": runway_prompt,
+            "duration": min(duration, 10),  # Runway has limits
+            "ratio": "16:9",
+            "watermark": False,
+            "enhance_prompt": True,
+            "seed": None  # Random seed for variety
+        }
+        
+        print(f"🎭 Runway ML: Creating cinematic video...")
+        print(f"📝 Enhanced prompt: {runway_prompt}")
+        
+        # Start generation
+        response = requests.post(
+            "https://api.runwayml.com/v1/generate",
+            headers=headers,
+            json=generation_data
+        )
+        
+        if response.status_code == 200:
+            task_id = response.json()["id"]
+            print(f"🔄 Runway generation started (ID: {task_id})")
+            
+            # Poll for completion (simplified version)
+            max_wait = 300  # 5 minutes
+            start_time = time.time()
+            
+            while time.time() - start_time < max_wait:
+                try:
+                    status_response = requests.get(
+                        f"https://api.runwayml.com/v1/tasks/{task_id}",
+                        headers=headers
+                    )
+                    
+                    if status_response.status_code == 200:
+                        status_data = status_response.json()
+                        status = status_data.get("status")
+                        
+                        if status == "SUCCEEDED":
+                            video_url = status_data.get("output", {}).get("video_url")
+                            print("✅ Runway ML generation completed!")
+                            
+                            # Download video
+                            video_filename = download_runway_video(video_url)
+                            if video_filename:
+                                return video_filename, None
+                            else:
+                                return None, "Failed to download Runway video"
+                                
+                        elif status == "FAILED":
+                            error = status_data.get("error", "Unknown error")
+                            print(f"❌ Runway ML generation failed: {error}")
+                            break
+                        else:
+                            print(f"🔄 Runway ML status: {status}...")
+                            time.sleep(10)
+                    else:
+                        print(f"⚠️ Status check failed: {status_response.status_code}")
+                        time.sleep(5)
+                        
+                except Exception as e:
+                    print(f"⚠️ Error checking status: {e}")
+                    time.sleep(5)
+            
+            print("⏰ Runway ML generation timed out")
+            
+        else:
+            error_msg = response.json().get('error', 'Unknown Runway error')
+            print(f"❌ Runway ML error: {error_msg}")
+            
+    except Exception as e:
+        print(f"❌ Runway ML generation failed: {e}")
+    
+    # Fallback to DALL-E
+    print("🔄 Falling back to DALL-E system...")
+    return generate_dalle_only_video(prompt, duration, 30, quality)
+
+def enhance_prompt_for_runway(prompt, quality):
+    """Enhance prompt specifically for Runway ML"""
+    
+    quality_enhancers = {
+        "quick": "simple, clean",
+        "standard": "detailed, good lighting",
+        "high": "cinematic, professional lighting, high detail, 4K quality",
+        "ultra": "cinematic masterpiece, dramatic lighting, ultra-detailed, professional cinematography, epic scene"
+    }
+    
+    enhancer = quality_enhancers.get(quality, quality_enhancers["high"])
+    
+    # Add cinematic elements
+    enhanced = f"{prompt}, {enhancer}, smooth motion, realistic movement"
+    
+    # Add style hints based on content
+    if any(word in prompt.lower() for word in ['nature', 'landscape', 'outdoor']):
+        enhanced += ", natural lighting, outdoor cinematography"
+    elif any(word in prompt.lower() for word in ['person', 'people', 'character']):
+        enhanced += ", portrait lighting, character focus"
+    elif any(word in prompt.lower() for word in ['abstract', 'artistic']):
+        enhanced += ", artistic style, creative cinematography"
+    
+    return enhanced
+
+def download_runway_video(video_url):
+    """Download Runway ML generated video"""
+    
+    try:
+        import requests
+        import uuid
+        import os
+        
+        video_response = requests.get(video_url)
+        
+        if video_response.status_code == 200:
+            # Generate unique filename
+            video_id = str(uuid.uuid4())
+            video_filename = f"runway_{video_id}.mp4"
+            
+            # Ensure videos directory exists
+            videos_dir = "static/generated_videos"
+            os.makedirs(videos_dir, exist_ok=True)
+            
+            video_path = os.path.join(videos_dir, video_filename)
+            
+            # Save video file
+            with open(video_path, 'wb') as f:
+                f.write(video_response.content)
+            
+            print(f"✅ Runway video saved: {video_filename}")
+            return video_filename
+        else:
+            print(f"❌ Failed to download video: {video_response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error downloading video: {e}")
+        return None
+
 def generate_dalle_only_video(text_prompt, duration=5, fps=30, quality="high"):
     """Generate a high-quality animated text video with DALL-E enhanced visuals"""
     if not VIDEO_FEATURES_AVAILABLE:
@@ -1622,13 +1842,8 @@ Just describe what you'd like me to create!"""
                     "ultra": "DALL-E Ultra (1024×1024, 10s) 🎨 Masterpiece animated"
                 }
             
-            return f"""🎥 **Video Generated Successfully!**
-
-📹 **Method**: {method_name}
-⚙️ **Quality**: {quality_desc.get(quality, quality)}
-🎬 **Video**: {full_video_url}
-
-Your video is ready! The system intelligently chose the best generation method for your prompt."""
+            return f"""📹 **Method**: {method_name}
+🎬 **Video**: {full_video_url}"""
             
             return f"""🎥 {quality_desc.get(quality, 'High Quality')} Video Generated
 📝 Prompt: "{prompt}"
