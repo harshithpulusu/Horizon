@@ -10,6 +10,10 @@ OPENAI_API_KEY=your_openai_api_key_here
 # 🎯 HIGH-IMPACT APIs (Recommended)
 # ============================================
 
+# 🎬 Video Generation APIs
+# DALL-E is included with OpenAI, Runway ML is premium upgrade
+RUNWAY_API_KEY=your_runway_api_key_here  # Premium cinematic videos ($12+/month)
+
 # 🗣️ Premium Voice Synthesis (Game Changer!)
 # Get from: https://elevenlabs.io/
 ELEVENLABS_API_KEY=your_elevenlabs_key_here

@@ -1106,7 +1106,7 @@ def handle_image_generation(text):
 # 🎥 AI VIDEO GENERATION FUNCTIONS
 # ===============================================
 
-def generate_text_video(text_prompt, duration=5, fps=30, quality="high"):
+def generate_dalle_only_video(text_prompt, duration=5, fps=30, quality="high"):
     """Generate a high-quality animated text video with DALL-E enhanced visuals"""
     if not VIDEO_FEATURES_AVAILABLE:
         return None, "Video features not available. Please install required packages."
@@ -1532,7 +1532,8 @@ def generate_animated_gif(text_prompt, duration=3, fps=15, quality="high"):
         return None, f"Error generating GIF: {str(e)}"
 
 def handle_video_generation(text):
-    """Handle video generation requests with quality detection"""
+    """Enhanced video generation with hybrid DALL-E + Runway ML support"""
+    
     # Extract quality level from text
     quality = "quick"  # Default to quick for faster processing
     if any(word in text.lower() for word in ["speed", "fast", "rapid", "instant"]):
@@ -1544,6 +1545,13 @@ def handle_video_generation(text):
     elif any(word in text.lower() for word in ["high", "quality", "premium"]):
         quality = "high"
     
+    # Extract generation method preference
+    method = "auto"  # Default to automatic method selection
+    if any(word in text.lower() for word in ["cinematic", "movie", "film", "realistic", "professional", "runway"]):
+        method = "runway"
+    elif any(word in text.lower() for word in ["dalle", "animated", "slideshow", "quick", "cheap"]):
+        method = "dalle"
+    
     # Extract the prompt from the text
     prompt_patterns = [
         r'generate.*video.*(?:of|about|showing)\s*(.+)',
@@ -1553,7 +1561,8 @@ def handle_video_generation(text):
         r'generate.*video\s*(.+)',
         r'create.*video\s*(.+)',
         r'make.*video\s*(.+)',
-        r'(?:video|movie|film).*[:\-]\s*(.+)'
+        r'(?:video|movie|film).*[:\-]\s*(.+)',
+        r'(?:cinematic|runway|dalle).*(?:video|shot).*(?:of|about)\s*(.+)'
     ]
     
     prompt = None
@@ -1564,31 +1573,62 @@ def handle_video_generation(text):
             break
     
     if not prompt:
-        return f"🎥 I can generate {quality} quality videos for you! Please describe what you'd like me to create. For example: 'generate a video of dancing robots' or 'create a high quality video about space exploration'."
+        return f"""🎥 I can generate videos using multiple methods:
+        
+🎨 **DALL-E Animated** (Fast & Affordable):
+- 'create a video of cats playing'
+- 'make a quick video about sunset'
+
+🎬 **Runway ML Cinematic** (Professional & Realistic):
+- 'create a cinematic video of dancing robot'
+- 'make a professional video of space exploration'
+
+Just describe what you'd like me to create!"""
     
     # Clean up prompt
     prompt = prompt.replace("high quality", "").replace("ultra quality", "").replace("quick", "").strip()
+    prompt = prompt.replace("cinematic", "").replace("runway", "").replace("dalle", "").strip()
     
-    print(f"🎥 Generating {quality} quality video with prompt: {prompt}")
+    print(f"🎥 Generating {quality} quality video with {method} method: {prompt}")
     
     try:
-        # Generate the video with specified quality
-        video_filename, error = generate_text_video(prompt, quality=quality)
+        # Generate the video with specified quality and method
+        video_filename, error = generate_text_video(prompt, quality=quality, method=method)
         
         if error:
             return f"🎥 I encountered an issue generating the video: {error}"
         
         if video_filename:
+            # Determine if it's a Runway or DALL-E video for appropriate messaging
+            is_runway = video_filename.startswith('runway_')
+            method_name = "Runway ML Cinematic" if is_runway else "DALL-E Animated"
+            
             # Create full URL for the video
             full_video_url = f"http://192.168.1.206:8080/static/generated_videos/{video_filename}"
             
-            # Quality descriptions - updated for speed optimizations
-            quality_desc = {
-                "quick": "Quick (480×270, 8fps, 1.5s) ⚡ ~3-8 seconds",
-                "standard": "Standard (720×480, 12fps, 2s) ⚡ ~5-12 seconds", 
-                "high": "High Quality (1280×720, 15fps, 3s) ⚡ ~8-20 seconds",
-                "ultra": "Ultra Quality (1920×1080, 20fps, 4s) ⚡ ~12-30 seconds"
-            }
+            # Enhanced quality descriptions for hybrid system
+            if is_runway:
+                quality_desc = {
+                    "quick": "Runway Quick (16:9, 3s) 🎬 Cinematic quality",
+                    "standard": "Runway Standard (16:9, 5s) 🎬 Professional grade",
+                    "high": "Runway High (16:9, 7s) 🎬 Hollywood quality",
+                    "ultra": "Runway Ultra (16:9, 10s) 🎬 Masterpiece level"
+                }
+            else:
+                quality_desc = {
+                    "quick": "DALL-E Quick (512×512, 3s) 🎨 Fast animated",
+                    "standard": "DALL-E Standard (512×512, 5s) 🎨 Detailed animated",
+                    "high": "DALL-E High (1024×1024, 7s) 🎨 Premium animated", 
+                    "ultra": "DALL-E Ultra (1024×1024, 10s) 🎨 Masterpiece animated"
+                }
+            
+            return f"""🎥 **Video Generated Successfully!**
+
+📹 **Method**: {method_name}
+⚙️ **Quality**: {quality_desc.get(quality, quality)}
+🎬 **Video**: {full_video_url}
+
+Your video is ready! The system intelligently chose the best generation method for your prompt."""
             
             return f"""🎥 {quality_desc.get(quality, 'High Quality')} Video Generated
 📝 Prompt: "{prompt}"
@@ -1705,7 +1745,11 @@ INTENT_PATTERNS = {
         r'\bvideo of\b', r'\bmovie of\b', r'\bfilm of\b',
         r'\bai.*video\b', r'\btext.*to.*video\b',
         r'\bshow me.*video\b', r'\bvideo.*about\b',
-        r'\brecord.*video\b', r'\bvideo.*clip\b'
+        r'\brecord.*video\b', r'\bvideo.*clip\b',
+        r'\bcinematic.*video\b', r'\brunway.*video\b',
+        r'\bdalle.*video\b', r'\banimated.*video\b',
+        r'\bprofessional.*video\b', r'\brealistic.*video\b',
+        r'\bmovie.*scene\b', r'\bfilm.*sequence\b'
     ],
     'gif_generation': [
         r'\b(generate|create|make|produce).*gif\b',

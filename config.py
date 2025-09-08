@@ -58,6 +58,11 @@ class Config:
     HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', '')
     DEEPAI_API_KEY = os.getenv('DEEPAI_API_KEY', '')
     
+    # 🎬 Video Generation APIs
+    RUNWAY_API_KEY = os.getenv('RUNWAY_API_KEY', '')  # Runway ML for cinematic videos
+    PIKA_API_KEY = os.getenv('PIKA_API_KEY', '')  # Pika Labs alternative
+    STABLE_VIDEO_API_KEY = os.getenv('STABLE_VIDEO_API_KEY', '')  # Stability AI
+    
     # 🗣️ Voice & Speech APIs
     ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')  # Premium TTS
     AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY', '')
