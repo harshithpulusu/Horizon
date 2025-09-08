@@ -1,0 +1,178 @@
+# 🚀 Horizon AI Assistant - API Keys Configuration Template
+# Copy this file to .env and add your actual API keys
+
+# ============================================
+# 🧠 CORE AI APIs (Required)
+# ============================================
+OPENAI_API_KEY=your_openai_api_key_here
+
+# ============================================
+# 🎯 HIGH-IMPACT APIs (Recommended)
+# ============================================
+
+# 🗣️ Premium Voice Synthesis (Game Changer!)
+# Get from: https://elevenlabs.io/
+ELEVENLABS_API_KEY=your_elevenlabs_key_here
+
+# 🎵 Music Control with Spotify
+# Get from: https://developer.spotify.com/dashboard
+SPOTIFY_CLIENT_ID=your_spotify_client_id_here
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret_here
+
+# 🌤️ Weather Information
+# Get from: https://openweathermap.org/api (Free: 1,000 calls/day)
+OPENWEATHERMAP_API_KEY=your_openweather_key_here
+
+# 🧮 Computational Intelligence
+# Get from: https://developer.wolframalpha.com/ ($2/month)
+WOLFRAM_ALPHA_API_KEY=your_wolfram_key_here
+
+# ============================================
+# 📱 USEFUL APIs (Nice to Have)
+# ============================================
+
+# 📰 News Updates
+# Get from: https://newsapi.org/ (Free: 1,000 requests/day)
+NEWS_API_KEY=your_news_api_key_here
+
+# 🎬 YouTube Search & Control
+# Get from: https://console.cloud.google.com/
+YOUTUBE_API_KEY=your_youtube_api_key_here
+
+# 🔍 Web Search
+# Get from: https://developers.google.com/custom-search
+GOOGLE_SEARCH_API_KEY=your_google_search_key_here
+
+# 🗺️ Maps & Location
+# Get from: https://console.cloud.google.com/
+GOOGLE_MAPS_API_KEY=your_google_maps_key_here
+
+# ============================================
+# 🏠 SMART HOME APIs (Advanced)
+# ============================================
+
+# 💡 Philips Hue Lights
+PHILIPS_HUE_API_KEY=your_hue_api_key_here
+
+# 🌡️ Nest Thermostat
+NEST_API_KEY=your_nest_api_key_here
+
+# ============================================
+# 💰 FINANCE & MARKET APIs
+# ============================================
+
+# 📈 Stock Market Data
+# Get from: https://www.alphavantage.co/
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+
+# 🪙 Cryptocurrency Data
+# Get from: https://coinmarketcap.com/api/
+COINMARKETCAP_API_KEY=your_coinmarketcap_key_here
+
+# ============================================
+# 🚗 TRANSPORTATION APIs
+# ============================================
+
+# 🚕 Uber Integration
+UBER_API_KEY=your_uber_api_key_here
+
+# 🚗 Lyft Integration
+LYFT_API_KEY=your_lyft_api_key_here
+
+# ============================================
+# 🧠 ALTERNATIVE AI APIs
+# ============================================
+
+# 🤖 Claude AI (Anthropic)
+# Get from: https://console.anthropic.com/
+ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# 🔮 Cohere AI
+# Get from: https://dashboard.cohere.ai/
+COHERE_API_KEY=your_cohere_key_here
+
+# 🤗 Hugging Face
+# Get from: https://huggingface.co/settings/tokens
+HUGGINGFACE_API_KEY=your_huggingface_key_here
+
+# ============================================
+# 📞 COMMUNICATION APIs
+# ============================================
+
+# 📧 Email Services (SendGrid)
+SENDGRID_API_KEY=your_sendgrid_key_here
+
+# 📱 SMS & Calling (Twilio)
+TWILIO_ACCOUNT_SID=your_twilio_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_token_here
+
+# ============================================
+# 📱 SOCIAL MEDIA APIs
+# ============================================
+
+# 🐦 Twitter Integration
+TWITTER_API_KEY=your_twitter_key_here
+TWITTER_API_SECRET=your_twitter_secret_here
+
+# 📸 Instagram Integration
+INSTAGRAM_API_KEY=your_instagram_key_here
+
+# ============================================
+# 🎮 GAMING & ENTERTAINMENT APIs
+# ============================================
+
+# 🎮 Steam Gaming
+STEAM_API_KEY=your_steam_key_here
+
+# 🎪 Twitch Streaming
+TWITCH_API_KEY=your_twitch_key_here
+
+# 🎯 Discord Bot
+DISCORD_BOT_TOKEN=your_discord_token_here
+
+# ============================================
+# 🔍 COMPUTER VISION APIs
+# ============================================
+
+# 👁️ Google Vision AI
+GOOGLE_VISION_API_KEY=your_google_vision_key_here
+
+# 🔍 Azure Computer Vision
+AZURE_VISION_API_KEY=your_azure_vision_key_here
+
+# 🎨 Clarifai Image Recognition
+CLARIFAI_API_KEY=your_clarifai_key_here
+
+# ============================================
+# 🗣️ ADVANCED SPEECH APIs
+# ============================================
+
+# 🎤 Azure Speech Services
+AZURE_SPEECH_KEY=your_azure_speech_key_here
+
+# 🗣️ Google Speech-to-Text
+GOOGLE_SPEECH_API_KEY=your_google_speech_key_here
+
+# ============================================
+# 🚀 QUICK START GUIDE
+# ============================================
+#
+# 1. PRIORITY APIS (Start here):
+#    - OPENAI_API_KEY (Required)
+#    - ELEVENLABS_API_KEY (Premium voice)
+#    - SPOTIFY_CLIENT_ID & SECRET (Music)
+#    - OPENWEATHERMAP_API_KEY (Weather)
+#
+# 2. NICE TO HAVE:
+#    - WOLFRAM_ALPHA_API_KEY (Calculations)
+#    - NEWS_API_KEY (News updates)
+#    - YOUTUBE_API_KEY (Video search)
+#
+# 3. ADVANCED FEATURES:
+#    - ANTHROPIC_API_KEY (Claude AI)
+#    - GOOGLE_MAPS_API_KEY (Location)
+#    - ALPHA_VANTAGE_API_KEY (Stocks)
+#
+# 🎯 Tip: Start with 3-4 APIs, then expand based on usage!
+# 💡 Many APIs have free tiers - perfect for testing!
+# 🔐 Keep this file secure and never commit to public repos!
