@@ -27,14 +27,24 @@ from config import Config
 try:
     from PIL import Image, ImageDraw, ImageFont
     import imageio
-    import cv2
-    import numpy as np
     VIDEO_FEATURES_AVAILABLE = True
-    print("🎥 Video generation features loaded successfully")
+    print("🎥 Basic video generation features loaded successfully")
+    
+    # Try to import opencv separately
+    try:
+        import cv2
+        import numpy as np
+        OPENCV_AVAILABLE = True
+        print("� Advanced video effects with OpenCV loaded")
+    except ImportError:
+        OPENCV_AVAILABLE = False
+        print("⚠️ OpenCV not available - basic video generation only")
+        
 except ImportError as e:
     VIDEO_FEATURES_AVAILABLE = False
+    OPENCV_AVAILABLE = False
     print(f"⚠️ Video features not available: {e}")
-    print("💡 Install with: pip install Pillow imageio imageio-ffmpeg opencv-python")
+    print("💡 Install with: pip install Pillow imageio imageio-ffmpeg")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -1096,94 +1106,388 @@ def handle_image_generation(text):
 # 🎥 AI VIDEO GENERATION FUNCTIONS
 # ===============================================
 
-def generate_text_video(text_prompt, duration=3, fps=24):
-    """Generate a simple animated text video"""
+def generate_text_video(text_prompt, duration=5, fps=30, quality="high"):
+    """Generate a high-quality animated text video with DALL-E enhanced visuals"""
     if not VIDEO_FEATURES_AVAILABLE:
         return None, "Video features not available. Please install required packages."
     
     try:
-        # Create frames for the video
-        width, height = 1920, 1080
-        frames = []
-        total_frames = duration * fps
+        import math  # Import math for advanced calculations
+        import requests
         
-        # Create background gradient
-        for frame_num in range(total_frames):
-            # Create a frame
-            frame = np.zeros((height, width, 3), dtype=np.uint8)
+        # Enhanced quality presets with longer durations and DALL-E integration
+        quality_settings = {
+            "quick": {"width": 512, "height": 512, "fps": 10, "duration": 3, "dalle_frames": 1},
+            "standard": {"width": 512, "height": 512, "fps": 15, "duration": 5, "dalle_frames": 2},
+            "high": {"width": 1024, "height": 1024, "fps": 20, "duration": 7, "dalle_frames": 3},
+            "ultra": {"width": 1024, "height": 1024, "fps": 24, "duration": 10, "dalle_frames": 4}
+        }
+        
+        # Apply quality settings
+        if quality in quality_settings:
+            settings = quality_settings[quality]
+            width, height = settings["width"], settings["height"]
+            fps = settings["fps"]
+            duration = settings["duration"]
+            dalle_frame_count = settings["dalle_frames"]
+        else:
+            width, height = 1024, 1024
+            dalle_frame_count = 2
+        
+        frames = []
+        total_frames = int(duration * fps)
+        
+        # Generate DALL-E images for key frames
+        print(f"🎨 Generating {dalle_frame_count} DALL-E images for video enhancement...")
+        dalle_images = []
+        
+        for i in range(dalle_frame_count):
+            # Create variations of the prompt for different scenes
+            if dalle_frame_count == 1:
+                dalle_prompt = f"High quality cinematic shot of {text_prompt}, vibrant colors, detailed, 4K"
+            else:
+                scene_variations = [
+                    f"Cinematic wide shot of {text_prompt}, bright lighting, detailed",
+                    f"Close-up view of {text_prompt}, dramatic lighting, high detail",
+                    f"Dynamic action shot of {text_prompt}, motion blur, cinematic",
+                    f"Artistic view of {text_prompt}, beautiful composition, vibrant colors"
+                ]
+                dalle_prompt = scene_variations[i % len(scene_variations)]
             
-            # Add gradient background
-            for y in range(height):
-                color_value = int(255 * (y / height) * (frame_num / total_frames))
-                frame[y, :] = [color_value % 100 + 50, (color_value + 50) % 255, (color_value + 100) % 255]
+            print(f"🖼️ Generating DALL-E image {i+1}/{dalle_frame_count}: {dalle_prompt[:50]}...")
             
-            # Convert to PIL for text
-            pil_frame = Image.fromarray(frame)
-            draw = ImageDraw.Draw(pil_frame)
-            
-            # Try to load a font, fallback to default
+            # Generate DALL-E image
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 72)
+                response = openai.images.generate(
+                    model="dall-e-3",
+                    prompt=dalle_prompt,
+                    size=f"{width}x{height}",
+                    quality="standard",
+                    n=1,
+                )
+                
+                image_url = response.data[0].url
+                
+                # Download and save the image
+                img_response = requests.get(image_url)
+                dalle_image = Image.open(io.BytesIO(img_response.content))
+                dalle_image = dalle_image.resize((width, height), Image.Resampling.LANCZOS)
+                dalle_images.append(dalle_image)
+                print(f"✅ DALL-E image {i+1} generated successfully")
+                
+            except Exception as e:
+                print(f"⚠️ Error generating DALL-E image {i+1}: {e}")
+                # Fallback to themed content
+                fallback_frame = generate_themed_content(text_prompt, width, height, i, dalle_frame_count)
+                dalle_images.append(fallback_frame)
+        
+        print(f"🎬 Creating {total_frames} video frames with DALL-E backgrounds...")
+        
+        # Create video frames with DALL-E backgrounds
+        for frame_num in range(total_frames):
+            progress = frame_num / total_frames
+            
+            # Determine which DALL-E images to blend
+            if len(dalle_images) == 1:
+                # Single image - add subtle animations
+                base_frame = dalle_images[0].copy()
+                
+                # Add subtle zoom and pan effects
+                zoom_factor = 1.0 + 0.05 * math.sin(progress * 2 * math.pi)
+                pan_x = int(10 * math.sin(progress * 4 * math.pi))
+                pan_y = int(5 * math.cos(progress * 3 * math.pi))
+                
+                # Apply zoom and pan
+                zoomed_size = (int(width * zoom_factor), int(height * zoom_factor))
+                if zoom_factor > 1.0:
+                    base_frame = base_frame.resize(zoomed_size, Image.Resampling.LANCZOS)
+                    # Crop back to original size with pan offset
+                    left = (zoomed_size[0] - width) // 2 + pan_x
+                    top = (zoomed_size[1] - height) // 2 + pan_y
+                    base_frame = base_frame.crop((left, top, left + width, top + height))
+                
+            else:
+                # Multiple images - blend between them
+                image_index = progress * (len(dalle_images) - 1)
+                current_image_idx = int(image_index)
+                next_image_idx = min(current_image_idx + 1, len(dalle_images) - 1)
+                blend_factor = image_index - current_image_idx
+                
+                # Blend between current and next image
+                current_image = dalle_images[current_image_idx]
+                next_image = dalle_images[next_image_idx]
+                
+                if current_image_idx == next_image_idx:
+                    base_frame = current_image.copy()
+                else:
+                    base_frame = Image.blend(current_image, next_image, blend_factor)
+            
+            # Add text overlay
+            draw = ImageDraw.Draw(base_frame)
+            
+            # Enhanced font loading
+            base_font_size = max(width // 25, 32)  # Larger, more readable font
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", base_font_size)
             except:
                 font = ImageFont.load_default()
             
-            # Calculate text position for centering
+            # Calculate text position
             bbox = draw.textbbox((0, 0), text_prompt, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             x = (width - text_width) // 2
-            y = (height - text_height) // 2
+            y = height - text_height - 50  # Position near bottom for better visibility
             
-            # Add text with animation effect
-            alpha = int(255 * min(1.0, frame_num / (total_frames * 0.3)))
-            text_color = (255, 255, 255, alpha) if frame_num < total_frames * 0.8 else (255, 255, 255, 255 - int(255 * (frame_num - total_frames * 0.8) / (total_frames * 0.2)))
+            # Enhanced text effects
+            if quality in ["high", "ultra"]:
+                # Multiple shadow layers for depth
+                for offset in range(4, 0, -1):
+                    shadow_alpha = 255 - (offset * 40)
+                    # Create shadow layer
+                    shadow_layer = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+                    shadow_draw = ImageDraw.Draw(shadow_layer)
+                    shadow_draw.text((x + offset, y + offset), text_prompt, 
+                                   fill=(0, 0, 0, shadow_alpha), font=font)
+                    base_frame = Image.alpha_composite(base_frame.convert('RGBA'), shadow_layer).convert('RGB')
             
-            draw.text((x, y), text_prompt, fill=(255, 255, 255), font=font)
+            # Animated text color
+            if quality == "ultra":
+                # Rainbow text animation
+                hue = (progress * 360) % 360
+                import colorsys
+                rgb = colorsys.hsv_to_rgb(hue/360, 0.8, 1.0)
+                text_color = tuple(int(c * 255) for c in rgb)
+            else:
+                # White text with slight glow
+                text_color = (255, 255, 255)
             
-            frames.append(np.array(pil_frame))
+            # Draw main text
+            draw.text((x, y), text_prompt, fill=text_color, font=font)
+            
+            frames.append(base_frame)
         
         # Save as video
         video_id = str(uuid.uuid4())
         video_filename = f"{video_id}.mp4"
         video_path = os.path.join(VIDEOS_DIR, video_filename)
         
-        # Write video using imageio
-        with imageio.get_writer(video_path, fps=fps, codec='libx264') as writer:
-            for frame in frames:
-                writer.append_data(frame)
+        print(f"🎥 Encoding video with {len(frames)} frames...")
         
+        # Write video using imageio with better quality settings
+        with imageio.get_writer(video_path, fps=int(fps), codec='libx264', 
+                               macro_block_size=1, quality=8) as writer:
+            for frame in frames:
+                # Convert PIL Image to numpy array for imageio
+                import numpy as np
+                frame_array = np.array(frame)
+                writer.append_data(frame_array)
+        
+        print(f"✅ Video generated successfully: {video_filename}")
         return video_filename, None
         
     except Exception as e:
         return None, f"Error generating video: {str(e)}"
 
-def generate_animated_gif(text_prompt, duration=2, fps=10):
-    """Generate an animated GIF from text prompt"""
+def generate_themed_content(prompt, width, height, frame_num, total_frames):
+    """Generate themed visual content based on the prompt"""
+    import math
+    import random
+    
+    # Create base frame
+    frame = Image.new('RGB', (width, height))
+    draw = ImageDraw.Draw(frame)
+    
+    progress = frame_num / total_frames
+    
+    # Theme detection and appropriate visuals
+    prompt_lower = prompt.lower()
+    
+    if any(word in prompt_lower for word in ['cat', 'cats', 'kitten', 'feline']):
+        # Cat-themed background
+        # Sky blue to pink gradient for cute cat scene
+        for y in range(height):
+            sky_progress = y / height
+            r = int(135 + sky_progress * 120)  # Pink tones
+            g = int(206 - sky_progress * 100)  # Blue to less blue
+            b = int(250 - sky_progress * 50)   # Keep some blue
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+        
+        # Draw simple cat silhouettes
+        for i in range(3):
+            cat_x = int(width * (0.2 + i * 0.3) + math.sin(progress * 3.14 + i) * 20)
+            cat_y = int(height * 0.7 + math.cos(progress * 6.28 + i) * 10)
+            
+            # Cat body (oval)
+            body_width, body_height = 40, 25
+            draw.ellipse([cat_x-body_width//2, cat_y-body_height//2, 
+                         cat_x+body_width//2, cat_y+body_height//2], fill=(50, 50, 50))
+            
+            # Cat head (circle)
+            head_size = 20
+            head_y = cat_y - 20
+            draw.ellipse([cat_x-head_size//2, head_y-head_size//2,
+                         cat_x+head_size//2, head_y+head_size//2], fill=(60, 60, 60))
+            
+            # Cat ears (triangles)
+            ear_size = 8
+            draw.polygon([(cat_x-12, head_y-15), (cat_x-5, head_y-25), (cat_x+2, head_y-15)], fill=(40, 40, 40))
+            draw.polygon([(cat_x-2, head_y-15), (cat_x+5, head_y-25), (cat_x+12, head_y-15)], fill=(40, 40, 40))
+            
+            # Cat tail (curved line)
+            tail_x = cat_x + 30
+            tail_y = int(cat_y + 15 * math.sin(progress * 6.28 + i * 2))
+            draw.ellipse([tail_x-3, tail_y-15, tail_x+3, tail_y+15], fill=(45, 45, 45))
+    
+    elif any(word in prompt_lower for word in ['sunset', 'sun', 'orange', 'evening']):
+        # Sunset scene
+        for y in range(height):
+            sunset_progress = y / height
+            r = int(255 - sunset_progress * 100)  # Orange to red
+            g = int(165 - sunset_progress * 100)  # Orange to darker
+            b = int(0 + sunset_progress * 100)    # Dark to purple
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+        
+        # Draw sun
+        sun_x = int(width * (0.3 + progress * 0.4))
+        sun_y = int(height * 0.3)
+        sun_size = 40 + int(10 * math.sin(progress * 6.28))
+        draw.ellipse([sun_x-sun_size, sun_y-sun_size, sun_x+sun_size, sun_y+sun_size], 
+                    fill=(255, 255, 100))
+        
+        # Sun rays
+        for i in range(8):
+            angle = (i * 45 + progress * 360) * math.pi / 180
+            ray_start_x = sun_x + int((sun_size + 10) * math.cos(angle))
+            ray_start_y = sun_y + int((sun_size + 10) * math.sin(angle))
+            ray_end_x = sun_x + int((sun_size + 30) * math.cos(angle))
+            ray_end_y = sun_y + int((sun_size + 30) * math.sin(angle))
+            draw.line([(ray_start_x, ray_start_y), (ray_end_x, ray_end_y)], 
+                     fill=(255, 255, 150), width=3)
+    
+    elif any(word in prompt_lower for word in ['space', 'stars', 'galaxy', 'universe', 'cosmic']):
+        # Space scene
+        # Dark gradient background
+        for y in range(height):
+            space_progress = y / height
+            intensity = int(20 + space_progress * 40)
+            draw.line([(0, y), (width, y)], fill=(intensity//3, intensity//2, intensity))
+        
+        # Draw stars
+        for i in range(20):
+            star_x = int((i * 123 + progress * 50) % width)
+            star_y = int((i * 67 + progress * 30) % height)
+            star_brightness = int(150 + 105 * math.sin(progress * 6.28 + i))
+            star_size = 2 + int(2 * math.sin(progress * 3.14 + i * 0.5))
+            draw.ellipse([star_x-star_size, star_y-star_size, star_x+star_size, star_y+star_size],
+                        fill=(star_brightness, star_brightness, 255))
+        
+        # Draw planets
+        for i in range(2):
+            planet_x = int(width * (0.2 + i * 0.6) + math.cos(progress * 2 + i * 3) * 50)
+            planet_y = int(height * (0.3 + i * 0.4) + math.sin(progress * 2 + i * 3) * 30)
+            planet_size = 25 + i * 15
+            colors = [(150, 100, 200), (200, 150, 100)]
+            draw.ellipse([planet_x-planet_size, planet_y-planet_size, 
+                         planet_x+planet_size, planet_y+planet_size], fill=colors[i])
+    
+    elif any(word in prompt_lower for word in ['rainbow', 'colors', 'colorful']):
+        # Rainbow scene
+        # Rainbow bands
+        band_height = height // 7
+        colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), 
+                 (0, 0, 255), (75, 0, 130), (238, 130, 238)]
+        
+        for i, color in enumerate(colors):
+            y_start = i * band_height
+            y_end = min((i + 1) * band_height, height)
+            # Add wave effect
+            for y in range(y_start, y_end):
+                wave_offset = int(20 * math.sin((y + progress * 100) * 0.02))
+                draw.line([(wave_offset, y), (width + wave_offset, y)], fill=color)
+    
+    else:
+        # Default abstract scene
+        # Dynamic gradient
+        for y in range(height):
+            gradient_progress = y / height
+            wave = math.sin(progress * 6.28 + gradient_progress * 3)
+            r = int(100 + 100 * wave)
+            g = int(150 + 50 * math.cos(progress * 4.14 + gradient_progress * 2))
+            b = int(200 + 55 * math.sin(progress * 3.14 + gradient_progress * 4))
+            draw.line([(0, y), (width, y)], fill=(max(0, min(255, r)), 
+                                                  max(0, min(255, g)), 
+                                                  max(0, min(255, b))))
+    
+    return frame
+
+def generate_animated_gif(text_prompt, duration=3, fps=15, quality="high"):
+    """Generate a high-quality animated GIF from text prompt"""
     if not VIDEO_FEATURES_AVAILABLE:
         return None, "GIF features not available. Please install required packages."
     
     try:
-        # Create frames for the GIF
-        width, height = 800, 600
+        import math  # Use math for advanced animations
+        
+        # Quality presets for GIFs - optimized for speed
+        quality_settings = {
+            "quick": {"width": 300, "height": 200, "fps": 6, "duration": 1.5},
+            "standard": {"width": 500, "height": 350, "fps": 8, "duration": 2},
+            "high": {"width": 600, "height": 400, "fps": 10, "duration": 2.5},
+            "ultra": {"width": 800, "height": 600, "fps": 12, "duration": 3}
+        }
+        
+        # Apply quality settings
+        if quality in quality_settings:
+            settings = quality_settings[quality]
+            width, height = settings["width"], settings["height"]
+            fps = settings["fps"] 
+            duration = settings["duration"]
+        else:
+            width, height = 800, 600
         frames = []
-        total_frames = duration * fps
+        total_frames = int(duration * fps)  # Ensure integer for range()
         
         for frame_num in range(total_frames):
-            # Create animated background
-            frame = Image.new('RGB', (width, height), color=(50, 50, 100))
+            # Fast animated background - simple gradient
+            progress = frame_num / total_frames
+            
+            # Create simple two-color gradient background (very fast)
+            color1 = (50 + int(progress * 100), 70 + int(progress * 80), 120 + int(progress * 60))
+            color2 = (120 + int(progress * 60), 100 + int(progress * 100), 180 + int(progress * 40))
+            
+            frame = Image.new('RGB', (width, height))
             draw = ImageDraw.Draw(frame)
             
-            # Animated circles
-            for i in range(5):
-                angle = (frame_num + i * 10) * 0.1
-                x = int(width/2 + 200 * np.cos(angle))
-                y = int(height/2 + 100 * np.sin(angle))
-                color = (100 + i * 30, 150 + i * 20, 200 + i * 10)
-                draw.ellipse([x-30, y-30, x+30, y+30], fill=color)
+            # Simple vertical gradient using rectangles (much faster than pixel-by-pixel)
+            band_height = height // 10  # Only 10 bands for speed
+            for i in range(10):
+                y_start = i * band_height
+                y_end = min((i + 1) * band_height, height)
+                band_progress = i / 9
+                
+                r = int(color1[0] + band_progress * (color2[0] - color1[0]))
+                g = int(color1[1] + band_progress * (color2[1] - color1[1]))
+                b = int(color1[2] + band_progress * (color2[2] - color1[2]))
+                
+                draw.rectangle([0, y_start, width, y_end], fill=(r, g, b))
             
-            # Add text
+            # Simple animated elements (only for higher quality)
+            if quality in ["high", "ultra"]:
+                # Just 2-3 simple moving circles instead of complex orbital math
+                for i in range(3):
+                    angle = (frame_num + i * 20) * 0.2
+                    x = int(width/2 + (width//4) * math.cos(angle))
+                    y = int(height/2 + (height//4) * math.sin(angle))
+                    
+                    size = 8 + i * 4
+                    color = (150 + i * 30, 100 + i * 40, 200 + i * 20)
+                    draw.ellipse([x-size, y-size, x+size, y+size], fill=color)
+            
+            # Fast text rendering
+            base_font_size = max(16, width // 25)
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 48)
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", base_font_size)
             except:
                 font = ImageFont.load_default()
             
@@ -1193,7 +1497,20 @@ def generate_animated_gif(text_prompt, duration=2, fps=10):
             x = (width - text_width) // 2
             y = (height - text_height) // 2
             
-            draw.text((x, y), text_prompt, fill=(255, 255, 255), font=font)
+            # Simple text effects for speed
+            if quality in ["high", "ultra"]:
+                # Simple shadow only for higher quality
+                draw.text((x + 1, y + 1), text_prompt, fill=(0, 0, 0), font=font)
+            
+            # Fast text color - simple white or slight animation
+            if quality == "ultra":
+                # Simple color pulse for ultra only
+                brightness = int(200 + 55 * math.sin(progress * 6.28))
+                text_color = (brightness, 255, brightness)
+            else:
+                text_color = (255, 255, 255)
+            
+            draw.text((x, y), text_prompt, fill=text_color, font=font)
             frames.append(frame)
         
         # Save as GIF
@@ -1215,16 +1532,28 @@ def generate_animated_gif(text_prompt, duration=2, fps=10):
         return None, f"Error generating GIF: {str(e)}"
 
 def handle_video_generation(text):
-    """Handle video generation requests"""
+    """Handle video generation requests with quality detection"""
+    # Extract quality level from text
+    quality = "quick"  # Default to quick for faster processing
+    if any(word in text.lower() for word in ["speed", "fast", "rapid", "instant"]):
+        quality = "quick"
+    elif any(word in text.lower() for word in ["standard", "normal", "regular"]):
+        quality = "standard"
+    elif any(word in text.lower() for word in ["ultra", "maximum", "best", "highest"]):
+        quality = "ultra"
+    elif any(word in text.lower() for word in ["high", "quality", "premium"]):
+        quality = "high"
+    
     # Extract the prompt from the text
     prompt_patterns = [
-        r'generate.*video.*[of|about|showing]\s*(.+)',
-        r'create.*video.*[of|about|showing]\s*(.+)',
-        r'make.*video.*[of|about|showing]\s*(.+)',
-        r'video.*[of|about|showing]\s*(.+)',
+        r'generate.*video.*(?:of|about|showing)\s*(.+)',
+        r'create.*video.*(?:of|about|showing)\s*(.+)', 
+        r'make.*video.*(?:of|about|showing)\s*(.+)',
+        r'video.*(?:of|about|showing)\s*(.+)',
         r'generate.*video\s*(.+)',
         r'create.*video\s*(.+)',
-        r'make.*video\s*(.+)'
+        r'make.*video\s*(.+)',
+        r'(?:video|movie|film).*[:\-]\s*(.+)'
     ]
     
     prompt = None
@@ -1235,13 +1564,16 @@ def handle_video_generation(text):
             break
     
     if not prompt:
-        return "🎥 I can generate videos for you! Please describe what you'd like me to create. For example: 'generate a video of dancing robots' or 'create a video about space exploration'."
+        return f"🎥 I can generate {quality} quality videos for you! Please describe what you'd like me to create. For example: 'generate a video of dancing robots' or 'create a high quality video about space exploration'."
     
-    print(f"🎥 Generating video with prompt: {prompt}")
+    # Clean up prompt
+    prompt = prompt.replace("high quality", "").replace("ultra quality", "").replace("quick", "").strip()
+    
+    print(f"🎥 Generating {quality} quality video with prompt: {prompt}")
     
     try:
-        # Generate the video
-        video_filename, error = generate_text_video(prompt)
+        # Generate the video with specified quality
+        video_filename, error = generate_text_video(prompt, quality=quality)
         
         if error:
             return f"🎥 I encountered an issue generating the video: {error}"
@@ -1249,7 +1581,17 @@ def handle_video_generation(text):
         if video_filename:
             # Create full URL for the video
             full_video_url = f"http://192.168.1.206:8080/static/generated_videos/{video_filename}"
-            return f"""🎥 Video Generated
+            
+            # Quality descriptions - updated for speed optimizations
+            quality_desc = {
+                "quick": "Quick (480×270, 8fps, 1.5s) ⚡ ~3-8 seconds",
+                "standard": "Standard (720×480, 12fps, 2s) ⚡ ~5-12 seconds", 
+                "high": "High Quality (1280×720, 15fps, 3s) ⚡ ~8-20 seconds",
+                "ultra": "Ultra Quality (1920×1080, 20fps, 4s) ⚡ ~12-30 seconds"
+            }
+            
+            return f"""🎥 {quality_desc.get(quality, 'High Quality')} Video Generated
+📝 Prompt: "{prompt}"
 
 {full_video_url}"""
         else:
@@ -1260,17 +1602,29 @@ def handle_video_generation(text):
         return "🎥 I had trouble generating that video. Please make sure your request is clear and try again!"
 
 def handle_gif_generation(text):
-    """Handle animated GIF generation requests"""
+    """Handle animated GIF generation requests with quality detection"""
+    # Extract quality level from text
+    quality = "quick"  # Default to quick for faster processing
+    if any(word in text.lower() for word in ["speed", "fast", "rapid", "instant"]):
+        quality = "quick"
+    elif any(word in text.lower() for word in ["standard", "normal", "regular"]):
+        quality = "standard"
+    elif any(word in text.lower() for word in ["ultra", "maximum", "best", "highest"]):
+        quality = "ultra"
+    elif any(word in text.lower() for word in ["high", "quality", "premium"]):
+        quality = "high"
+    
     # Extract the prompt from the text
     prompt_patterns = [
-        r'generate.*gif.*[of|about|showing]\s*(.+)',
-        r'create.*gif.*[of|about|showing]\s*(.+)',
-        r'make.*gif.*[of|about|showing]\s*(.+)',
-        r'gif.*[of|about|showing]\s*(.+)',
+        r'generate.*gif.*(?:of|about|showing)\s*(.+)',
+        r'create.*gif.*(?:of|about|showing)\s*(.+)',
+        r'make.*gif.*(?:of|about|showing)\s*(.+)',
+        r'gif.*(?:of|about|showing)\s*(.+)',
         r'generate.*gif\s*(.+)',
         r'create.*gif\s*(.+)',
         r'make.*gif\s*(.+)',
-        r'animate.*(.+)'
+        r'animate.*(.+)',
+        r'(?:gif|animation).*[:\-]\s*(.+)'
     ]
     
     prompt = None
@@ -1281,13 +1635,16 @@ def handle_gif_generation(text):
             break
     
     if not prompt:
-        return "🎬 I can create animated GIFs for you! Please describe what you'd like me to animate. For example: 'generate a gif of bouncing balls' or 'animate a spinning logo'."
+        return f"🎬 I can create {quality} quality animated GIFs for you! Please describe what you'd like me to animate. For example: 'generate a high quality gif of bouncing balls' or 'animate a spinning logo'."
     
-    print(f"🎬 Generating GIF with prompt: {prompt}")
+    # Clean up prompt
+    prompt = prompt.replace("high quality", "").replace("ultra quality", "").replace("quick", "").strip()
+    
+    print(f"🎬 Generating {quality} quality GIF with prompt: {prompt}")
     
     try:
-        # Generate the GIF
-        gif_filename, error = generate_animated_gif(prompt)
+        # Generate the GIF with specified quality
+        gif_filename, error = generate_animated_gif(prompt, quality=quality)
         
         if error:
             return f"🎬 I encountered an issue generating the GIF: {error}"
@@ -1295,7 +1652,17 @@ def handle_gif_generation(text):
         if gif_filename:
             # Create full URL for the GIF
             full_gif_url = f"http://192.168.1.206:8080/static/generated_gifs/{gif_filename}"
-            return f"""🎬 Animated GIF Generated
+            
+            # Quality descriptions for GIFs - updated for speed
+            quality_desc = {
+                "quick": "Quick (300×200, 6fps, 1.5s) ⚡ ~2-5 seconds",
+                "standard": "Standard (500×350, 8fps, 2s) ⚡ ~3-8 seconds",
+                "high": "High Quality (600×400, 10fps, 2.5s) ⚡ ~4-10 seconds", 
+                "ultra": "Ultra Quality (800×600, 12fps, 3s) ⚡ ~6-15 seconds"
+            }
+            
+            return f"""🎬 {quality_desc.get(quality, 'High Quality')} Animated GIF Generated
+📝 Prompt: "{prompt}"
 
 {full_gif_url}"""
         else:

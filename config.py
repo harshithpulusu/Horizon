@@ -6,9 +6,81 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    # API Keys (loaded from environment variables)
+    # Core AI APIs
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-    NEWS_API_KEY = os.getenv('NEWS_API_KEY', 'your-news-api-key-here')
+    
+    # 🎵 Music & Audio APIs
+    SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID', '')
+    SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET', '')
+    YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', '')
+    
+    # 🌤️ Weather & Location APIs
+    OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY', '')
+    WEATHERAPI_KEY = os.getenv('WEATHERAPI_KEY', '')
+    MAPBOX_API_KEY = os.getenv('MAPBOX_API_KEY', '')
+    
+    # 📰 News & Information APIs
+    NEWS_API_KEY = os.getenv('NEWS_API_KEY', '')
+    NEWSDATA_API_KEY = os.getenv('NEWSDATA_API_KEY', '')
+    
+    # 🏠 Smart Home & IoT APIs
+    PHILIPS_HUE_API_KEY = os.getenv('PHILIPS_HUE_API_KEY', '')
+    NEST_API_KEY = os.getenv('NEST_API_KEY', '')
+    SMARTTHINGS_API_KEY = os.getenv('SMARTTHINGS_API_KEY', '')
+    
+    # 📈 Finance & Crypto APIs
+    ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', '')
+    COINMARKETCAP_API_KEY = os.getenv('COINMARKETCAP_API_KEY', '')
+    POLYGON_API_KEY = os.getenv('POLYGON_API_KEY', '')
+    
+    # 🛒 E-commerce & Shopping APIs
+    AMAZON_API_KEY = os.getenv('AMAZON_API_KEY', '')
+    EBAY_API_KEY = os.getenv('EBAY_API_KEY', '')
+    
+    # 🚗 Transportation APIs
+    UBER_API_KEY = os.getenv('UBER_API_KEY', '')
+    LYFT_API_KEY = os.getenv('LYFT_API_KEY', '')
+    GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
+    
+    # 📱 Social Media APIs
+    TWITTER_API_KEY = os.getenv('TWITTER_API_KEY', '')
+    TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET', '')
+    INSTAGRAM_API_KEY = os.getenv('INSTAGRAM_API_KEY', '')
+    
+    # 🎮 Gaming & Entertainment APIs
+    STEAM_API_KEY = os.getenv('STEAM_API_KEY', '')
+    TWITCH_API_KEY = os.getenv('TWITCH_API_KEY', '')
+    DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
+    
+    # 🧠 Advanced AI APIs
+    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')  # Claude AI
+    COHERE_API_KEY = os.getenv('COHERE_API_KEY', '')
+    HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', '')
+    DEEPAI_API_KEY = os.getenv('DEEPAI_API_KEY', '')
+    
+    # 🗣️ Voice & Speech APIs
+    ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')  # Premium TTS
+    AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY', '')
+    GOOGLE_SPEECH_API_KEY = os.getenv('GOOGLE_SPEECH_API_KEY', '')
+    
+    # 📚 Knowledge & Search APIs
+    WOLFRAM_ALPHA_API_KEY = os.getenv('WOLFRAM_ALPHA_API_KEY', '')
+    GOOGLE_SEARCH_API_KEY = os.getenv('GOOGLE_SEARCH_API_KEY', '')
+    BING_SEARCH_API_KEY = os.getenv('BING_SEARCH_API_KEY', '')
+    
+    # 🔍 Computer Vision APIs
+    GOOGLE_VISION_API_KEY = os.getenv('GOOGLE_VISION_API_KEY', '')
+    AZURE_VISION_API_KEY = os.getenv('AZURE_VISION_API_KEY', '')
+    CLARIFAI_API_KEY = os.getenv('CLARIFAI_API_KEY', '')
+    
+    # 📧 Communication APIs
+    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+    TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
+    TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
+    
+    # 📊 Analytics & Monitoring APIs
+    MIXPANEL_API_KEY = os.getenv('MIXPANEL_API_KEY', '')
+    AMPLITUDE_API_KEY = os.getenv('AMPLITUDE_API_KEY', '')
 
     # Wake Word Detection
     WAKE_WORDS = ["hey horizon", "horizon", "hey assistant", "assistant"]
