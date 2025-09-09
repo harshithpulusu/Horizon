@@ -2350,6 +2350,211 @@ def handle_gif_generation(text):
         print(f"Error in GIF generation: {e}")
         return "🎬 I had trouble generating that GIF. Please make sure your request is clear and try again!"
 
+def handle_music_generation(text):
+    """Handle AI music composition requests"""
+    
+    # Extract quality level from text
+    quality = "standard"  # Default
+    if any(word in text.lower() for word in ["high", "premium", "quality", "professional"]):
+        quality = "high"
+    elif any(word in text.lower() for word in ["quick", "fast", "simple", "basic"]):
+        quality = "quick"
+    
+    # Extract duration from text
+    duration = 30  # Default 30 seconds
+    import re
+    duration_match = re.search(r'(\d+)\s*(second|minute|min)', text.lower())
+    if duration_match:
+        dur_value = int(duration_match.group(1))
+        dur_unit = duration_match.group(2)
+        if dur_unit in ['minute', 'min']:
+            duration = dur_value * 60
+        else:
+            duration = dur_value
+        duration = min(duration, 300)  # Max 5 minutes
+    
+    # Extract music style from text
+    style = "pop"  # Default
+    style_keywords = {
+        'pop': ['pop', 'upbeat', 'catchy', 'mainstream'],
+        'rock': ['rock', 'guitar', 'drums', 'heavy'],
+        'classical': ['classical', 'orchestra', 'piano', 'elegant'],
+        'electronic': ['electronic', 'synth', 'edm', 'techno', 'dance'],
+        'jazz': ['jazz', 'saxophone', 'smooth', 'blues'],
+        'ambient': ['ambient', 'chill', 'relaxing', 'peaceful', 'calm'],
+        'hip-hop': ['hip-hop', 'rap', 'beats', 'urban'],
+        'country': ['country', 'folk', 'acoustic', 'western']
+    }
+    
+    for style_name, keywords in style_keywords.items():
+        if any(keyword in text.lower() for keyword in keywords):
+            style = style_name
+            break
+    
+    # Extract the prompt from the text
+    prompt_patterns = [
+        r'(?:generate|create|make|compose).*music.*(?:about|for|of)\s*(.+)',
+        r'(?:generate|create|make|compose).*song.*(?:about|for|of)\s*(.+)',
+        r'music.*(?:about|for|of)\s*(.+)',
+        r'song.*(?:about|for|of)\s*(.+)',
+        r'(?:compose|write).*(?:music|song)\s*(.+)',
+        r'ai.*music.*[:\-]\s*(.+)',
+        r'(?:suno|musicgen).*[:\-]\s*(.+)'
+    ]
+    
+    prompt = None
+    for pattern in prompt_patterns:
+        match = re.search(pattern, text.lower())
+        if match:
+            prompt = match.group(1).strip()
+            break
+    
+    if not prompt:
+        return f"""🎵 I can generate AI music in various styles!
+
+🎼 **Available Styles**: Pop, Rock, Classical, Electronic, Jazz, Ambient, Hip-Hop, Country
+
+💡 **Examples**:
+- 'compose pop music about summer'
+- 'create classical music for relaxation'
+- 'generate electronic music for 2 minutes'
+- 'make jazz music about city nights'
+
+Just describe what kind of music you'd like!"""
+    
+    # Clean up prompt
+    prompt = prompt.replace(f"{quality}", "").replace(f"{style}", "").strip()
+    
+    print(f"🎵 Generating {style} music ({quality} quality, {duration}s): {prompt}")
+    
+    try:
+        # Generate the music
+        music_filename, error = generate_ai_music(prompt, duration, style, quality)
+        
+        if error:
+            return f"🎵 I encountered an issue generating the music: {error}"
+        
+        if music_filename:
+            # Create full URL for the music
+            full_music_url = f"http://192.168.1.206:8080/static/generated_music/{music_filename}"
+            
+            # Determine service used
+            service_name = "AI Music Generator"
+            if music_filename.startswith('suno_'):
+                service_name = "Suno AI"
+            elif music_filename.startswith('musicgen_'):
+                service_name = "MusicGen"
+            elif music_filename.startswith('synth_'):
+                service_name = "Synthesized"
+            
+            return f"""🎵 **Service**: {service_name} {style.title()} Music
+🎼 **Track**: {full_music_url}"""
+            
+        return "🎵 I had trouble generating that music. Please try a different description."
+        
+    except Exception as e:
+        print(f"Error in music generation: {e}")
+        return "🎵 I had trouble generating that music. Please make sure your request is clear and try again!"
+
+def handle_voice_generation(text):
+    """Handle voice/speech synthesis requests"""
+    
+    # Extract voice style from text
+    voice_style = "alloy"  # Default OpenAI voice
+    voice_keywords = {
+        'alloy': ['neutral', 'balanced', 'alloy'],
+        'echo': ['male', 'deep', 'echo'],
+        'fable': ['british', 'accent', 'fable'],
+        'onyx': ['strong', 'powerful', 'onyx'],
+        'nova': ['female', 'clear', 'nova'],
+        'shimmer': ['soft', 'gentle', 'shimmer']
+    }
+    
+    for voice_name, keywords in voice_keywords.items():
+        if any(keyword in text.lower() for keyword in keywords):
+            voice_style = voice_name
+            break
+    
+    # Extract quality level
+    quality = "standard"
+    if any(word in text.lower() for word in ["high", "premium", "quality", "hd"]):
+        quality = "high"
+    
+    # Extract the text to speak
+    prompt_patterns = [
+        r'(?:say|speak|read).*[:\-]\s*(.+)',
+        r'voice.*(?:saying|reading)\s*(.+)',
+        r'text.*to.*speech.*[:\-]\s*(.+)',
+        r'(?:generate|create).*voice.*[:\-]\s*(.+)',
+        r'(?:elevenlabs|tts).*[:\-]\s*(.+)',
+        r'speak.*text\s*(.+)',
+        r'narrate.*[:\-]\s*(.+)'
+    ]
+    
+    text_to_speak = None
+    for pattern in prompt_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            text_to_speak = match.group(1).strip()
+            break
+    
+    if not text_to_speak:
+        return f"""🗣️ I can generate speech from text using AI voices!
+
+🎤 **Available Voices**: Alloy, Echo, Fable, Onyx, Nova, Shimmer
+
+💡 **Examples**:
+- 'say: Hello world'
+- 'generate female voice: Welcome to our store'
+- 'speak with male voice: This is a test'
+- 'read aloud: The quick brown fox jumps'
+
+Just tell me what text to speak!"""
+    
+    print(f"🗣️ Generating {voice_style} voice ({quality}): {text_to_speak[:50]}...")
+    
+    try:
+        # Generate the voice audio
+        audio_filename, error = generate_voice_audio(text_to_speak, voice_style, quality)
+        
+        if error:
+            return f"🗣️ I encountered an issue generating the voice: {error}"
+        
+        if audio_filename:
+            # Create full URL for the audio
+            full_audio_url = f"http://192.168.1.206:8080/static/generated_audio/{audio_filename}"
+            
+            # Determine service used
+            service_name = "OpenAI TTS"
+            if audio_filename.startswith('elevenlabs_'):
+                service_name = "ElevenLabs"
+            
+            return f"""🗣️ **Voice**: {service_name} ({voice_style.title()})
+🎙️ **Audio**: {full_audio_url}"""
+            
+        return "🗣️ I had trouble generating that voice. Please try a different text."
+        
+    except Exception as e:
+        print(f"Error in voice generation: {e}")
+        return "🗣️ I had trouble generating that voice. Please make sure your request is clear and try again!"
+
+def handle_audio_transcription(text):
+    """Handle audio transcription requests"""
+    
+    return """🎤 **Audio Transcription Available!**
+
+To transcribe audio to text:
+1. Upload an audio file (MP3, WAV, etc.)
+2. Use the transcription endpoint
+3. Get text output from speech
+
+💡 **Supported**:
+- OpenAI Whisper (premium)
+- Google Speech Recognition
+- Offline Sphinx recognition
+
+📁 **File Upload**: Coming soon in web interface!"""
+
 # Intent recognition
 INTENT_PATTERNS = {
     'greeting': [r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b'],
@@ -2396,6 +2601,35 @@ INTENT_PATTERNS = {
         r'\bai.*gif\b', r'\bmoving.*image\b',
         r'\bshow me.*gif\b', r'\bgif.*about\b',
         r'\bloop.*animation\b', r'\bshort.*animation\b'
+    ],
+    'music_generation': [
+        r'\b(generate|create|make|compose).*music\b',
+        r'\b(generate|create|make|compose).*song\b',
+        r'\b(generate|create|make|compose).*track\b',
+        r'\b(generate|create|make|compose).*tune\b',
+        r'\bai.*music\b', r'\bai.*song\b', r'\bmusic.*about\b',
+        r'\bcompose.*music\b', r'\bwrite.*song\b',
+        r'\bplay.*music\b', r'\bmake.*beat\b',
+        r'\bsynthesize.*music\b', r'\bmusical.*composition\b',
+        r'\binstrumental\b', r'\bmelody.*for\b',
+        r'\bsuno.*music\b', r'\bmusicgen\b'
+    ],
+    'voice_generation': [
+        r'\b(generate|create|make).*voice\b',
+        r'\b(generate|create|make).*speech\b',
+        r'\btext.*to.*speech\b', r'\btts\b',
+        r'\bspeak.*text\b', r'\bvoice.*over\b',
+        r'\bai.*voice\b', r'\bai.*speech\b',
+        r'\bread.*aloud\b', r'\bsay.*this\b',
+        r'\belevenlabs\b', r'\bvoice.*synthesis\b',
+        r'\bnarrate.*this\b', r'\bspoken.*audio\b'
+    ],
+    'audio_transcription': [
+        r'\btranscribe.*audio\b', r'\bspeech.*to.*text\b',
+        r'\bconvert.*speech\b', r'\blisten.*to.*audio\b',
+        r'\bwhisper.*transcribe\b', r'\baudio.*to.*text\b',
+        r'\btranscription\b', r'\bparse.*audio\b',
+        r'\bsubtitles.*from.*audio\b'
     ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
@@ -2459,7 +2693,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None):
@@ -2496,6 +2730,12 @@ def process_user_input(user_input, personality='friendly', session_id=None):
             response = handle_video_generation(user_input)
         elif intent == 'gif_generation':
             response = handle_gif_generation(user_input)
+        elif intent == 'music_generation':
+            response = handle_music_generation(user_input)
+        elif intent == 'voice_generation':
+            response = handle_voice_generation(user_input)
+        elif intent == 'audio_transcription':
+            response = handle_audio_transcription(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
@@ -2914,6 +3154,125 @@ def generate_image_api():
         print(f"Error in generate_image_api: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/generate-music', methods=['POST'])
+def generate_music_api():
+    """API endpoint for music generation"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '').strip()
+        style = data.get('style', 'pop')
+        duration = min(int(data.get('duration', 30)), 300)  # Max 5 minutes
+        quality = data.get('quality', 'standard')
+        
+        if not prompt:
+            return jsonify({'error': 'Prompt is required'}), 400
+        
+        print(f"🎵 API Music generation request: {prompt} ({style}, {duration}s)")
+        
+        music_filename, error = generate_ai_music(prompt, duration, style, quality)
+        
+        if error:
+            return jsonify({'error': error}), 500
+        
+        if music_filename:
+            music_url = f"/static/generated_music/{music_filename}"
+            return jsonify({
+                'music_filename': music_filename,
+                'music_url': music_url,
+                'style': style,
+                'duration': duration,
+                'message': f'🎵 {style.title()} music generated successfully!'
+            })
+        else:
+            return jsonify({'error': 'Failed to generate music'}), 500
+            
+    except Exception as e:
+        print(f"Error in generate_music_api: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/generate-voice', methods=['POST'])
+def generate_voice_api():
+    """API endpoint for voice synthesis"""
+    try:
+        data = request.get_json()
+        text = data.get('text', '').strip()
+        voice = data.get('voice', 'alloy')
+        quality = data.get('quality', 'standard')
+        
+        if not text:
+            return jsonify({'error': 'Text is required'}), 400
+        
+        if len(text) > 4000:
+            return jsonify({'error': 'Text too long (max 4000 characters)'}), 400
+        
+        print(f"🗣️ API Voice generation request: {text[:50]}... ({voice})")
+        
+        audio_filename, error = generate_voice_audio(text, voice, quality)
+        
+        if error:
+            return jsonify({'error': error}), 500
+        
+        if audio_filename:
+            audio_url = f"/static/generated_audio/{audio_filename}"
+            return jsonify({
+                'audio_filename': audio_filename,
+                'audio_url': audio_url,
+                'voice': voice,
+                'message': f'🗣️ Voice generated successfully!'
+            })
+        else:
+            return jsonify({'error': 'Failed to generate voice'}), 500
+            
+    except Exception as e:
+        print(f"Error in generate_voice_api: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/transcribe-audio', methods=['POST'])
+def transcribe_audio_api():
+    """API endpoint for audio transcription"""
+    try:
+        if 'audio' not in request.files:
+            return jsonify({'error': 'Audio file is required'}), 400
+        
+        audio_file = request.files['audio']
+        if audio_file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Save uploaded file temporarily
+        import tempfile
+        import os
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            audio_file.save(temp_file.name)
+            temp_path = temp_file.name
+        
+        try:
+            print(f"🎤 API Transcription request: {audio_file.filename}")
+            
+            # Transcribe the audio
+            transcription, error = transcribe_audio(temp_path)
+            
+            if error:
+                return jsonify({'error': error}), 500
+            
+            if transcription:
+                return jsonify({
+                    'transcription': transcription,
+                    'filename': audio_file.filename,
+                    'message': '🎤 Audio transcribed successfully!'
+                })
+            else:
+                return jsonify({'error': 'Failed to transcribe audio'}), 500
+                
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            
+    except Exception as e:
+        print(f"Error in transcribe_audio_api: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/static/generated_images/<filename>')
 def serve_generated_image(filename):
     """Serve generated images from the local storage"""
@@ -2921,6 +3280,22 @@ def serve_generated_image(filename):
         return send_from_directory(IMAGES_DIR, filename)
     except FileNotFoundError:
         return jsonify({'error': 'Image not found'}), 404
+
+@app.route('/static/generated_music/<filename>')
+def serve_generated_music(filename):
+    """Serve generated music from the local storage"""
+    try:
+        return send_from_directory(MUSIC_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Music not found'}), 404
+
+@app.route('/static/generated_audio/<filename>')
+def serve_generated_audio(filename):
+    """Serve generated audio from the local storage"""
+    try:
+        return send_from_directory(AUDIO_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Audio not found'}), 404
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
