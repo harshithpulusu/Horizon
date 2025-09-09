@@ -17,6 +17,11 @@ class Config:
     SUNO_API_KEY = os.getenv('SUNO_API_KEY', '')
     MUSICGEN_API_KEY = os.getenv('MUSICGEN_API_KEY', '')
     
+    # 🎼 Professional Music Generation APIs
+    REPLICATE_API_TOKEN = os.getenv('REPLICATE_API_TOKEN', '')
+    STABILITY_API_KEY = os.getenv('STABILITY_API_KEY', '')
+    HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', '')
+    
     # 🌤️ Weather & Location APIs
     OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY', '')
     WEATHERAPI_KEY = os.getenv('WEATHERAPI_KEY', '')

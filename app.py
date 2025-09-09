@@ -1138,66 +1138,510 @@ def generate_ai_music(prompt, duration=30, style="pop", quality="standard"):
     
     print(f"🎵 Generating AI music: '{prompt}' ({style}, {duration}s)")
     
-    # Try Suno AI first (best quality)
-    if Config.SUNO_API_KEY:
-        result = generate_suno_music(prompt, duration, style, quality)
+    # Try Replicate MusicGen first (best quality with real instruments)
+    if Config.REPLICATE_API_TOKEN:
+        result = generate_replicate_music(prompt, duration, style, quality)
         if result[0]:  # Success
             return result
     
-    # Fallback to MusicGen API
-    if Config.MUSICGEN_API_KEY:
-        result = generate_musicgen_music(prompt, duration, style, quality)
+    # Try Stability AI Stable Audio
+    if Config.STABILITY_API_KEY:
+        result = generate_stability_music(prompt, duration, style, quality)
         if result[0]:  # Success
             return result
     
-    # Fallback to synthesized music
-    return generate_synthesized_music(prompt, duration, style, quality)
+    # Try Hugging Face MusicGen
+    if Config.HUGGINGFACE_API_KEY:
+        result = generate_huggingface_music(prompt, duration, style, quality)
+        if result[0]:  # Success
+            return result
+    
+    # Fallback to enhanced synthesized music
+    return generate_enhanced_music(prompt, duration, style, quality)
 
-def generate_suno_music(prompt, duration, style, quality):
-    """Generate music using Suno AI API"""
+def generate_replicate_music(prompt, duration, style, quality):
+    """Generate music using Replicate's MusicGen API - BEST QUALITY"""
     
     try:
-        print("🎭 Using Suno AI for professional music generation...")
+        print("🎼 Using Replicate MusicGen for professional music with real instruments...")
         
-        # Enhanced prompt for Suno AI
-        suno_prompt = f"{prompt}, {style} style, {quality} quality, {duration} seconds"
+        # Import replicate at function level to handle missing dependency gracefully
+        try:
+            import replicate
+        except ImportError:
+            print("⚠️ Replicate package not installed. Install with: pip install replicate")
+            return None, "Replicate package not available"
         
-        # Suno AI API call
+        # Set API token
+        if not Config.REPLICATE_API_TOKEN:
+            print("⚠️ Replicate API token not configured")
+            return None, "Replicate API token not configured"
+        
+        # Enhanced prompt for MusicGen
+        musicgen_prompt = f"{style} music, {prompt}"
+        
+        # Add instrument specifications based on style
+        if style.lower() == "pop":
+            musicgen_prompt += ", with drums, bass, electric guitar, synthesizer, upbeat"
+        elif style.lower() == "rock":
+            musicgen_prompt += ", with rock drums, distorted electric guitar, bass guitar, powerful"
+        elif style.lower() == "electronic":
+            musicgen_prompt += ", with electronic drums, synthesizer, bass synth, energetic"
+        elif style.lower() == "classical":
+            musicgen_prompt += ", orchestral, piano, strings, elegant"
+        elif style.lower() == "jazz":
+            musicgen_prompt += ", with jazz drums, saxophone, piano, bass, smooth"
+        elif style.lower() == "ambient":
+            musicgen_prompt += ", atmospheric, peaceful, flowing"
+        else:
+            musicgen_prompt += ", with drums and bass"
+        
+        # Add quality descriptors
+        if quality == "high":
+            musicgen_prompt += ", professional production, studio quality"
+        
+        print(f"🎵 Generating with Replicate MusicGen: {musicgen_prompt}")
+        print(f"⏱️ Duration: {duration} seconds")
+        
+        # Set the API token
+        import os
+        os.environ["REPLICATE_API_TOKEN"] = Config.REPLICATE_API_TOKEN
+        
+        # Generate music using the exact format you provided
+        output = replicate.run(
+            "meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb",
+            input={
+                "top_k": 250,
+                "top_p": 0,
+                "prompt": musicgen_prompt,
+                "duration": min(duration, 30),  # MusicGen max 30 seconds
+                "temperature": 1,
+                "continuation": False,
+                "model_version": "stereo-large" if quality == "high" else "large",
+                "output_format": "mp3",
+                "continuation_start": 0,
+                "multi_band_diffusion": False,
+                "normalization_strategy": "peak",
+                "classifier_free_guidance": 3
+            }
+        )
+        
+        print("✅ Replicate MusicGen generation completed!")
+        
+        # Download and save the generated music
+        import uuid
+        music_id = str(uuid.uuid4())
+        music_filename = f"replicate_{music_id}.mp3"
+        music_path = os.path.join(MUSIC_DIR, music_filename)
+        
+        # Write the file to disk using the provided method
+        with open(music_path, "wb") as file:
+            file.write(output.read())
+        
+        print(f"✅ Replicate music saved: {music_filename}")
+        return music_filename, None
+        
+    except Exception as e:
+        print(f"❌ Replicate error: {e}")
+        return None, f"Replicate error: {str(e)}"
+
+def generate_stability_music(prompt, duration, style, quality):
+    """Generate music using Stability AI's Stable Audio"""
+    
+    try:
+        print("🎹 Using Stability AI Stable Audio for professional music...")
+        
+        # Enhanced prompt for Stable Audio
+        stable_prompt = f"{style} music: {prompt}"
+        
+        # Add instrument specifications
+        if style.lower() == "pop":
+            stable_prompt += ", pop drums, electric guitar, bass, synthesizer"
+        elif style.lower() == "rock":
+            stable_prompt += ", rock drums, distorted electric guitar, bass guitar"
+        elif style.lower() == "electronic":
+            stable_prompt += ", electronic drums, synthesizer, bass synth"
+        elif style.lower() == "classical":
+            stable_prompt += ", orchestral instruments, piano, strings"
+        elif style.lower() == "jazz":
+            stable_prompt += ", jazz drums, saxophone, piano, bass"
+        
         headers = {
-            "Authorization": f"Bearer {Config.SUNO_API_KEY}",
+            "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
             "Content-Type": "application/json"
         }
         
         generation_data = {
-            "prompt": suno_prompt,
-            "duration": min(duration, 300),  # Max 5 minutes
-            "style": style,
-            "quality": quality,
-            "format": "mp3"
+            "prompt": stable_prompt,
+            "duration": min(duration, 47),  # Stable Audio max
+            "cfg_scale": 7,
+            "seed": None
         }
         
+        print(f"🎵 Generating with Stability AI: {stable_prompt}")
+        
         response = requests.post(
-            "https://api.suno.ai/v1/generate",
+            "https://api.stability.ai/v2beta/stable-audio/generate/music",
             headers=headers,
             json=generation_data
         )
         
         if response.status_code == 200:
-            task_id = response.json()["id"]
-            print(f"🔄 Suno AI generation started (ID: {task_id})")
+            result = response.json()
+            generation_id = result.get("id")
             
-            # Poll for completion
-            music_url = poll_suno_completion(task_id, headers)
-            if music_url:
-                music_filename = download_music_file(music_url, "suno")
-                return music_filename, None
+            if generation_id:
+                print(f"🔄 Stability AI generation started (ID: {generation_id})")
+                
+                # Poll for completion
+                music_url = poll_stability_completion(generation_id, headers)
+                if music_url:
+                    music_filename = download_music_file(music_url, "stability")
+                    return music_filename, None
+        else:
+            print(f"⚠️ Stability AI error: {response.status_code} - {response.text}")
         
-        print(f"⚠️ Suno AI error: {response.status_code}")
-        return None, "Suno AI generation failed"
+        return None, f"Stability AI generation failed: {response.status_code}"
+        
+    except Exception as e:
+        print(f"❌ Stability AI error: {e}")
+        return None, f"Stability AI error: {str(e)}"
+
+def generate_huggingface_music(prompt, duration, style, quality):
+    """Generate music using Hugging Face MusicGen"""
+    
+    try:
+        print("🤗 Using Hugging Face MusicGen for AI music generation...")
+        
+        # Enhanced prompt for Hugging Face
+        hf_prompt = f"{style} style: {prompt}"
+        
+        headers = {
+            "Authorization": f"Bearer {Config.HUGGINGFACE_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Use Facebook's MusicGen model
+        model = "facebook/musicgen-large" if quality == "high" else "facebook/musicgen-medium"
+        
+        generation_data = {
+            "inputs": hf_prompt,
+            "parameters": {
+                "max_new_tokens": min(duration * 50, 1500),  # Approximate tokens per second
+                "temperature": 0.9,
+                "do_sample": True
+            }
+        }
+        
+        print(f"🎵 Generating with Hugging Face: {hf_prompt}")
+        
+        response = requests.post(
+            f"https://api-inference.huggingface.co/models/{model}",
+            headers=headers,
+            json=generation_data
+        )
+        
+        if response.status_code == 200:
+            # Hugging Face returns audio data directly
+            import uuid
+            music_id = str(uuid.uuid4())
+            music_filename = f"huggingface_{music_id}.wav"
+            music_path = os.path.join(MUSIC_DIR, music_filename)
+            
+            with open(music_path, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"✅ Hugging Face music saved: {music_filename}")
+            return music_filename, None
+        else:
+            print(f"⚠️ Hugging Face error: {response.status_code} - {response.text}")
+        
+        return None, f"Hugging Face generation failed: {response.status_code}"
+        
+    except Exception as e:
+        print(f"❌ Hugging Face error: {e}")
+        return None, f"Hugging Face error: {str(e)}"
+
+def poll_replicate_completion(prediction_id, headers, max_wait=300):
+    """Poll Replicate for completion"""
+    import time
+    
+    start_time = time.time()
+    while time.time() - start_time < max_wait:
+        try:
+            response = requests.get(
+                f"https://api.replicate.com/v1/predictions/{prediction_id}",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                status = data.get("status")
+                
+                print(f"🔄 Replicate status: {status}")
+                
+                if status == "succeeded":
+                    output = data.get("output")
+                    if output:
+                        print("✅ Replicate generation completed!")
+                        return output
+                elif status == "failed":
+                    error = data.get("error", "Unknown error")
+                    print(f"❌ Replicate generation failed: {error}")
+                    return None
+                    
+            time.sleep(10)
+            
+        except Exception as e:
+            print(f"⚠️ Error polling Replicate: {e}")
+            time.sleep(5)
+    
+    print("⏰ Replicate generation timed out")
+    return None
+
+def poll_stability_completion(generation_id, headers, max_wait=300):
+    """Poll Stability AI for completion"""
+    import time
+    
+    start_time = time.time()
+    while time.time() - start_time < max_wait:
+        try:
+            response = requests.get(
+                f"https://api.stability.ai/v2beta/stable-audio/generate/{generation_id}",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                # Check if it's JSON (status) or binary (audio)
+                content_type = response.headers.get('content-type', '')
+                
+                if 'application/json' in content_type:
+                    data = response.json()
+                    status = data.get("status", "unknown")
+                    print(f"🔄 Stability AI status: {status}")
+                    
+                    if status == "failed":
+                        print("❌ Stability AI generation failed")
+                        return None
+                        
+                elif 'audio' in content_type:
+                    # Audio file is ready
+                    print("✅ Stability AI generation completed!")
+                    
+                    # Save the audio directly
+                    import uuid
+                    music_id = str(uuid.uuid4())
+                    music_filename = f"stability_{music_id}.wav"
+                    music_path = os.path.join(MUSIC_DIR, music_filename)
+                    
+                    with open(music_path, 'wb') as f:
+                        f.write(response.content)
+                    
+                    return music_filename  # Return filename instead of URL
+                    
+            time.sleep(10)
+            
+        except Exception as e:
+            print(f"⚠️ Error polling Stability AI: {e}")
+            time.sleep(5)
+    
+    print("⏰ Stability AI generation timed out")
+    return None
+    """Generate music using Suno AI API"""
+    
+    try:
+        print("🎭 Using Suno AI for professional music generation...")
+        
+        # For now, Suno AI requires web interface access
+        # The API key you provided might be for web interface access
+        print("📝 Note: Suno AI currently requires web interface for generation")
+        print("🔄 Falling back to enhanced music generation...")
+        
+        # Fall back to enhanced music generation
+        return generate_enhanced_music(prompt, duration, style, quality)
         
     except Exception as e:
         print(f"❌ Suno AI error: {e}")
         return None, f"Suno AI error: {str(e)}"
+
+def generate_enhanced_music(prompt, duration, style, quality):
+    """Generate enhanced music with multiple layers and realistic instruments"""
+    
+    try:
+        print("🎼 Creating enhanced multi-layered music...")
+        
+        if not AUDIO_FEATURES_AVAILABLE:
+            return None, "Audio libraries not available"
+        
+        # Create a more sophisticated synthesized track
+        sample_rate = 44100
+        total_samples = int(duration * sample_rate)
+        
+        import numpy as np
+        import math
+        
+        # Time array
+        t = np.linspace(0, duration, total_samples)
+        
+        # Initialize final audio
+        final_audio = np.zeros(total_samples)
+        
+        # Style-specific music generation
+        if style.lower() in ['pop', 'dance', 'electronic']:
+            # Pop/Electronic style with multiple layers
+            
+            # Bass line (low frequency)
+            bass_freq = 65.4  # C2
+            bass_pattern = np.sin(2 * np.pi * bass_freq * t)
+            bass_pattern += 0.5 * np.sin(2 * np.pi * bass_freq * 1.5 * t)  # Fifth
+            bass_envelope = np.where(np.sin(2 * np.pi * 2 * t) > 0, 0.4, 0.1)  # Pumping bass
+            bass_line = bass_pattern * bass_envelope
+            
+            # Lead melody
+            melody_freqs = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]  # C major scale
+            melody = np.zeros(total_samples)
+            note_duration = sample_rate // 4  # Quarter note
+            
+            for i, freq in enumerate(melody_freqs * 10):  # Repeat pattern
+                start_idx = (i * note_duration) % total_samples
+                end_idx = min(start_idx + note_duration, total_samples)
+                if start_idx < total_samples:
+                    note_t = t[start_idx:end_idx] - t[start_idx]
+                    note_wave = np.sin(2 * np.pi * freq * note_t) * np.exp(-note_t * 2)  # Decay
+                    melody[start_idx:end_idx] += note_wave * 0.3
+            
+            # Drum-like percussion
+            kick_freq = 60
+            kick_times = np.arange(0, duration, 0.5)  # Every half second
+            percussion = np.zeros(total_samples)
+            for kick_time in kick_times:
+                kick_idx = int(kick_time * sample_rate)
+                if kick_idx < total_samples - 1000:
+                    kick_wave = np.sin(2 * np.pi * kick_freq * t[kick_idx:kick_idx+1000]) * np.exp(-t[:1000] * 10)
+                    percussion[kick_idx:kick_idx+1000] += kick_wave * 0.2
+            
+            # Hi-hat like sound
+            hihat_noise = np.random.normal(0, 0.1, total_samples)
+            hihat_envelope = np.zeros(total_samples)
+            hihat_times = np.arange(0.25, duration, 0.25)  # Offbeat
+            for hihat_time in hihat_times:
+                hihat_idx = int(hihat_time * sample_rate)
+                if hihat_idx < total_samples - 500:
+                    hihat_envelope[hihat_idx:hihat_idx+500] = np.exp(-t[:500] * 20) * 0.1
+            
+            hihat = hihat_noise * hihat_envelope
+            
+            # Combine all elements
+            final_audio = bass_line + melody + percussion + hihat
+            
+        elif style.lower() in ['classical', 'piano', 'ambient']:
+            # Classical/Piano style
+            
+            # Piano-like melody with harmonics
+            root_freqs = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C major
+            
+            for i, freq in enumerate(root_freqs):
+                # Create chord progression
+                chord_start = (i * duration / len(root_freqs))
+                chord_duration = duration / len(root_freqs)
+                
+                chord_start_idx = int(chord_start * sample_rate)
+                chord_end_idx = int((chord_start + chord_duration) * sample_rate)
+                
+                if chord_start_idx < total_samples:
+                    chord_end_idx = min(chord_end_idx, total_samples)
+                    chord_t = t[chord_start_idx:chord_end_idx] - chord_start
+                    
+                    # Root note
+                    root_note = np.sin(2 * np.pi * freq * chord_t) * np.exp(-chord_t * 0.5)
+                    # Third (major)
+                    third_note = np.sin(2 * np.pi * freq * 1.25 * chord_t) * np.exp(-chord_t * 0.5) * 0.7
+                    # Fifth
+                    fifth_note = np.sin(2 * np.pi * freq * 1.5 * chord_t) * np.exp(-chord_t * 0.5) * 0.5
+                    
+                    chord = (root_note + third_note + fifth_note) * 0.2
+                    final_audio[chord_start_idx:chord_end_idx] += chord
+            
+        elif style.lower() in ['rock', 'metal']:
+            # Rock style with distorted elements
+            
+            # Power chord progression
+            power_chord_freqs = [82.41, 87.31, 98.00, 110.00]  # E, F, G, A
+            
+            for i, freq in enumerate(power_chord_freqs * 4):
+                chord_start = (i * duration / 16)
+                chord_duration = duration / 16
+                
+                chord_start_idx = int(chord_start * sample_rate)
+                chord_end_idx = int((chord_start + chord_duration) * sample_rate)
+                
+                if chord_start_idx < total_samples:
+                    chord_end_idx = min(chord_end_idx, total_samples)
+                    chord_t = t[chord_start_idx:chord_end_idx] - chord_start
+                    
+                    # Distorted guitar-like sound
+                    guitar_wave = np.sin(2 * np.pi * freq * chord_t)
+                    guitar_wave += 0.3 * np.sin(2 * np.pi * freq * 2 * chord_t)  # Octave
+                    guitar_wave = np.tanh(guitar_wave * 3) * 0.4  # Distortion
+                    
+                    final_audio[chord_start_idx:chord_end_idx] += guitar_wave
+            
+            # Rock drums
+            kick_pattern = np.arange(0, duration, 1)  # Every beat
+            for kick_time in kick_pattern:
+                kick_idx = int(kick_time * sample_rate)
+                if kick_idx < total_samples - 2000:
+                    kick_wave = np.sin(2 * np.pi * 50 * t[kick_idx:kick_idx+2000]) * np.exp(-t[:2000] * 5)
+                    final_audio[kick_idx:kick_idx+2000] += kick_wave * 0.3
+        
+        else:
+            # Default ambient style
+            ambient_freqs = [130.81, 146.83, 164.81, 174.61, 196.00, 220.00]  # C3 major
+            
+            for i, freq in enumerate(ambient_freqs):
+                phase = i * np.pi / 3
+                wave = np.sin(2 * np.pi * freq * t + phase) * np.sin(2 * np.pi * 0.1 * t)  # Slow modulation
+                final_audio += wave * (0.15 / len(ambient_freqs))
+        
+        # Apply overall envelope for smooth start/end
+        envelope = np.ones(total_samples)
+        fade_samples = sample_rate // 10  # 0.1 second fade
+        envelope[:fade_samples] = np.linspace(0, 1, fade_samples)
+        envelope[-fade_samples:] = np.linspace(1, 0, fade_samples)
+        final_audio *= envelope
+        
+        # Normalize audio
+        max_val = np.max(np.abs(final_audio))
+        if max_val > 0:
+            final_audio = final_audio / max_val * 0.8  # Leave some headroom
+        
+        # Convert to 16-bit integer
+        audio_data = (final_audio * 32767).astype(np.int16)
+        
+        import uuid
+        music_id = str(uuid.uuid4())
+        music_filename = f"enhanced_{music_id}.wav"
+        music_path = os.path.join(MUSIC_DIR, music_filename)
+        
+        # Save using wave format
+        try:
+            import wave
+            with wave.open(music_path, 'w') as wav_file:
+                wav_file.setnchannels(1)  # Mono
+                wav_file.setsampwidth(2)  # 16-bit
+                wav_file.setframerate(sample_rate)
+                wav_file.writeframes(audio_data.tobytes())
+            
+            print(f"✅ Enhanced {style} music saved: {music_filename}")
+            return music_filename, None
+            
+        except Exception as e:
+            print(f"❌ Error saving enhanced music: {e}")
+            return None, f"Failed to save music: {str(e)}"
+        
+    except Exception as e:
+        print(f"❌ Enhanced music generation error: {e}")
+        return None, f"Enhanced music error: {str(e)}"
 
 def generate_musicgen_music(prompt, duration, style, quality):
     """Generate music using MusicGen API"""
@@ -2439,13 +2883,21 @@ Just describe what kind of music you'd like!"""
             full_music_url = f"http://192.168.1.206:8080/static/generated_music/{music_filename}"
             
             # Determine service used
-            service_name = "AI Music Generator"
-            if music_filename.startswith('suno_'):
+            service_name = "Enhanced AI Music"
+            if music_filename.startswith('replicate_'):
+                service_name = "Replicate MusicGen Pro"
+            elif music_filename.startswith('stability_'):
+                service_name = "Stability AI Stable Audio"
+            elif music_filename.startswith('huggingface_'):
+                service_name = "Hugging Face MusicGen"
+            elif music_filename.startswith('suno_'):
                 service_name = "Suno AI"
             elif music_filename.startswith('musicgen_'):
                 service_name = "MusicGen"
+            elif music_filename.startswith('enhanced_'):
+                service_name = "Enhanced Multi-Layer"
             elif music_filename.startswith('synth_'):
-                service_name = "Synthesized"
+                service_name = "Basic Synthesized"
             
             return f"""🎵 **Service**: {service_name} {style.title()} Music
 🎼 **Track**: {full_music_url}"""
