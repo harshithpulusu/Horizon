@@ -46,6 +46,30 @@ except ImportError as e:
     print(f"⚠️ Video features not available: {e}")
     print("💡 Install with: pip install Pillow imageio imageio-ffmpeg")
 
+# Audio and Music generation imports
+try:
+    import speech_recognition as sr
+    import pyaudio
+    from pydub import AudioSegment
+    from mutagen import File as MutagenFile
+    AUDIO_FEATURES_AVAILABLE = True
+    print("🎵 Audio processing features loaded successfully")
+    
+    # Try to import ElevenLabs for voice synthesis
+    try:
+        import elevenlabs
+        ELEVENLABS_AVAILABLE = True
+        print("🗣️ ElevenLabs voice synthesis available")
+    except ImportError:
+        ELEVENLABS_AVAILABLE = False
+        print("⚠️ ElevenLabs not available - install with: pip install elevenlabs")
+        
+except ImportError as e:
+    AUDIO_FEATURES_AVAILABLE = False
+    ELEVENLABS_AVAILABLE = False
+    print(f"⚠️ Audio features not available: {e}")
+    print("💡 Install with: pip install speechrecognition pyaudio pydub mutagen")
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
@@ -54,10 +78,14 @@ CORS(app)
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_images')
 VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_videos')
 GIFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_gifs')
+AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_audio')
+MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_music')
 
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(VIDEOS_DIR, exist_ok=True)
 os.makedirs(GIFS_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
+os.makedirs(MUSIC_DIR, exist_ok=True)
 
 # ChatGPT API Integration
 try:
@@ -1103,7 +1131,402 @@ def handle_image_generation(text):
         return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
 
 # ===============================================
-# 🎥 AI VIDEO GENERATION FUNCTIONS
+# � AI MUSIC & AUDIO GENERATION FUNCTIONS
+
+def generate_ai_music(prompt, duration=30, style="pop", quality="standard"):
+    """Generate AI music using multiple APIs with fallback options"""
+    
+    print(f"🎵 Generating AI music: '{prompt}' ({style}, {duration}s)")
+    
+    # Try Suno AI first (best quality)
+    if Config.SUNO_API_KEY:
+        result = generate_suno_music(prompt, duration, style, quality)
+        if result[0]:  # Success
+            return result
+    
+    # Fallback to MusicGen API
+    if Config.MUSICGEN_API_KEY:
+        result = generate_musicgen_music(prompt, duration, style, quality)
+        if result[0]:  # Success
+            return result
+    
+    # Fallback to synthesized music
+    return generate_synthesized_music(prompt, duration, style, quality)
+
+def generate_suno_music(prompt, duration, style, quality):
+    """Generate music using Suno AI API"""
+    
+    try:
+        print("🎭 Using Suno AI for professional music generation...")
+        
+        # Enhanced prompt for Suno AI
+        suno_prompt = f"{prompt}, {style} style, {quality} quality, {duration} seconds"
+        
+        # Suno AI API call
+        headers = {
+            "Authorization": f"Bearer {Config.SUNO_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        generation_data = {
+            "prompt": suno_prompt,
+            "duration": min(duration, 300),  # Max 5 minutes
+            "style": style,
+            "quality": quality,
+            "format": "mp3"
+        }
+        
+        response = requests.post(
+            "https://api.suno.ai/v1/generate",
+            headers=headers,
+            json=generation_data
+        )
+        
+        if response.status_code == 200:
+            task_id = response.json()["id"]
+            print(f"🔄 Suno AI generation started (ID: {task_id})")
+            
+            # Poll for completion
+            music_url = poll_suno_completion(task_id, headers)
+            if music_url:
+                music_filename = download_music_file(music_url, "suno")
+                return music_filename, None
+        
+        print(f"⚠️ Suno AI error: {response.status_code}")
+        return None, "Suno AI generation failed"
+        
+    except Exception as e:
+        print(f"❌ Suno AI error: {e}")
+        return None, f"Suno AI error: {str(e)}"
+
+def generate_musicgen_music(prompt, duration, style, quality):
+    """Generate music using MusicGen API"""
+    
+    try:
+        print("🎼 Using MusicGen for AI music composition...")
+        
+        # MusicGen API integration
+        headers = {
+            "Authorization": f"Bearer {Config.MUSICGEN_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        musicgen_prompt = f"Generate {style} music: {prompt}"
+        
+        generation_data = {
+            "prompt": musicgen_prompt,
+            "duration": duration,
+            "model": "musicgen-large" if quality == "high" else "musicgen-medium",
+            "format": "mp3"
+        }
+        
+        response = requests.post(
+            "https://api.replicate.com/v1/predictions",
+            headers=headers,
+            json={
+                "version": "7a76a8258b23fae65c5a22debb8841d1d7e816b75c2f24218cd2bd8573787906",
+                "input": generation_data
+            }
+        )
+        
+        if response.status_code == 201:
+            prediction_id = response.json()["id"]
+            music_url = poll_musicgen_completion(prediction_id, headers)
+            if music_url:
+                music_filename = download_music_file(music_url, "musicgen")
+                return music_filename, None
+        
+        return None, "MusicGen generation failed"
+        
+    except Exception as e:
+        print(f"❌ MusicGen error: {e}")
+        return None, f"MusicGen error: {str(e)}"
+
+def generate_synthesized_music(prompt, duration, style, quality):
+    """Generate synthesized music as fallback"""
+    
+    try:
+        print("🎹 Generating synthesized music as fallback...")
+        
+        if not AUDIO_FEATURES_AVAILABLE:
+            return None, "Audio libraries not available"
+        
+        # Create a simple synthesized track
+        sample_rate = 44100
+        total_samples = int(duration * sample_rate)
+        
+        # Generate different tones based on style
+        import numpy as np
+        
+        if style.lower() in ['pop', 'dance', 'electronic']:
+            # Upbeat electronic-style synth
+            base_freq = 440  # A4
+            t = np.linspace(0, duration, total_samples)
+            
+            # Main melody
+            melody = np.sin(2 * np.pi * base_freq * t) * 0.3
+            # Bass line
+            bass = np.sin(2 * np.pi * base_freq/2 * t) * 0.2
+            # High harmonics
+            harmony = np.sin(2 * np.pi * base_freq * 2 * t) * 0.1
+            
+            audio_data = melody + bass + harmony
+            
+        elif style.lower() in ['classical', 'piano', 'ambient']:
+            # Softer, more melodic
+            t = np.linspace(0, duration, total_samples)
+            frequencies = [261.63, 293.66, 329.63, 349.23, 392.00]  # C major scale
+            
+            audio_data = np.zeros(total_samples)
+            for i, freq in enumerate(frequencies):
+                phase_shift = i * np.pi / 4
+                audio_data += np.sin(2 * np.pi * freq * t + phase_shift) * (0.2 / len(frequencies))
+        
+        else:
+            # Default gentle melody
+            t = np.linspace(0, duration, total_samples)
+            audio_data = np.sin(2 * np.pi * 440 * t) * 0.3
+        
+        # Apply envelope for smoother sound
+        envelope = np.exp(-t / (duration * 0.3))  # Decay envelope
+        audio_data *= envelope
+        
+        # Convert to audio format and save
+        audio_data = (audio_data * 32767).astype(np.int16)
+        
+        import uuid
+        music_id = str(uuid.uuid4())
+        music_filename = f"synth_{music_id}.wav"
+        music_path = os.path.join(MUSIC_DIR, music_filename)
+        
+        # Save using scipy or simple wave format
+        try:
+            import wave
+            with wave.open(music_path, 'w') as wav_file:
+                wav_file.setnchannels(1)  # Mono
+                wav_file.setsampwidth(2)  # 16-bit
+                wav_file.setframerate(sample_rate)
+                wav_file.writeframes(audio_data.tobytes())
+            
+            print(f"✅ Synthesized music saved: {music_filename}")
+            return music_filename, None
+            
+        except Exception as e:
+            print(f"❌ Error saving synthesized music: {e}")
+            return None, f"Failed to save music: {str(e)}"
+        
+    except Exception as e:
+        print(f"❌ Synthesized music error: {e}")
+        return None, f"Synthesized music error: {str(e)}"
+
+def poll_suno_completion(task_id, headers, max_wait=300):
+    """Poll Suno AI for completion"""
+    import time
+    
+    start_time = time.time()
+    while time.time() - start_time < max_wait:
+        try:
+            response = requests.get(
+                f"https://api.suno.ai/v1/tasks/{task_id}",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == "completed":
+                    return data.get("output_url")
+                elif data.get("status") == "failed":
+                    print("❌ Suno AI generation failed")
+                    return None
+                    
+            time.sleep(10)
+            
+        except Exception as e:
+            print(f"⚠️ Error polling Suno: {e}")
+            time.sleep(5)
+    
+    return None
+
+def poll_musicgen_completion(prediction_id, headers, max_wait=300):
+    """Poll MusicGen for completion"""
+    import time
+    
+    start_time = time.time()
+    while time.time() - start_time < max_wait:
+        try:
+            response = requests.get(
+                f"https://api.replicate.com/v1/predictions/{prediction_id}",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == "succeeded":
+                    return data.get("output")
+                elif data.get("status") == "failed":
+                    print("❌ MusicGen generation failed")
+                    return None
+                    
+            time.sleep(10)
+            
+        except Exception as e:
+            print(f"⚠️ Error polling MusicGen: {e}")
+            time.sleep(5)
+    
+    return None
+
+def download_music_file(music_url, service_name):
+    """Download generated music file"""
+    
+    try:
+        import uuid
+        
+        response = requests.get(music_url)
+        if response.status_code == 200:
+            music_id = str(uuid.uuid4())
+            music_filename = f"{service_name}_{music_id}.mp3"
+            music_path = os.path.join(MUSIC_DIR, music_filename)
+            
+            with open(music_path, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"✅ Music downloaded: {music_filename}")
+            return music_filename
+        else:
+            print(f"❌ Failed to download music: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error downloading music: {e}")
+        return None
+
+def generate_voice_audio(text, voice_style="alloy", quality="standard"):
+    """Generate voice audio using ElevenLabs or OpenAI TTS"""
+    
+    print(f"🗣️ Generating voice audio: '{text[:50]}...'")
+    
+    # Try ElevenLabs first if available
+    if ELEVENLABS_AVAILABLE and Config.ELEVENLABS_API_KEY:
+        return generate_elevenlabs_voice(text, voice_style, quality)
+    
+    # Fallback to OpenAI TTS
+    if Config.OPENAI_API_KEY:
+        return generate_openai_voice(text, voice_style, quality)
+    
+    return None, "No voice generation services available"
+
+def generate_elevenlabs_voice(text, voice_style, quality):
+    """Generate voice using ElevenLabs API"""
+    
+    try:
+        print("🎤 Using ElevenLabs for premium voice synthesis...")
+        
+        import elevenlabs
+        elevenlabs.set_api_key(Config.ELEVENLABS_API_KEY)
+        
+        # Voice style mapping
+        voice_map = {
+            "alloy": "21m00Tcm4TlvDq8ikWAM",  # Rachel
+            "echo": "ErXwobaYiN019PkySvjV",   # Antoni  
+            "fable": "MF3mGyEYCl7XYWbV9V6O",  # Elli
+            "onyx": "Yko7PKHZNXotIFUBG7I9",   # Sam
+            "nova": "pNInz6obpgDQGcFmaJgB",   # Adam
+            "shimmer": "Xb7hH8MSUJpSbSDYk0k2" # Alice
+        }
+        
+        voice_id = voice_map.get(voice_style, voice_map["alloy"])
+        
+        # Generate audio
+        audio = elevenlabs.generate(
+            text=text,
+            voice=voice_id,
+            model="eleven_multilingual_v2" if quality == "high" else "eleven_monolingual_v1"
+        )
+        
+        # Save audio file
+        import uuid
+        audio_id = str(uuid.uuid4())
+        audio_filename = f"elevenlabs_{audio_id}.mp3"
+        audio_path = os.path.join(AUDIO_DIR, audio_filename)
+        
+        elevenlabs.save(audio, audio_path)
+        
+        print(f"✅ ElevenLabs voice generated: {audio_filename}")
+        return audio_filename, None
+        
+    except Exception as e:
+        print(f"❌ ElevenLabs error: {e}")
+        return None, f"ElevenLabs error: {str(e)}"
+
+def generate_openai_voice(text, voice_style, quality):
+    """Generate voice using OpenAI TTS"""
+    
+    try:
+        print("🤖 Using OpenAI TTS for voice synthesis...")
+        
+        client = OpenAI(api_key=Config.OPENAI_API_KEY)
+        
+        # Generate audio
+        response = client.audio.speech.create(
+            model="tts-1-hd" if quality == "high" else "tts-1",
+            voice=voice_style,
+            input=text
+        )
+        
+        # Save audio file
+        import uuid
+        audio_id = str(uuid.uuid4())
+        audio_filename = f"openai_tts_{audio_id}.mp3"
+        audio_path = os.path.join(AUDIO_DIR, audio_filename)
+        
+        response.stream_to_file(audio_path)
+        
+        print(f"✅ OpenAI TTS generated: {audio_filename}")
+        return audio_filename, None
+        
+    except Exception as e:
+        print(f"❌ OpenAI TTS error: {e}")
+        return None, f"OpenAI TTS error: {str(e)}"
+
+def transcribe_audio(audio_file_path):
+    """Transcribe audio to text using speech recognition"""
+    
+    if not AUDIO_FEATURES_AVAILABLE:
+        return None, "Audio features not available"
+    
+    try:
+        print("🎤 Transcribing audio to text...")
+        
+        r = sr.Recognizer()
+        
+        # Load audio file
+        with sr.AudioFile(audio_file_path) as source:
+            audio_data = r.record(source)
+        
+        # Try multiple recognition services
+        transcription_methods = [
+            ("OpenAI Whisper", lambda: r.recognize_whisper_api(audio_data, api_key=Config.OPENAI_API_KEY)),
+            ("Google Speech", lambda: r.recognize_google(audio_data)),
+            ("Sphinx (offline)", lambda: r.recognize_sphinx(audio_data))
+        ]
+        
+        for method_name, method_func in transcription_methods:
+            try:
+                print(f"🔄 Trying {method_name}...")
+                text = method_func()
+                print(f"✅ Transcription successful with {method_name}")
+                return text, None
+            except Exception as e:
+                print(f"⚠️ {method_name} failed: {e}")
+                continue
+        
+        return None, "All transcription methods failed"
+        
+    except Exception as e:
+        print(f"❌ Transcription error: {e}")
+        return None, f"Transcription error: {str(e)}"
+
+# �🎥 AI VIDEO GENERATION FUNCTIONS
 # ===============================================
 
 def generate_text_video(text_prompt, duration=5, fps=30, quality="high", method="auto"):

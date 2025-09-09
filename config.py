@@ -13,6 +13,9 @@ class Config:
     SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID', '')
     SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET', '')
     YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', '')
+    ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')
+    SUNO_API_KEY = os.getenv('SUNO_API_KEY', '')
+    MUSICGEN_API_KEY = os.getenv('MUSICGEN_API_KEY', '')
     
     # 🌤️ Weather & Location APIs
     OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY', '')
