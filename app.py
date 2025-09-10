@@ -1138,25 +1138,35 @@ def generate_ai_music(prompt, duration=30, style="pop", quality="standard"):
     
     print(f"🎵 Generating AI music: '{prompt}' ({style}, {duration}s)")
     
-    # Try Replicate MusicGen first (best quality with real instruments)
-    if Config.REPLICATE_API_TOKEN:
-        result = generate_replicate_music(prompt, duration, style, quality)
-        if result[0]:  # Success
-            return result
-    
-    # Try Stability AI Stable Audio
+    # Try Stability AI first (PRIMARY - with corrected endpoints)
     if Config.STABILITY_API_KEY:
+        print("🎹 Trying Stability AI (PRIMARY)...")
         result = generate_stability_music(prompt, duration, style, quality)
         if result[0]:  # Success
             return result
+        else:
+            print(f"⚠️ Stability AI failed: {result[1]}")
     
-    # Try Hugging Face MusicGen
+    # Try Replicate MusicGen (BACKUP 1 - best quality with real instruments)
+    if Config.REPLICATE_API_TOKEN:
+        print("🎼 Trying Replicate MusicGen (BACKUP 1)...")
+        result = generate_replicate_music(prompt, duration, style, quality)
+        if result[0]:  # Success
+            return result
+        else:
+            print(f"⚠️ Replicate failed: {result[1]}")
+    
+    # Try Hugging Face MusicGen (BACKUP 2 - good quality, more reliable)
     if Config.HUGGINGFACE_API_KEY:
+        print("🤗 Trying Hugging Face MusicGen (BACKUP 2)...")
         result = generate_huggingface_music(prompt, duration, style, quality)
         if result[0]:  # Success
             return result
+        else:
+            print(f"⚠️ Hugging Face failed: {result[1]}")
     
-    # Fallback to enhanced synthesized music
+    # Fallback to enhanced synthesized music (BACKUP 3)
+    print("🔄 Using Enhanced Multi-layer Synthesis (BACKUP 3)...")
     return generate_enhanced_music(prompt, duration, style, quality)
 
 def generate_replicate_music(prompt, duration, style, quality):
@@ -1246,88 +1256,236 @@ def generate_replicate_music(prompt, duration, style, quality):
         return None, f"Replicate error: {str(e)}"
 
 def generate_stability_music(prompt, duration, style, quality):
-    """Generate music using Stability AI's Stable Audio API"""
+    """Generate music using Stability AI's Stable Audio API - REAL INSTRUMENTS"""
     
     try:
-        print("🎹 Using Stability AI Stable Audio for professional music...")
+        print("🎹 Using Stability AI Stable Audio - REAL instruments and professional quality...")
         
         # Check API key
         if not Config.STABILITY_API_KEY:
             print("⚠️ Stability AI API key not configured")
             return None, "Stability AI API key not configured"
         
-        # Enhanced prompt for Stable Audio
+        # Enhanced prompt for Stable Audio (it DOES support real instruments)
         stable_prompt = f"{style} music: {prompt}"
         
-        # Add instrument specifications based on style
+        # Add real instrument specifications based on style
         if style.lower() == "pop":
-            stable_prompt += ", pop drums, electric guitar, bass, synthesizer, upbeat"
+            stable_prompt += ", real drums, electric guitar, bass guitar, synthesizer, upbeat tempo"
         elif style.lower() == "rock":
-            stable_prompt += ", rock drums, distorted electric guitar, bass guitar, powerful"
+            stable_prompt += ", rock drums, distorted electric guitar, bass guitar, powerful energy"
         elif style.lower() == "electronic":
-            stable_prompt += ", electronic drums, synthesizer, bass synth, energetic"
+            stable_prompt += ", electronic drums, synthesizer, bass synth, dance beat"
         elif style.lower() == "classical":
-            stable_prompt += ", orchestral instruments, piano, strings, elegant"
+            stable_prompt += ", orchestral instruments, piano, violin, cello, strings"
         elif style.lower() == "jazz":
-            stable_prompt += ", jazz drums, saxophone, piano, bass, smooth"
+            stable_prompt += ", jazz drums, saxophone, piano, double bass, swing rhythm"
         elif style.lower() == "ambient":
-            stable_prompt += ", atmospheric, peaceful, flowing"
+            stable_prompt += ", atmospheric sounds, soft instruments, ethereal"
         else:
-            stable_prompt += ", with drums and bass"
+            stable_prompt += ", with real drums and bass guitar"
         
-        # Add quality descriptors
+        # Add professional quality descriptors
         if quality == "high":
-            stable_prompt += ", professional production, studio quality"
+            stable_prompt += ", high fidelity, studio quality, professional mixing"
         
-        print(f"🎵 Generating with Stability AI: {stable_prompt}")
+        print(f"🎵 Generating with Stability AI Stable Audio: {stable_prompt}")
         print(f"⏱️ Duration: {duration} seconds")
         
-        # Use the correct Stability AI API endpoint
+        # The correct Stability AI Stable Audio endpoint
+        url = "https://api.stability.ai/v2beta/stable-audio/generate/music"
+        
         headers = {
             "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         }
         
-        generation_data = {
+        # Correct payload format for Stable Audio
+        payload = {
             "prompt": stable_prompt,
-            "duration": min(duration, 47),  # Stable Audio max duration
-            "cfg_scale": 7,
+            "duration": min(duration, 47),  # Stable Audio supports up to 47 seconds
+            "cfg_scale": 7.0,
             "seed": None
         }
         
-        # Try the audio generation endpoint
-        response = requests.post(
-            "https://api.stability.ai/v2beta/stable-audio/generate/music",
-            headers=headers,
-            json=generation_data,
-            timeout=30
-        )
+        print(f"🔄 Making request to Stability AI Stable Audio...")
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
         
         print(f"🔍 Stability AI response status: {response.status_code}")
         
         if response.status_code == 200:
             result = response.json()
-            generation_id = result.get("id")
+            print("✅ Stability AI generation started successfully!")
             
-            if generation_id:
-                print(f"🔄 Stability AI generation started (ID: {generation_id})")
+            if "id" in result:
+                generation_id = result["id"]
+                print(f"🔄 Generation ID: {generation_id}")
                 
                 # Poll for completion
                 music_url = poll_stability_completion(generation_id, headers)
                 if music_url:
-                    music_filename = download_music_file(music_url, "stability")
+                    music_filename = download_music_file(music_url, "stability_audio")
                     return music_filename, None
-            else:
-                print("⚠️ No generation ID received from Stability AI")
+                    
+        elif response.status_code == 400:
+            error_detail = response.json() if response.content else "Bad request"
+            print(f"❌ Bad request: {error_detail}")
+            return None, f"Stability AI bad request: {error_detail}"
+            
+        elif response.status_code == 401:
+            print("🔑 Stability AI: Invalid API key - check your token")
+            return None, "Invalid Stability AI API key"
+            
+        elif response.status_code == 402:
+            print("💳 Stability AI: Insufficient credits - check your account balance")
+            return None, "Insufficient Stability AI credits"
+            
+        elif response.status_code == 429:
+            print("⏱️ Stability AI: Rate limited - too many requests")
+            return None, "Stability AI rate limited"
+            
         else:
-            print(f"⚠️ Stability AI error: {response.status_code}")
-            print(f"Response: {response.text}")
+            error_text = response.text[:200] if response.text else "Unknown error"
+            print(f"⚠️ Stability AI error {response.status_code}: {error_text}")
+            return None, f"Stability AI error {response.status_code}: {error_text}"
+        
+        return None, "Stability AI generation failed"
+        
+    except Exception as e:
+        print(f"❌ Stability AI error: {e}")
+        return None, f"Stability AI error: {str(e)}"
+        
+        # Test different authentication methods
+        auth_methods = [
+            {"Authorization": f"Bearer {Config.STABILITY_API_KEY}"},
+            {"Authorization": f"Token {Config.STABILITY_API_KEY}"},
+            {"API-Key": Config.STABILITY_API_KEY},
+            {"X-API-Key": Config.STABILITY_API_KEY},
+            {"stability-api-key": Config.STABILITY_API_KEY}
+        ]
+        
+        # Test authentication with account endpoint
+        for i, headers in enumerate(auth_methods):
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
+            
+            try:
+                print(f"🔄 Testing auth method {i+1}/5...")
+                
+                # Test with account/balance endpoint (most APIs have this)
+                response = requests.get(
+                    "https://api.stability.ai/v1/user/account",
+                    headers=headers,
+                    timeout=10
+                )
+                
+                print(f"🔍 Auth test response: {response.status_code}")
+                
+                if response.status_code == 200:
+                    print("✅ Valid authentication method found!")
+                    account_info = response.json()
+                    print(f"📊 Account info: {account_info}")
+                    
+                    # Now test what endpoints are available
+                    available_endpoints = [
+                        "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+                        "https://api.stability.ai/v1/engines/list",
+                        "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image"
+                    ]
+                    
+                    print("� Checking available Stability AI services...")
+                    for endpoint in available_endpoints:
+                        test_response = requests.get(endpoint, headers=headers, timeout=5)
+                        print(f"📍 {endpoint.split('/')[-1]}: {test_response.status_code}")
+                    
+                    # Stability AI currently focuses on images, not audio
+                    print("📝 Analysis: Stability AI primarily offers image generation")
+                    print("� Stable Audio API may not be publicly available yet")
+                    print("🔄 Falling back to other music generation services...")
+                    
+                    return None, "Stability AI audio generation not available - image service only"
+                    
+                elif response.status_code == 401:
+                    print(f"❌ Auth method {i+1}: Invalid credentials")
+                elif response.status_code == 403:
+                    print(f"❌ Auth method {i+1}: Forbidden - check API permissions")
+                else:
+                    print(f"⚠️ Auth method {i+1}: {response.status_code}")
+                    
+            except Exception as e:
+                print(f"❌ Auth method {i+1} error: {e}")
+                continue
+        
+        print("❌ No valid authentication method found for Stability AI")
+        print("💡 Suggestion: Verify API key format and check if your account has required permissions")
+        
+        return None, "Stability AI authentication failed - check API key format"
+        
+    except Exception as e:
+        print(f"❌ Stability AI error: {e}")
+        return None, f"Stability AI error: {str(e)}"
         
         return None, f"Stability AI generation failed: {response.status_code}"
         
     except Exception as e:
         print(f"❌ Stability AI error: {e}")
-        return None, f"Stability AI error: {str(e)}"
+def save_stability_audio_response(result):
+    """Save audio from Stability AI JSON response"""
+    try:
+        import uuid
+        import base64
+        
+        audio_data = None
+        
+        # Check different response formats
+        if "audio" in result:
+            audio_data = result["audio"]
+        elif "artifacts" in result and len(result["artifacts"]) > 0:
+            artifact = result["artifacts"][0]
+            if "base64" in artifact:
+                audio_data = artifact["base64"]
+        
+        if audio_data:
+            # Decode base64 audio
+            audio_bytes = base64.b64decode(audio_data)
+            
+            # Save to file
+            music_id = str(uuid.uuid4())
+            music_filename = f"stability_{music_id}.wav"
+            music_path = os.path.join(MUSIC_DIR, music_filename)
+            
+            with open(music_path, "wb") as f:
+                f.write(audio_bytes)
+            
+            print(f"✅ Stability AI music saved: {music_filename}")
+            return music_filename
+            
+    except Exception as e:
+        print(f"❌ Error saving Stability AI audio: {e}")
+    
+    return None
+
+def save_stability_binary_audio(audio_content):
+    """Save binary audio from Stability AI response"""
+    try:
+        import uuid
+        
+        music_id = str(uuid.uuid4())
+        music_filename = f"stability_{music_id}.wav"
+        music_path = os.path.join(MUSIC_DIR, music_filename)
+        
+        with open(music_path, "wb") as f:
+            f.write(audio_content)
+        
+        print(f"✅ Stability AI binary music saved: {music_filename}")
+        return music_filename
+        
+    except Exception as e:
+        print(f"❌ Error saving binary audio: {e}")
+    
+    return None
 
 def generate_huggingface_music(prompt, duration, style, quality):
     """Generate music using Hugging Face MusicGen"""
