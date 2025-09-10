@@ -9,6 +9,17 @@ __pycache__/
 # Database
 *.db
 
+# Generated content
+static/generated_images/
+static/generated_audio/
+static/generated_videos/
+static/generated_music/
+static/generated_gifs/
+static/generated_avatars/
+static/generated_designs/
+static/generated_logos/
+static/generated_3d_models/
+
 # Virtual environment
 venv/
 .venv/

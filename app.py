@@ -1522,7 +1522,7 @@ def generate_ai_avatar(prompt, style="realistic", consistency_seed=None):
             print("🎨 Using DALL-E for avatar generation...")
             
             try:
-                response = openai_client.images.generate(
+                response = client.images.generate(
                     model="dall-e-3",
                     prompt=avatar_prompt,
                     size="1024x1024",
@@ -1809,7 +1809,7 @@ def generate_logo_design(brand_name, industry, style="modern"):
             print("🎨 Using DALL-E for logo design...")
             
             try:
-                response = openai_client.images.generate(
+                response = client.images.generate(
                     model="dall-e-3",
                     prompt=logo_prompt,
                     size="1024x1024",
@@ -3919,6 +3919,154 @@ def health_check():
         'version': 'chatgpt_v1.0'
     })
 
+# ===== VISUAL AI API ENDPOINTS =====
+
+@app.route('/api/generate-avatar', methods=['POST'])
+def api_generate_avatar():
+    """Generate AI avatar"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
+        style = data.get('style', 'realistic')
+        
+        if not prompt:
+            return jsonify({'error': 'Prompt is required'}), 400
+        
+        filename, error = generate_ai_avatar(prompt, style)
+        
+        if filename:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'url': f'/static/generated_avatars/{filename}'
+            })
+        else:
+            return jsonify({'error': error or 'Avatar generation failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/edit-background', methods=['POST'])
+def api_edit_background():
+    """Edit image background"""
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        image_file = request.files['image']
+        action = request.form.get('action', 'remove')
+        
+        # Save uploaded image temporarily
+        import uuid
+        temp_id = str(uuid.uuid4())
+        temp_filename = f"temp_{temp_id}.png"
+        temp_path = os.path.join(DESIGNS_DIR, temp_filename)
+        image_file.save(temp_path)
+        
+        filename, error = edit_image_background(temp_path, action)
+        
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        if filename:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'url': f'/static/generated_designs/{filename}'
+            })
+        else:
+            return jsonify({'error': error or 'Background editing failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate-3d-model', methods=['POST'])
+def api_generate_3d_model():
+    """Generate 3D model"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
+        style = data.get('style', 'realistic')
+        
+        if not prompt:
+            return jsonify({'error': 'Prompt is required'}), 400
+        
+        filename, error = generate_3d_model(prompt, style)
+        
+        if filename:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'url': f'/static/generated_3d_models/{filename}'
+            })
+        else:
+            return jsonify({'error': error or '3D model generation failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate-logo', methods=['POST'])
+def api_generate_logo():
+    """Generate logo design"""
+    try:
+        data = request.get_json()
+        brand_name = data.get('brand_name', '')
+        industry = data.get('industry', 'technology')
+        style = data.get('style', 'modern')
+        
+        if not brand_name:
+            return jsonify({'error': 'Brand name is required'}), 400
+        
+        filename, error = generate_logo_design(brand_name, industry, style)
+        
+        if filename:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'url': f'/static/generated_logos/{filename}'
+            })
+        else:
+            return jsonify({'error': error or 'Logo generation failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/upscale-image', methods=['POST'])
+def api_upscale_image():
+    """Upscale image"""
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        image_file = request.files['image']
+        scale_factor = int(request.form.get('scale', 2))
+        
+        # Save uploaded image temporarily
+        import uuid
+        temp_id = str(uuid.uuid4())
+        temp_filename = f"temp_{temp_id}.png"
+        temp_path = os.path.join(DESIGNS_DIR, temp_filename)
+        image_file.save(temp_path)
+        
+        filename, error = upscale_image(temp_path, scale_factor)
+        
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        if filename:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'url': f'/static/generated_designs/{filename}'
+            })
+        else:
+            return jsonify({'error': error or 'Image upscaling failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/process', methods=['POST'])
 def process_message():
     try:
@@ -4406,6 +4554,38 @@ def serve_generated_audio(filename):
         return send_from_directory(AUDIO_DIR, filename)
     except FileNotFoundError:
         return jsonify({'error': 'Audio not found'}), 404
+
+@app.route('/static/generated_avatars/<filename>')
+def serve_generated_avatar(filename):
+    """Serve generated avatars from the local storage"""
+    try:
+        return send_from_directory(AVATARS_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Avatar not found'}), 404
+
+@app.route('/static/generated_designs/<filename>')
+def serve_generated_design(filename):
+    """Serve generated designs from the local storage"""
+    try:
+        return send_from_directory(DESIGNS_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Design not found'}), 404
+
+@app.route('/static/generated_3d_models/<filename>')
+def serve_generated_3d_model(filename):
+    """Serve generated 3D models from the local storage"""
+    try:
+        return send_from_directory(MODELS_3D_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': '3D model not found'}), 404
+
+@app.route('/static/generated_logos/<filename>')
+def serve_generated_logo(filename):
+    """Serve generated logos from the local storage"""
+    try:
+        return send_from_directory(LOGOS_DIR, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Logo not found'}), 404
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
