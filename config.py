@@ -71,6 +71,16 @@ class Config:
     PIKA_API_KEY = os.getenv('PIKA_API_KEY', '')  # Pika Labs alternative
     STABLE_VIDEO_API_KEY = os.getenv('STABLE_VIDEO_API_KEY', '')  # Stability AI
     
+    # 🎨 Visual AI & Design APIs
+    MIDJOURNEY_API_KEY = os.getenv('MIDJOURNEY_API_KEY', '')  # Avatar & design generation
+    LEONARDO_AI_API_KEY = os.getenv('LEONARDO_AI_API_KEY', '')  # Character consistency
+    REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', '')  # Background removal
+    UPSCAYL_API_KEY = os.getenv('UPSCAYL_API_KEY', '')  # Image upscaling
+    TRIPO_API_KEY = os.getenv('TRIPO_API_KEY', '')  # 3D model generation
+    MESHY_API_KEY = os.getenv('MESHY_API_KEY', '')  # 3D object creation
+    LOOKA_API_KEY = os.getenv('LOOKA_API_KEY', '')  # Logo generation
+    BRANDMARK_API_KEY = os.getenv('BRANDMARK_API_KEY', '')  # Brand design
+    
     # 🗣️ Voice & Speech APIs
     ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')  # Premium TTS
     AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY', '')

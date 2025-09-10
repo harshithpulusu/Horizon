@@ -80,12 +80,20 @@ VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 
 GIFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_gifs')
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_audio')
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_music')
+AVATARS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_avatars')
+DESIGNS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_designs')
+MODELS_3D_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_3d_models')
+LOGOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_logos')
 
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(VIDEOS_DIR, exist_ok=True)
 os.makedirs(GIFS_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(MUSIC_DIR, exist_ok=True)
+os.makedirs(AVATARS_DIR, exist_ok=True)
+os.makedirs(DESIGNS_DIR, exist_ok=True)
+os.makedirs(MODELS_3D_DIR, exist_ok=True)
+os.makedirs(LOGOS_DIR, exist_ok=True)
 
 # ChatGPT API Integration
 try:
@@ -1486,6 +1494,476 @@ def save_stability_binary_audio(audio_content):
         print(f"❌ Error saving binary audio: {e}")
     
     return None
+
+# ===== VISUAL AI GENERATION FUNCTIONS =====
+
+def generate_ai_avatar(prompt, style="realistic", consistency_seed=None):
+    """Generate consistent character avatars using AI"""
+    
+    try:
+        print(f"🎭 Generating AI Avatar: {prompt} (style: {style})")
+        
+        # Enhanced avatar prompt
+        avatar_prompt = f"portrait of {prompt}, {style} style"
+        
+        if style.lower() == "realistic":
+            avatar_prompt += ", professional headshot, high quality, detailed face, studio lighting"
+        elif style.lower() == "anime":
+            avatar_prompt += ", anime character design, vibrant colors, detailed eyes"
+        elif style.lower() == "cartoon":
+            avatar_prompt += ", cartoon character, friendly expression, colorful"
+        elif style.lower() == "professional":
+            avatar_prompt += ", business portrait, professional attire, corporate style"
+        
+        # Try multiple avatar generation services
+        
+        # Option 1: Use DALL-E for avatar generation
+        if Config.OPENAI_API_KEY:
+            print("🎨 Using DALL-E for avatar generation...")
+            
+            try:
+                response = openai_client.images.generate(
+                    model="dall-e-3",
+                    prompt=avatar_prompt,
+                    size="1024x1024",
+                    quality="hd",
+                    n=1,
+                    response_format="url"
+                )
+                
+                image_url = response.data[0].url
+                
+                # Download and save avatar
+                image_response = requests.get(image_url, timeout=30)
+                if image_response.status_code == 200:
+                    import uuid
+                    avatar_id = str(uuid.uuid4())
+                    avatar_filename = f"avatar_{avatar_id}.png"
+                    avatar_path = os.path.join(AVATARS_DIR, avatar_filename)
+                    
+                    with open(avatar_path, 'wb') as f:
+                        f.write(image_response.content)
+                    
+                    print(f"✅ Avatar generated: {avatar_filename}")
+                    return avatar_filename, None
+                    
+            except Exception as e:
+                print(f"⚠️ DALL-E avatar error: {e}")
+        
+        # Option 2: Use Stability AI for avatar generation
+        if Config.STABILITY_API_KEY:
+            print("🎭 Using Stability AI for avatar generation...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "text_prompts": [{"text": avatar_prompt}],
+                    "cfg_scale": 7,
+                    "samples": 1,
+                    "steps": 50
+                }
+                
+                response = requests.post(
+                    "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if "artifacts" in data and len(data["artifacts"]) > 0:
+                        import base64
+                        import uuid
+                        
+                        image_data = base64.b64decode(data["artifacts"][0]["base64"])
+                        avatar_id = str(uuid.uuid4())
+                        avatar_filename = f"avatar_stability_{avatar_id}.png"
+                        avatar_path = os.path.join(AVATARS_DIR, avatar_filename)
+                        
+                        with open(avatar_path, 'wb') as f:
+                            f.write(image_data)
+                        
+                        print(f"✅ Stability AI avatar generated: {avatar_filename}")
+                        return avatar_filename, None
+                        
+            except Exception as e:
+                print(f"⚠️ Stability AI avatar error: {e}")
+        
+        return None, "Avatar generation failed - no working APIs"
+        
+    except Exception as e:
+        print(f"❌ Avatar generation error: {e}")
+        return None, f"Avatar error: {str(e)}"
+
+def edit_image_background(image_path, action="remove", new_background=None):
+    """Edit image backgrounds - remove, replace, or enhance"""
+    
+    try:
+        print(f"🖼️ Image editing: {action} background")
+        
+        if action == "remove" and Config.REMOVE_BG_API_KEY:
+            print("✂️ Removing background with Remove.bg API...")
+            
+            headers = {
+                "X-Api-Key": Config.REMOVE_BG_API_KEY
+            }
+            
+            with open(image_path, 'rb') as f:
+                files = {"image_file": f}
+                
+                response = requests.post(
+                    "https://api.remove.bg/v1.0/removebg",
+                    headers=headers,
+                    files=files,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    import uuid
+                    edit_id = str(uuid.uuid4())
+                    edited_filename = f"bg_removed_{edit_id}.png"
+                    edited_path = os.path.join(DESIGNS_DIR, edited_filename)
+                    
+                    with open(edited_path, 'wb') as f:
+                        f.write(response.content)
+                    
+                    print(f"✅ Background removed: {edited_filename}")
+                    return edited_filename, None
+        
+        # Fallback to OpenCV background removal
+        print("🔄 Using OpenCV for background processing...")
+        
+        try:
+            import cv2
+            import numpy as np
+            from PIL import Image
+            
+            # Load image
+            img = cv2.imread(image_path)
+            
+            if action == "remove":
+                # Simple background removal using grabcut
+                height, width = img.shape[:2]
+                mask = np.zeros((height, width), np.uint8)
+                
+                # Create rectangle for foreground
+                rect = (50, 50, width-50, height-50)
+                
+                bgd_model = np.zeros((1, 65), np.float64)
+                fgd_model = np.zeros((1, 65), np.float64)
+                
+                cv2.grabCut(img, mask, rect, bgd_model, fgd_model, 5, cv2.GC_INIT_WITH_RECT)
+                
+                mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype('uint8')
+                result = img * mask2[:, :, np.newaxis]
+                
+                # Convert to RGBA for transparency
+                result_rgba = cv2.cvtColor(result, cv2.COLOR_BGR2RGBA)
+                result_rgba[:, :, 3] = mask2 * 255
+                
+                import uuid
+                edit_id = str(uuid.uuid4())
+                edited_filename = f"bg_removed_cv_{edit_id}.png"
+                edited_path = os.path.join(DESIGNS_DIR, edited_filename)
+                
+                cv2.imwrite(edited_path, result_rgba)
+                
+                print(f"✅ Background removed with OpenCV: {edited_filename}")
+                return edited_filename, None
+                
+        except Exception as e:
+            print(f"⚠️ OpenCV processing error: {e}")
+        
+        return None, "Background editing failed"
+        
+    except Exception as e:
+        print(f"❌ Image editing error: {e}")
+        return None, f"Image editing error: {str(e)}"
+
+def generate_3d_model(prompt, style="realistic"):
+    """Generate 3D models from text descriptions"""
+    
+    try:
+        print(f"🗿 Generating 3D model: {prompt} (style: {style})")
+        
+        # Enhanced 3D model prompt
+        model_prompt = f"3D model of {prompt}, {style} style"
+        
+        if style.lower() == "realistic":
+            model_prompt += ", high detail, photorealistic textures, professional quality"
+        elif style.lower() == "lowpoly":
+            model_prompt += ", low polygon count, game-ready, clean geometry"
+        elif style.lower() == "stylized":
+            model_prompt += ", artistic style, creative design, unique aesthetic"
+        
+        # Try Tripo API for 3D generation
+        if Config.TRIPO_API_KEY:
+            print("🔮 Using Tripo API for 3D model generation...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.TRIPO_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "prompt": model_prompt,
+                    "style": style,
+                    "quality": "high"
+                }
+                
+                response = requests.post(
+                    "https://api.tripo3d.ai/v1/text-to-3d",
+                    headers=headers,
+                    json=payload,
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    if "model_url" in result:
+                        # Download 3D model
+                        model_response = requests.get(result["model_url"], timeout=60)
+                        
+                        if model_response.status_code == 200:
+                            import uuid
+                            model_id = str(uuid.uuid4())
+                            model_filename = f"model_3d_{model_id}.obj"
+                            model_path = os.path.join(MODELS_3D_DIR, model_filename)
+                            
+                            with open(model_path, 'wb') as f:
+                                f.write(model_response.content)
+                            
+                            print(f"✅ 3D model generated: {model_filename}")
+                            return model_filename, None
+                            
+            except Exception as e:
+                print(f"⚠️ Tripo API error: {e}")
+        
+        # Try Meshy API for 3D generation
+        if Config.MESHY_API_KEY:
+            print("🎯 Using Meshy API for 3D model generation...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.MESHY_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "text": model_prompt,
+                    "mode": "text-to-3d",
+                    "art_style": style
+                }
+                
+                response = requests.post(
+                    "https://api.meshy.ai/v1/text-to-3d",
+                    headers=headers,
+                    json=payload,
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"✅ Meshy 3D generation started: {result}")
+                    return None, "3D model generation started - check back in a few minutes"
+                    
+            except Exception as e:
+                print(f"⚠️ Meshy API error: {e}")
+        
+        return None, "3D model generation not available - API keys needed"
+        
+    except Exception as e:
+        print(f"❌ 3D model generation error: {e}")
+        return None, f"3D generation error: {str(e)}"
+
+def generate_logo_design(brand_name, industry, style="modern"):
+    """Generate logos and brand designs"""
+    
+    try:
+        print(f"🏷️ Generating logo for: {brand_name} ({industry}, {style})")
+        
+        # Enhanced logo prompt
+        logo_prompt = f"professional logo design for {brand_name}, {industry} industry, {style} style"
+        
+        if style.lower() == "modern":
+            logo_prompt += ", clean lines, minimalist, contemporary design"
+        elif style.lower() == "vintage":
+            logo_prompt += ", retro aesthetic, classic typography, timeless design"
+        elif style.lower() == "creative":
+            logo_prompt += ", artistic flair, unique concept, innovative design"
+        elif style.lower() == "corporate":
+            logo_prompt += ", professional appearance, trustworthy, business-oriented"
+        
+        logo_prompt += ", vector style, high contrast, suitable for business use"
+        
+        # Try DALL-E for logo generation
+        if Config.OPENAI_API_KEY:
+            print("🎨 Using DALL-E for logo design...")
+            
+            try:
+                response = openai_client.images.generate(
+                    model="dall-e-3",
+                    prompt=logo_prompt,
+                    size="1024x1024",
+                    quality="hd",
+                    n=1,
+                    response_format="url"
+                )
+                
+                image_url = response.data[0].url
+                
+                # Download and save logo
+                image_response = requests.get(image_url, timeout=30)
+                if image_response.status_code == 200:
+                    import uuid
+                    logo_id = str(uuid.uuid4())
+                    logo_filename = f"logo_{brand_name}_{logo_id}.png"
+                    logo_path = os.path.join(LOGOS_DIR, logo_filename)
+                    
+                    with open(logo_path, 'wb') as f:
+                        f.write(image_response.content)
+                    
+                    print(f"✅ Logo generated: {logo_filename}")
+                    return logo_filename, None
+                    
+            except Exception as e:
+                print(f"⚠️ DALL-E logo error: {e}")
+        
+        # Try Stability AI for logo generation
+        if Config.STABILITY_API_KEY:
+            print("🎭 Using Stability AI for logo design...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "text_prompts": [{"text": logo_prompt}],
+                    "cfg_scale": 7,
+                    "samples": 1,
+                    "steps": 50
+                }
+                
+                response = requests.post(
+                    "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if "artifacts" in data and len(data["artifacts"]) > 0:
+                        import base64
+                        import uuid
+                        
+                        image_data = base64.b64decode(data["artifacts"][0]["base64"])
+                        logo_id = str(uuid.uuid4())
+                        logo_filename = f"logo_stability_{brand_name}_{logo_id}.png"
+                        logo_path = os.path.join(LOGOS_DIR, logo_filename)
+                        
+                        with open(logo_path, 'wb') as f:
+                            f.write(image_data)
+                        
+                        print(f"✅ Stability AI logo generated: {logo_filename}")
+                        return logo_filename, None
+                        
+            except Exception as e:
+                print(f"⚠️ Stability AI logo error: {e}")
+        
+        return None, "Logo generation failed - no working APIs"
+        
+    except Exception as e:
+        print(f"❌ Logo generation error: {e}")
+        return None, f"Logo error: {str(e)}"
+
+def upscale_image(image_path, scale_factor=2):
+    """Upscale images using AI"""
+    
+    try:
+        print(f"📈 Upscaling image by {scale_factor}x...")
+        
+        # Try AI upscaling services first
+        if Config.UPSCAYL_API_KEY:
+            print("🚀 Using AI upscaling service...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.UPSCAYL_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                with open(image_path, 'rb') as f:
+                    files = {"image": f}
+                    data = {"scale": scale_factor}
+                    
+                    response = requests.post(
+                        "https://api.upscayl.com/v1/upscale",
+                        headers=headers,
+                        files=files,
+                        data=data,
+                        timeout=60
+                    )
+                    
+                    if response.status_code == 200:
+                        import uuid
+                        upscale_id = str(uuid.uuid4())
+                        upscaled_filename = f"upscaled_{scale_factor}x_{upscale_id}.png"
+                        upscaled_path = os.path.join(DESIGNS_DIR, upscaled_filename)
+                        
+                        with open(upscaled_path, 'wb') as f:
+                            f.write(response.content)
+                        
+                        print(f"✅ Image upscaled: {upscaled_filename}")
+                        return upscaled_filename, None
+                        
+            except Exception as e:
+                print(f"⚠️ AI upscaling error: {e}")
+        
+        # Fallback to OpenCV upscaling
+        print("🔄 Using OpenCV for image upscaling...")
+        
+        try:
+            import cv2
+            
+            img = cv2.imread(image_path)
+            height, width = img.shape[:2]
+            
+            new_width = int(width * scale_factor)
+            new_height = int(height * scale_factor)
+            
+            # Use INTER_CUBIC for better quality upscaling
+            upscaled = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            
+            import uuid
+            upscale_id = str(uuid.uuid4())
+            upscaled_filename = f"upscaled_cv_{scale_factor}x_{upscale_id}.png"
+            upscaled_path = os.path.join(DESIGNS_DIR, upscaled_filename)
+            
+            cv2.imwrite(upscaled_path, upscaled)
+            
+            print(f"✅ Image upscaled with OpenCV: {upscaled_filename}")
+            return upscaled_filename, None
+            
+        except Exception as e:
+            print(f"⚠️ OpenCV upscaling error: {e}")
+        
+        return None, "Image upscaling failed"
+        
+    except Exception as e:
+        print(f"❌ Image upscaling error: {e}")
+        return None, f"Upscaling error: {str(e)}"
 
 def generate_huggingface_music(prompt, duration, style, quality):
     """Generate music using Hugging Face MusicGen"""
