@@ -1246,26 +1246,43 @@ def generate_replicate_music(prompt, duration, style, quality):
         return None, f"Replicate error: {str(e)}"
 
 def generate_stability_music(prompt, duration, style, quality):
-    """Generate music using Stability AI's Stable Audio"""
+    """Generate music using Stability AI's Stable Audio API"""
     
     try:
         print("🎹 Using Stability AI Stable Audio for professional music...")
         
+        # Check API key
+        if not Config.STABILITY_API_KEY:
+            print("⚠️ Stability AI API key not configured")
+            return None, "Stability AI API key not configured"
+        
         # Enhanced prompt for Stable Audio
         stable_prompt = f"{style} music: {prompt}"
         
-        # Add instrument specifications
+        # Add instrument specifications based on style
         if style.lower() == "pop":
-            stable_prompt += ", pop drums, electric guitar, bass, synthesizer"
+            stable_prompt += ", pop drums, electric guitar, bass, synthesizer, upbeat"
         elif style.lower() == "rock":
-            stable_prompt += ", rock drums, distorted electric guitar, bass guitar"
+            stable_prompt += ", rock drums, distorted electric guitar, bass guitar, powerful"
         elif style.lower() == "electronic":
-            stable_prompt += ", electronic drums, synthesizer, bass synth"
+            stable_prompt += ", electronic drums, synthesizer, bass synth, energetic"
         elif style.lower() == "classical":
-            stable_prompt += ", orchestral instruments, piano, strings"
+            stable_prompt += ", orchestral instruments, piano, strings, elegant"
         elif style.lower() == "jazz":
-            stable_prompt += ", jazz drums, saxophone, piano, bass"
+            stable_prompt += ", jazz drums, saxophone, piano, bass, smooth"
+        elif style.lower() == "ambient":
+            stable_prompt += ", atmospheric, peaceful, flowing"
+        else:
+            stable_prompt += ", with drums and bass"
         
+        # Add quality descriptors
+        if quality == "high":
+            stable_prompt += ", professional production, studio quality"
+        
+        print(f"🎵 Generating with Stability AI: {stable_prompt}")
+        print(f"⏱️ Duration: {duration} seconds")
+        
+        # Use the correct Stability AI API endpoint
         headers = {
             "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
             "Content-Type": "application/json"
@@ -1273,18 +1290,20 @@ def generate_stability_music(prompt, duration, style, quality):
         
         generation_data = {
             "prompt": stable_prompt,
-            "duration": min(duration, 47),  # Stable Audio max
+            "duration": min(duration, 47),  # Stable Audio max duration
             "cfg_scale": 7,
             "seed": None
         }
         
-        print(f"🎵 Generating with Stability AI: {stable_prompt}")
-        
+        # Try the audio generation endpoint
         response = requests.post(
             "https://api.stability.ai/v2beta/stable-audio/generate/music",
             headers=headers,
-            json=generation_data
+            json=generation_data,
+            timeout=30
         )
+        
+        print(f"🔍 Stability AI response status: {response.status_code}")
         
         if response.status_code == 200:
             result = response.json()
@@ -1298,8 +1317,11 @@ def generate_stability_music(prompt, duration, style, quality):
                 if music_url:
                     music_filename = download_music_file(music_url, "stability")
                     return music_filename, None
+            else:
+                print("⚠️ No generation ID received from Stability AI")
         else:
-            print(f"⚠️ Stability AI error: {response.status_code} - {response.text}")
+            print(f"⚠️ Stability AI error: {response.status_code}")
+            print(f"Response: {response.text}")
         
         return None, f"Stability AI generation failed: {response.status_code}"
         
