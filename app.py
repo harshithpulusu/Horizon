@@ -539,11 +539,11 @@ def generate_fallback_response(user_input, personality):
     
     return prefix + base_response + suffix
 
-def ask_ai_model(user_input, personality, session_id=None):
+def ask_ai_model(user_input, personality, session_id=None, user_id='anonymous'):
     """Main AI function - tries ChatGPT first with context, falls back to smart responses"""
     try:
-        # Try ChatGPT first with conversation context
-        chatgpt_response, context_used = ask_chatgpt(user_input, personality, session_id)
+        # Try ChatGPT first with conversation context and AI intelligence
+        chatgpt_response, context_used = ask_chatgpt(user_input, personality, session_id, user_id)
         
         if chatgpt_response:
             return chatgpt_response, context_used
