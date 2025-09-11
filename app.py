@@ -346,13 +346,27 @@ def download_and_save_image(image_url, prompt):
         print(f"❌ Error downloading image: {e}")
         return None, None
 
-def ask_chatgpt(user_input, personality, session_id=None):
-    """Use ChatGPT API for intelligent responses with conversation context"""
+def ask_chatgpt(user_input, personality, session_id=None, user_id='anonymous'):
+    """Use ChatGPT API for intelligent responses with conversation context and AI intelligence features"""
     if not AI_MODEL_AVAILABLE or not client:
         return None, False
     
     try:
-        # Create personality-specific system prompt with strong personality traits
+        # Update personality usage
+        update_personality_usage(personality)
+        
+        # Analyze user emotion
+        emotion_data = analyze_emotion(user_input)
+        detected_emotion = emotion_data.get('emotion', 'neutral')
+        sentiment_score = emotion_data.get('sentiment', 0.0)
+        
+        # Retrieve user memory and context
+        user_memories = retrieve_user_memory(user_id)
+        
+        # Get personality profile
+        personality_profile = get_personality_profile(personality)
+        
+        # Create enhanced personality-specific system prompt
         personality_prompts = {
             'friendly': "You are Horizon, a warm and friendly AI assistant. Always use a welcoming tone with phrases like 'I'd be happy to help!', 'That's a great question!', and 'Thanks for asking!' Use emojis occasionally 😊. Be encouraging and supportive. Start responses with friendly greetings when appropriate.",
             
@@ -381,10 +395,35 @@ def ask_chatgpt(user_input, personality, session_id=None):
             'robot': "You are Horizon, a logical robot AI assistant. 🤖 SPEAK.IN.ROBOTIC.MANNER. Use phrases like 'PROCESSING REQUEST...', 'COMPUTATION COMPLETE', 'ERROR: DOES NOT COMPUTE', 'AFFIRMATIVE', 'NEGATIVE'. Speak in ALL CAPS occasionally and use technical beeping sounds like *BEEP BOOP*."
         }
         
-        system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
+        base_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
+        
+        # Build enhanced context
+        context_parts = [base_prompt]
+        
+        # Add personality profile context
+        if personality_profile:
+            context_parts.append(f"\nYour personality traits: {', '.join(personality_profile['traits']) if personality_profile['traits'] else 'N/A'}")
+            context_parts.append(f"Your response style: {personality_profile['style']}")
+        
+        # Add emotional context
+        if detected_emotion != 'neutral':
+            context_parts.append(f"\nIMPORTANT: The user is feeling {detected_emotion} (confidence: {emotion_data.get('confidence', 0):.2f})")
+            context_parts.append(f"User's sentiment: {sentiment_score:.2f} ({classify_mood(sentiment_score)})")
+            context_parts.append(f"Please respond appropriately to their {detected_emotion} emotional state and be supportive.")
+        
+        # Add memory context
+        if user_memories:
+            important_memories = [mem for mem in user_memories if len(mem) >= 4 and mem[3] > 0.7]  # High importance memories
+            if important_memories:
+                context_parts.append("\nThings I remember about this user:")
+                for memory in important_memories[:3]:  # Top 3 memories
+                    if len(memory) >= 3:
+                        context_parts.append(f"- {memory[1]}: {memory[2]}")
+        
+        enhanced_system_prompt = "\n".join(context_parts)
         
         # Build conversation messages with context
-        messages = [{"role": "system", "content": system_prompt}]
+        messages = [{"role": "system", "content": enhanced_system_prompt}]
         
         # Add conversation history if session exists
         context_used = False
@@ -403,15 +442,43 @@ def ask_chatgpt(user_input, personality, session_id=None):
         # Add current user input
         messages.append({"role": "user", "content": user_input})
         
-        # Make API call to ChatGPT with context
+        # Make API call to ChatGPT with enhanced context
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            max_tokens=250,  # Increased for more personality expression
-            temperature=0.9,  # Higher temperature for more creative/personality-driven responses
+            max_tokens=300,  # Increased for more comprehensive responses
+            temperature=0.8,  # Balanced for personality and accuracy
         )
         
-        return response.choices[0].message.content.strip(), context_used
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Enhance response with emotional awareness
+        ai_response = enhance_response_with_emotion(ai_response, detected_emotion, personality)
+        
+        # Extract and save important information to user memory
+        if len(user_input) > 50:  # Longer messages likely contain important info
+            keywords = extract_keywords(user_input)
+            if keywords:
+                key_info = f"User mentioned: {', '.join(keywords[:3])}"
+                save_user_memory(user_id, 'conversation_topics', f"topics_{datetime.now().strftime('%Y%m%d')}", key_info, importance=0.6)
+        
+        # Check for personal information to remember
+        personal_info_patterns = {
+            'name': r'my name is (\w+)|i\'m (\w+)|call me (\w+)',
+            'location': r'i live in ([^,\.]+)|i\'m from ([^,\.]+)|located in ([^,\.]+)',
+            'occupation': r'i work as (.*?)|i\'m a (.*?)|my job is (.*?)',
+            'interests': r'i like (.*?)|i love (.*?)|i enjoy (.*?)|i\'m interested in (.*?)'
+        }
+        
+        import re
+        for info_type, pattern in personal_info_patterns.items():
+            match = re.search(pattern, user_input.lower())
+            if match:
+                value = next((group for group in match.groups() if group), '')
+                if value and len(value.strip()) > 1:
+                    save_user_memory(user_id, 'personal_info', info_type, value.strip(), importance=0.9)
+        
+        return ai_response, context_used
         
     except Exception as e:
         print(f"ChatGPT API error: {e}")
