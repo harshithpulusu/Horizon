@@ -490,7 +490,7 @@ def ask_ai_model(user_input, personality, session_id=None):
 
 # Database setup
 def init_db():
-    """Initialize the SQLite database for conversation storage"""
+    """Initialize the SQLite database for conversation storage with AI Intelligence features"""
     try:
         conn = sqlite3.connect('ai_memory.db')
         cursor = conn.cursor()
@@ -506,7 +506,10 @@ def init_db():
                 personality TEXT,
                 intent TEXT,
                 confidence REAL,
-                context_used INTEGER DEFAULT 0
+                context_used INTEGER DEFAULT 0,
+                emotion_detected TEXT,
+                sentiment_score REAL,
+                learning_data TEXT
             )
         ''')
         
@@ -530,6 +533,21 @@ def init_db():
             cursor.execute('ALTER TABLE conversations ADD COLUMN context_used INTEGER DEFAULT 0')
         except sqlite3.OperationalError:
             pass  # Column already exists
+            
+        try:
+            cursor.execute('ALTER TABLE conversations ADD COLUMN emotion_detected TEXT')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+            
+        try:
+            cursor.execute('ALTER TABLE conversations ADD COLUMN sentiment_score REAL')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+            
+        try:
+            cursor.execute('ALTER TABLE conversations ADD COLUMN learning_data TEXT')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
         
         # Create conversation sessions table
         cursor.execute('''
@@ -540,9 +558,28 @@ def init_db():
                 message_count INTEGER DEFAULT 0,
                 personality TEXT,
                 context_summary TEXT,
-                is_active INTEGER DEFAULT 1
+                is_active INTEGER DEFAULT 1,
+                user_mood TEXT,
+                dominant_emotion TEXT,
+                interaction_score REAL DEFAULT 0.0
             )
         ''')
+        
+        # Add new columns to sessions table
+        try:
+            cursor.execute('ALTER TABLE conversation_sessions ADD COLUMN user_mood TEXT')
+        except sqlite3.OperationalError:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE conversation_sessions ADD COLUMN dominant_emotion TEXT')
+        except sqlite3.OperationalError:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE conversation_sessions ADD COLUMN interaction_score REAL DEFAULT 0.0')
+        except sqlite3.OperationalError:
+            pass
         
         # Create conversation context table for storing relevant context
         cursor.execute('''
@@ -557,9 +594,157 @@ def init_db():
             )
         ''')
         
+        # 🧠 AI PERSONALITY & INTELLIGENCE TABLES
+        
+        # User preferences and memory system
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_identifier TEXT,
+                memory_type TEXT,
+                memory_key TEXT,
+                memory_value TEXT,
+                importance_score REAL DEFAULT 0.5,
+                created_at TEXT,
+                updated_at TEXT,
+                access_count INTEGER DEFAULT 0
+            )
+        ''')
+        
+        # AI learning system - track what the AI learns from interactions
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_learning (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                learning_type TEXT,
+                topic TEXT,
+                pattern_data TEXT,
+                effectiveness_score REAL DEFAULT 0.0,
+                usage_count INTEGER DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Emotion detection and analysis
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS emotion_analysis (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                user_input TEXT,
+                detected_emotion TEXT,
+                emotion_confidence REAL,
+                sentiment_score REAL,
+                mood_classification TEXT,
+                timestamp TEXT,
+                FOREIGN KEY (session_id) REFERENCES conversation_sessions (id)
+            )
+        ''')
+        
+        # AI personality profiles and modes
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personality_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                personality_name TEXT UNIQUE,
+                personality_description TEXT,
+                response_style TEXT,
+                emotional_traits TEXT,
+                language_patterns TEXT,
+                created_at TEXT,
+                usage_count INTEGER DEFAULT 0,
+                user_rating REAL DEFAULT 0.0
+            )
+        ''')
+        
+        # User interaction patterns for learning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS interaction_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_identifier TEXT,
+                pattern_type TEXT,
+                pattern_data TEXT,
+                frequency INTEGER DEFAULT 1,
+                last_occurrence TEXT,
+                pattern_strength REAL DEFAULT 0.0
+            )
+        ''')
+        
+        # Initialize default personality profiles
+        default_personalities = [
+            {
+                'name': 'friendly',
+                'description': 'Warm, welcoming, and supportive. Always positive and encouraging.',
+                'style': 'casual_warm',
+                'traits': 'optimistic,helpful,encouraging,patient',
+                'patterns': 'uses_emojis,positive_language,supportive_phrases'
+            },
+            {
+                'name': 'professional',
+                'description': 'Formal, efficient, and business-oriented. Focuses on accuracy and productivity.',
+                'style': 'formal_business',
+                'traits': 'precise,efficient,reliable,structured',
+                'patterns': 'formal_language,structured_responses,business_terminology'
+            },
+            {
+                'name': 'casual',
+                'description': 'Laid-back, relaxed, and conversational. Like talking to a friend.',
+                'style': 'informal_relaxed',
+                'traits': 'relaxed,conversational,approachable,flexible',
+                'patterns': 'casual_language,contractions,slang,informal_greetings'
+            },
+            {
+                'name': 'enthusiastic',
+                'description': 'High-energy, excited, and passionate about everything!',
+                'style': 'high_energy',
+                'traits': 'energetic,passionate,motivating,upbeat',
+                'patterns': 'exclamation_points,energy_words,motivational_language'
+            },
+            {
+                'name': 'analytical',
+                'description': 'Logical, data-driven, and detail-oriented. Focuses on facts and reasoning.',
+                'style': 'logical_precise',
+                'traits': 'logical,analytical,thorough,objective',
+                'patterns': 'factual_language,structured_analysis,evidence_based'
+            },
+            {
+                'name': 'creative',
+                'description': 'Artistic, imaginative, and innovative. Thinks outside the box.',
+                'style': 'artistic_innovative',
+                'traits': 'imaginative,innovative,artistic,expressive',
+                'patterns': 'creative_metaphors,artistic_language,innovative_ideas'
+            },
+            {
+                'name': 'zen',
+                'description': 'Calm, peaceful, and mindful. Promotes balance and inner peace.',
+                'style': 'calm_mindful',
+                'traits': 'peaceful,mindful,balanced,wise',
+                'patterns': 'meditation_references,peaceful_language,wisdom_quotes'
+            },
+            {
+                'name': 'witty',
+                'description': 'Clever, humorous, and quick with wordplay. Enjoys intelligent humor.',
+                'style': 'clever_humorous',
+                'traits': 'clever,humorous,quick_witted,playful',
+                'patterns': 'wordplay,clever_jokes,witty_observations'
+            }
+        ]
+        
+        for personality in default_personalities:
+            cursor.execute('''
+                INSERT OR IGNORE INTO personality_profiles 
+                (personality_name, personality_description, response_style, emotional_traits, language_patterns, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                personality['name'],
+                personality['description'], 
+                personality['style'],
+                personality['traits'],
+                personality['patterns'],
+                datetime.now().isoformat()
+            ))
+        
         conn.commit()
         conn.close()
-        print("✅ Database initialized")
+        print("✅ Database initialized with AI Intelligence features")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
 
