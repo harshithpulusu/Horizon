@@ -759,23 +759,576 @@ def save_conversation(user_input, ai_response, personality, session_id=None, int
             session_id = generate_session_id()
             create_conversation_session(session_id, personality)
         
+        # Analyze emotion and sentiment
+        emotion_data = analyze_emotion(user_input)
+        emotion_detected = emotion_data.get('emotion', 'neutral')
+        sentiment_score = emotion_data.get('sentiment', 0.0)
+        
+        # Extract learning data
+        learning_data = extract_learning_patterns(user_input, ai_response, intent, confidence)
+        
         # Save the conversation
         cursor.execute('''
-            INSERT INTO conversations (session_id, timestamp, user_input, ai_response, personality, intent, confidence, context_used)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (session_id, datetime.now().isoformat(), user_input, ai_response, personality, intent, confidence, int(context_used)))
+            INSERT INTO conversations (session_id, timestamp, user_input, ai_response, personality, intent, confidence, context_used, emotion_detected, sentiment_score, learning_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, datetime.now().isoformat(), user_input, ai_response, personality, intent, confidence, int(context_used), emotion_detected, sentiment_score, json.dumps(learning_data)))
         
-        # Update session info
+        # Update session info with emotion analysis
         cursor.execute('''
             UPDATE conversation_sessions 
-            SET updated_at = ?, message_count = message_count + 1
+            SET updated_at = ?, message_count = message_count + 1, dominant_emotion = ?, user_mood = ?
             WHERE id = ?
-        ''', (datetime.now().isoformat(), session_id))
+        ''', (datetime.now().isoformat(), emotion_detected, classify_mood(sentiment_score), session_id))
+        
+        # Save emotion analysis
+        cursor.execute('''
+            INSERT INTO emotion_analysis (session_id, user_input, detected_emotion, emotion_confidence, sentiment_score, mood_classification, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, user_input, emotion_detected, emotion_data.get('confidence', 0.0), sentiment_score, classify_mood(sentiment_score), datetime.now().isoformat()))
+        
+        # Update AI learning system
+        update_ai_learning(user_input, ai_response, intent, confidence, emotion_detected)
         
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"Error saving conversation: {e}")
+
+# ===== AI PERSONALITY & INTELLIGENCE FUNCTIONS =====
+
+def analyze_emotion(text):
+    """Analyze emotion and sentiment from user input"""
+    try:
+        text_lower = text.lower()
+        
+        # Emotion keywords and patterns
+        emotion_patterns = {
+            'happy': ['happy', 'joy', 'excited', 'great', 'awesome', 'wonderful', 'fantastic', 'amazing', 'love', 'perfect', '😄', '😊', '🎉', '❤️'],
+            'sad': ['sad', 'unhappy', 'depressed', 'down', 'upset', 'disappointed', 'terrible', 'awful', 'worst', '😢', '😞', '💔'],
+            'angry': ['angry', 'mad', 'furious', 'annoyed', 'frustrated', 'hate', 'stupid', 'ridiculous', 'terrible', '😠', '😡', '🤬'],
+            'anxious': ['worried', 'nervous', 'anxious', 'scared', 'afraid', 'concerned', 'stress', 'panic', 'overwhelmed', '😰', '😟'],
+            'excited': ['excited', 'thrilled', 'pumped', 'enthusiastic', 'can\'t wait', 'looking forward', 'amazing', '🚀', '✨', '🎯'],
+            'confused': ['confused', 'don\'t understand', 'unclear', 'puzzled', 'lost', 'what?', 'huh?', '🤔', '😕'],
+            'grateful': ['thank', 'thanks', 'grateful', 'appreciate', 'blessed', 'lucky', 'grateful', '🙏', '❤️'],
+            'curious': ['curious', 'wonder', 'interested', 'how', 'why', 'what', 'tell me', 'explain', '🤔'],
+            'disappointed': ['disappointed', 'let down', 'expected', 'hoped', 'thought', 'supposed to', '😞'],
+            'surprised': ['wow', 'really?', 'no way', 'seriously?', 'amazing', 'incredible', '😮', '🤯']
+        }
+        
+        # Calculate emotion scores
+        emotion_scores = {}
+        for emotion, keywords in emotion_patterns.items():
+            score = 0
+            for keyword in keywords:
+                if keyword in text_lower:
+                    score += 1
+            emotion_scores[emotion] = score
+        
+        # Find dominant emotion
+        dominant_emotion = max(emotion_scores, key=emotion_scores.get) if max(emotion_scores.values()) > 0 else 'neutral'
+        emotion_confidence = min(emotion_scores[dominant_emotion] / 3.0, 1.0)  # Normalize to 0-1
+        
+        # Calculate sentiment score (-1 to 1)
+        positive_words = ['good', 'great', 'awesome', 'perfect', 'love', 'amazing', 'wonderful', 'excellent', 'fantastic', 'best']
+        negative_words = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'stupid', 'ridiculous', 'disappointing']
+        
+        sentiment_score = 0
+        for word in positive_words:
+            if word in text_lower:
+                sentiment_score += 0.1
+        for word in negative_words:
+            if word in text_lower:
+                sentiment_score -= 0.1
+        
+        # Adjust sentiment based on emotion
+        if dominant_emotion in ['happy', 'excited', 'grateful']:
+            sentiment_score += 0.2
+        elif dominant_emotion in ['sad', 'angry', 'disappointed']:
+            sentiment_score -= 0.2
+        
+        sentiment_score = max(-1.0, min(1.0, sentiment_score))  # Clamp to -1, 1
+        
+        return {
+            'emotion': dominant_emotion,
+            'confidence': emotion_confidence,
+            'sentiment': sentiment_score,
+            'all_emotions': emotion_scores
+        }
+        
+    except Exception as e:
+        print(f"Error in emotion analysis: {e}")
+        return {'emotion': 'neutral', 'confidence': 0.0, 'sentiment': 0.0}
+
+def classify_mood(sentiment_score):
+    """Classify overall mood based on sentiment score"""
+    if sentiment_score > 0.3:
+        return 'positive'
+    elif sentiment_score < -0.3:
+        return 'negative'
+    else:
+        return 'neutral'
+
+def extract_learning_patterns(user_input, ai_response, intent, confidence):
+    """Extract patterns for AI learning system"""
+    try:
+        patterns = {
+            'user_input_length': len(user_input),
+            'response_length': len(ai_response),
+            'intent': intent,
+            'confidence': confidence,
+            'timestamp': datetime.now().isoformat(),
+            'keywords': extract_keywords(user_input),
+            'question_type': detect_question_type(user_input),
+            'complexity': assess_complexity(user_input)
+        }
+        return patterns
+    except Exception as e:
+        print(f"Error extracting learning patterns: {e}")
+        return {}
+
+def extract_keywords(text):
+    """Extract important keywords from text"""
+    try:
+        # Simple keyword extraction based on frequency and importance
+        import re
+        
+        # Remove common stop words
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can'}
+        
+        # Extract words
+        words = re.findall(r'\b\w+\b', text.lower())
+        keywords = [word for word in words if word not in stop_words and len(word) > 2]
+        
+        # Return top 5 keywords
+        word_freq = {}
+        for word in keywords:
+            word_freq[word] = word_freq.get(word, 0) + 1
+        
+        top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:5]
+        return [word for word, freq in top_keywords]
+        
+    except Exception as e:
+        print(f"Error extracting keywords: {e}")
+        return []
+
+def detect_question_type(text):
+    """Detect the type of question being asked"""
+    text_lower = text.lower().strip()
+    
+    if text_lower.startswith('what'):
+        return 'what_question'
+    elif text_lower.startswith('how'):
+        return 'how_question'
+    elif text_lower.startswith('why'):
+        return 'why_question'
+    elif text_lower.startswith('when'):
+        return 'when_question'
+    elif text_lower.startswith('where'):
+        return 'where_question'
+    elif text_lower.startswith('who'):
+        return 'who_question'
+    elif '?' in text:
+        return 'general_question'
+    elif any(word in text_lower for word in ['help', 'assist', 'support']):
+        return 'help_request'
+    elif any(word in text_lower for word in ['create', 'generate', 'make']):
+        return 'creation_request'
+    else:
+        return 'statement'
+
+def assess_complexity(text):
+    """Assess the complexity of the user input"""
+    try:
+        # Simple complexity assessment based on various factors
+        factors = {
+            'length': len(text),
+            'words': len(text.split()),
+            'sentences': text.count('.') + text.count('!') + text.count('?'),
+            'technical_terms': count_technical_terms(text),
+            'question_words': sum(1 for word in ['what', 'how', 'why', 'when', 'where', 'who'] if word in text.lower())
+        }
+        
+        # Calculate complexity score (0-1)
+        complexity_score = 0
+        
+        # Length factor
+        if factors['length'] > 100:
+            complexity_score += 0.2
+        elif factors['length'] > 50:
+            complexity_score += 0.1
+        
+        # Word count factor
+        if factors['words'] > 20:
+            complexity_score += 0.2
+        elif factors['words'] > 10:
+            complexity_score += 0.1
+        
+        # Technical terms factor
+        complexity_score += min(factors['technical_terms'] * 0.1, 0.3)
+        
+        # Multiple questions factor
+        if factors['question_words'] > 1:
+            complexity_score += 0.2
+        
+        # Multiple sentences factor
+        if factors['sentences'] > 1:
+            complexity_score += 0.1
+        
+        return min(complexity_score, 1.0)
+        
+    except Exception as e:
+        print(f"Error assessing complexity: {e}")
+        return 0.0
+
+def count_technical_terms(text):
+    """Count technical terms in the text"""
+    technical_terms = [
+        'algorithm', 'api', 'database', 'programming', 'software', 'hardware', 'network',
+        'artificial intelligence', 'machine learning', 'neural network', 'blockchain',
+        'cryptocurrency', 'quantum', 'cybersecurity', 'encryption', 'protocol',
+        'server', 'client', 'framework', 'library', 'repository', 'deployment'
+    ]
+    
+    text_lower = text.lower()
+    return sum(1 for term in technical_terms if term in text_lower)
+
+def update_ai_learning(user_input, ai_response, intent, confidence, emotion):
+    """Update the AI learning system with new interaction data"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Learning categories
+        learning_categories = {
+            'response_effectiveness': {
+                'topic': intent or 'general',
+                'pattern': f"intent:{intent},emotion:{emotion}",
+                'effectiveness': calculate_response_effectiveness(confidence, emotion)
+            },
+            'emotional_adaptation': {
+                'topic': emotion,
+                'pattern': f"emotion:{emotion},response_type:{detect_response_type(ai_response)}",
+                'effectiveness': calculate_emotional_effectiveness(emotion, ai_response)
+            },
+            'conversation_flow': {
+                'topic': 'conversation_patterns',
+                'pattern': f"input_length:{len(user_input)},response_length:{len(ai_response)}",
+                'effectiveness': confidence
+            }
+        }
+        
+        for learning_type, data in learning_categories.items():
+            # Check if pattern exists
+            cursor.execute('''
+                SELECT id, usage_count, effectiveness_score FROM ai_learning 
+                WHERE learning_type = ? AND topic = ? AND pattern_data = ?
+            ''', (learning_type, data['topic'], data['pattern']))
+            
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update existing pattern
+                new_usage_count = existing[1] + 1
+                new_effectiveness = (existing[2] * existing[1] + data['effectiveness']) / new_usage_count
+                
+                cursor.execute('''
+                    UPDATE ai_learning 
+                    SET usage_count = ?, effectiveness_score = ?, updated_at = ?
+                    WHERE id = ?
+                ''', (new_usage_count, new_effectiveness, datetime.now().isoformat(), existing[0]))
+            else:
+                # Create new pattern
+                cursor.execute('''
+                    INSERT INTO ai_learning (learning_type, topic, pattern_data, effectiveness_score, usage_count, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, 1, ?, ?)
+                ''', (learning_type, data['topic'], data['pattern'], data['effectiveness'], datetime.now().isoformat(), datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error updating AI learning: {e}")
+
+def calculate_response_effectiveness(confidence, emotion):
+    """Calculate how effective the response was based on confidence and emotion"""
+    base_effectiveness = confidence
+    
+    # Boost effectiveness for positive emotions
+    if emotion in ['happy', 'excited', 'grateful']:
+        base_effectiveness += 0.2
+    elif emotion in ['sad', 'angry', 'disappointed']:
+        base_effectiveness += 0.1  # Still learning opportunity
+    
+    return min(base_effectiveness, 1.0)
+
+def calculate_emotional_effectiveness(emotion, response):
+    """Calculate how well the response addresses the detected emotion"""
+    response_lower = response.lower()
+    
+    # Emotional response patterns
+    if emotion == 'sad':
+        if any(word in response_lower for word in ['sorry', 'understand', 'support', 'here for you']):
+            return 0.8
+    elif emotion == 'angry':
+        if any(word in response_lower for word in ['understand', 'frustrating', 'help', 'solve']):
+            return 0.8
+    elif emotion == 'happy':
+        if any(word in response_lower for word in ['great', 'wonderful', 'fantastic', 'excited']):
+            return 0.8
+    elif emotion == 'anxious':
+        if any(word in response_lower for word in ['calm', 'relax', 'help', 'support', 'okay']):
+            return 0.8
+    
+    return 0.5  # Default effectiveness
+
+def detect_response_type(response):
+    """Detect the type of response generated"""
+    response_lower = response.lower()
+    
+    if any(word in response_lower for word in ['sorry', 'apologize', 'understand your frustration']):
+        return 'empathetic'
+    elif any(word in response_lower for word in ['congratulations', 'great', 'fantastic', 'wonderful']):
+        return 'celebratory'
+    elif any(word in response_lower for word in ['help', 'assist', 'support', 'guide']):
+        return 'helpful'
+    elif any(word in response_lower for word in ['explain', 'information', 'details', 'about']):
+        return 'informative'
+    elif any(word in response_lower for word in ['create', 'generate', 'make', 'build']):
+        return 'creative'
+    else:
+        return 'general'
+
+def get_personality_profile(personality_name):
+    """Get detailed personality profile from database"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT personality_description, response_style, emotional_traits, language_patterns, user_rating
+            FROM personality_profiles 
+            WHERE personality_name = ?
+        ''', (personality_name,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return {
+                'description': result[0],
+                'style': result[1], 
+                'traits': result[2].split(',') if result[2] else [],
+                'patterns': result[3].split(',') if result[3] else [],
+                'rating': result[4] or 0.0
+            }
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error getting personality profile: {e}")
+        return None
+
+def save_user_memory(user_id, memory_type, key, value, importance=0.5):
+    """Save information to user memory system"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Check if memory already exists
+        cursor.execute('''
+            SELECT id FROM user_memory 
+            WHERE user_identifier = ? AND memory_type = ? AND memory_key = ?
+        ''', (user_id, memory_type, key))
+        
+        if cursor.fetchone():
+            # Update existing memory
+            cursor.execute('''
+                UPDATE user_memory 
+                SET memory_value = ?, importance_score = ?, updated_at = ?, access_count = access_count + 1
+                WHERE user_identifier = ? AND memory_type = ? AND memory_key = ?
+            ''', (value, importance, datetime.now().isoformat(), user_id, memory_type, key))
+        else:
+            # Create new memory
+            cursor.execute('''
+                INSERT INTO user_memory (user_identifier, memory_type, memory_key, memory_value, importance_score, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, memory_type, key, value, importance, datetime.now().isoformat(), datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error saving user memory: {e}")
+
+def retrieve_user_memory(user_id, memory_type=None, key=None):
+    """Retrieve information from user memory system"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        if key:
+            cursor.execute('''
+                SELECT memory_value, importance_score FROM user_memory 
+                WHERE user_identifier = ? AND memory_type = ? AND memory_key = ?
+            ''', (user_id, memory_type, key))
+            result = cursor.fetchone()
+            conn.close()
+            return result[0] if result else None
+        elif memory_type:
+            cursor.execute('''
+                SELECT memory_key, memory_value, importance_score FROM user_memory 
+                WHERE user_identifier = ? AND memory_type = ?
+                ORDER BY importance_score DESC, access_count DESC
+            ''', (user_id, memory_type))
+        else:
+            cursor.execute('''
+                SELECT memory_type, memory_key, memory_value, importance_score FROM user_memory 
+                WHERE user_identifier = ?
+                ORDER BY importance_score DESC, access_count DESC
+            ''', (user_id,))
+        
+        results = cursor.fetchall()
+        conn.close()
+        return results
+        
+    except Exception as e:
+        print(f"Error retrieving user memory: {e}")
+        return []
+
+def update_personality_usage(personality_name):
+    """Update personality usage statistics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE personality_profiles 
+            SET usage_count = usage_count + 1
+            WHERE personality_name = ?
+        ''', (personality_name,))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error updating personality usage: {e}")
+
+def get_ai_insights(session_id):
+    """Get AI insights about the conversation and user"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get conversation statistics
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as message_count,
+                AVG(sentiment_score) as avg_sentiment,
+                dominant_emotion,
+                user_mood
+            FROM conversations c
+            JOIN conversation_sessions s ON c.session_id = s.id
+            WHERE c.session_id = ?
+        ''', (session_id,))
+        
+        stats = cursor.fetchone()
+        
+        # Get emotion distribution
+        cursor.execute('''
+            SELECT emotion_detected, COUNT(*) as count
+            FROM emotion_analysis 
+            WHERE session_id = ?
+            GROUP BY emotion_detected
+            ORDER BY count DESC
+        ''', (session_id,))
+        
+        emotions = cursor.fetchall()
+        
+        # Get learning insights
+        cursor.execute('''
+            SELECT learning_type, AVG(effectiveness_score) as avg_effectiveness
+            FROM ai_learning
+            GROUP BY learning_type
+        ''', ())
+        
+        learning = cursor.fetchall()
+        
+        conn.close()
+        
+        return {
+            'conversation_stats': {
+                'message_count': stats[0] if stats else 0,
+                'avg_sentiment': stats[1] if stats else 0.0,
+                'dominant_emotion': stats[2] if stats else 'neutral',
+                'user_mood': stats[3] if stats else 'neutral'
+            },
+            'emotion_distribution': emotions,
+            'learning_effectiveness': dict(learning)
+        }
+        
+    except Exception as e:
+        print(f"Error getting AI insights: {e}")
+        return {}
+
+def enhance_response_with_emotion(response, detected_emotion, personality):
+    """Enhance AI response based on detected emotion and personality"""
+    try:
+        # Get personality profile
+        profile = get_personality_profile(personality)
+        
+        if not profile:
+            return response
+        
+        # Emotional enhancement patterns
+        emotion_enhancements = {
+            'sad': {
+                'friendly': ["I can hear that you're feeling down. ", "I'm here to support you. ", "It sounds like you're going through a tough time. "],
+                'professional': ["I understand this is a difficult situation. ", "Let me provide some assistance. "],
+                'casual': ["Hey, I can tell you're feeling down. ", "That sounds rough. "],
+                'enthusiastic': ["I want to help cheer you up! ", "Let's turn this around together! "],
+                'zen': ["I sense your sadness. Let's find some peace together. ", "Breathe deeply, I'm here with you. "]
+            },
+            'angry': {
+                'friendly': ["I understand you're frustrated. ", "I can help work through this. ", "Let's solve this together. "],
+                'professional': ["I recognize your concern. ", "Let me address this matter effectively. "],
+                'casual': ["I get that you're mad about this. ", "That's definitely frustrating! "],
+                'enthusiastic': ["Let's channel that energy into solving this! ", "I'm ready to help fix this! "],
+                'zen': ["I feel your anger. Let's find calm solutions. ", "Take a moment to breathe. "]
+            },
+            'happy': {
+                'friendly': ["I love your positive energy! ", "That's wonderful to hear! ", "Your happiness is contagious! "],
+                'professional': ["Excellent! ", "That's very positive news. "],
+                'casual': ["That's awesome! ", "So cool! ", "Love the good vibes! "],
+                'enthusiastic': ["YES! That's AMAZING! ", "I'm so excited for you! ", "This is FANTASTIC! "],
+                'zen': ["Your joy brings peace to our conversation. ", "Beautiful energy flows from your happiness. "]
+            },
+            'anxious': {
+                'friendly': ["I understand you're worried. Let me help ease your concerns. ", "It's okay to feel anxious. "],
+                'professional': ["I'll address your concerns systematically. ", "Let me provide clear guidance. "],
+                'casual': ["Hey, no worries! ", "I got you covered. ", "Let's figure this out together. "],
+                'enthusiastic': ["Don't worry, we've got this! ", "I'm here to help you feel confident! "],
+                'zen': ["Breathe with me. Let's find calm together. ", "Peace will come. I'm here to guide you. "]
+            },
+            'excited': {
+                'friendly': ["I love your excitement! ", "That enthusiasm is wonderful! "],
+                'professional': ["Your enthusiasm is noted. ", "That's excellent motivation. "],
+                'casual': ["Your excitement is contagious! ", "I'm pumped too! "],
+                'enthusiastic': ["YES! I'm SO excited with you! ", "This energy is INCREDIBLE! "],
+                'zen': ["Your excitement brings beautiful energy to our space. "]
+            }
+        }
+        
+        # Get appropriate enhancement
+        if detected_emotion in emotion_enhancements and personality in emotion_enhancements[detected_emotion]:
+            enhancement_options = emotion_enhancements[detected_emotion][personality]
+            enhancement = random.choice(enhancement_options)
+            return enhancement + response
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error enhancing response with emotion: {e}")
+        return response
 
 def generate_session_id():
     """Generate a unique session ID"""
