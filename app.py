@@ -2181,6 +2181,352 @@ def handle_logo_generation(text):
         return "🏷️ I'd love to help you create a logo! Please describe your brand name, industry, and preferred style (modern, vintage, creative, etc.). For example: 'Create a modern logo for TechStart, a software company' or 'Design a vintage logo for Bella's Cafe, a coffee shop'."
 
 # ===============================================
+# 🎮 INTERACTIVE FEATURES FUNCTIONS
+
+def handle_game_master(text, session_id=None, personality='friendly'):
+    """Handle AI Game Master requests for interactive stories and text adventures"""
+    try:
+        print(f"🎮 Processing game master request: {text}")
+        
+        # Extract game/story type and theme from the text
+        import re
+        
+        # Detect game type
+        game_type = "adventure"  # default
+        if re.search(r'\b(fantasy|magic|dragon|wizard|medieval)\b', text.lower()):
+            game_type = "fantasy"
+        elif re.search(r'\b(sci.*fi|space|alien|robot|future)\b', text.lower()):
+            game_type = "sci-fi"
+        elif re.search(r'\b(horror|scary|zombie|ghost|dark)\b', text.lower()):
+            game_type = "horror"
+        elif re.search(r'\b(mystery|detective|crime|solve)\b', text.lower()):
+            game_type = "mystery"
+        elif re.search(r'\b(romance|love|relationship)\b', text.lower()):
+            game_type = "romance"
+        
+        # Detect if it's a new story or continuation
+        is_continuation = re.search(r'\b(continue|next|what.*happens|then|choice)\b', text.lower())
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"🎮 Let's start an amazing {game_type} adventure together!",
+            'professional': f"🎯 Initiating {game_type} narrative experience.",
+            'creative': f"✨ Oh, what a delightful {game_type} tale we shall weave!",
+            'witty': f"🃏 Ready for a {game_type} adventure? Plot twist: you're the hero!",
+            'empathetic': f"🌟 I sense you're ready for an emotional {game_type} journey."
+        }
+        
+        if is_continuation:
+            # This would ideally load from session memory
+            story_scenarios = {
+                'fantasy': "🏰 The ancient castle looms before you, its gates creaking in the wind. Inside, you hear the faint sound of chanting. **What do you do?**\n\nA) Enter through the main gate boldly\nB) Sneak around to find a side entrance\nC) Call out to announce your presence\nD) Cast a protection spell first",
+                'sci-fi': "🚀 Your spaceship's alarms are blaring. Through the viewport, you see an unknown alien vessel approaching. Your AI companion says: 'Captain, they're hailing us.' **What's your command?**\n\nA) Open communications immediately\nB) Charge weapons defensively\nC) Attempt to flee at maximum warp\nD) Send a peaceful greeting signal",
+                'mystery': "🔍 You examine the crime scene more closely. A torn piece of fabric caught on the window latch catches your eye - it's expensive silk with an unusual pattern. **Your next move?**\n\nA) Test the fabric for DNA evidence\nB) Research local shops that sell this fabric\nC) Check if the victim owned similar clothing\nD) Look for security cameras nearby",
+                'horror': "👻 The basement door creaks open by itself. A cold draft carries the scent of decay, and you hear footsteps echoing from below. Your flashlight flickers ominously. **Do you dare...**\n\nA) Descend into the basement immediately\nB) Call for backup first\nC) Secure the door and leave\nD) Record evidence before proceeding",
+                'adventure': "⚔️ At the crossroads, you notice fresh horse tracks leading in three directions: north toward the mountains, east to the dark forest, and south to the coastal village. **Which path calls to you?**\n\nA) Follow the mountain trail north\nB) Brave the mysterious dark forest\nC) Head to the coastal village\nD) Study the tracks more carefully first"
+            }
+            
+            base_response = personality_responses.get(personality, personality_responses['friendly'])
+            return f"{base_response}\n\n{story_scenarios.get(game_type, story_scenarios['adventure'])}\n\n🎭 **Choose wisely!** Your decision will shape the story. Type your choice (A, B, C, or D) or describe your own action!"
+        
+        else:
+            # Start a new adventure
+            story_intros = {
+                'fantasy': "🧙‍♂️ **The Kingdom of Aethermoor** 🏰\n\nYou are a young adventurer who has just arrived at the mystical Kingdom of Aethermoor. Ancient magic flows through the land, but dark forces are stirring. The village elder approaches you with worry in her eyes.\n\n'Brave traveler,' she says, 'the Crystal of Eternal Light has been stolen from our sacred temple. Without it, our protective barriers will fall within three days. Will you help us?'\n\n**What do you do?**\nA) Accept the quest immediately\nB) Ask for more details about the crystal\nC) Request payment for your services\nD) Suggest finding other heroes to help",
+                
+                'sci-fi': "🌌 **Stardate 2387: The Nexus Station** 🚀\n\nYou're Commander of the exploration vessel 'Aurora' docked at the remote Nexus Station. Suddenly, all communications with Earth go silent. The station's AI informs you that an unknown energy signature is approaching fast.\n\n'Commander,' your Science Officer reports, 'the signature doesn't match any known technology. ETA: 15 minutes.'\n\n**Your orders, Commander?**\nA) Prepare for first contact protocols\nB) Ready defensive systems\nC) Evacuate the station immediately\nD) Attempt to scan the approaching object",
+                
+                'mystery': "🕵️ **The Ravenwood Manor Mystery** 🏚️\n\nYou're a detective called to investigate the sudden disappearance of Lord Ravenwood from his locked study. The house staff is nervous, the family members each have alibis, and a valuable painting is also missing.\n\nThe butler, Mr. Grimsby, leads you to the study: 'Everything is exactly as we found it, Detective. The door was locked from the inside, and the window is 30 feet above ground.'\n\n**Where do you begin?**\nA) Examine the locked study thoroughly\nB) Interview the family members\nC) Question the house staff\nD) Investigate the missing painting",
+                
+                'horror': "🌙 **The Whispers of Blackwood House** 👻\n\nYou're a paranormal investigator who has just entered the abandoned Blackwood House. Local legends speak of the family that vanished 50 years ago, leaving behind only their screams echoing in the night.\n\nAs you step into the foyer, the door slams shut behind you. Your EMF detector starts beeping rapidly, and you hear children laughing somewhere upstairs.\n\n**What's your first move?**\nA) Head upstairs toward the laughter\nB) Try to force the front door open\nC) Set up recording equipment first\nD) Explore the ground floor systematically",
+                
+                'adventure': "🗺️ **The Lost Treasure of Captain Stormwind** ⚓\n\nYou're standing on the deck of your ship, the 'Sea Dragon,' holding an ancient map you found in a bottle. It shows the location of Captain Stormwind's legendary treasure on the mysterious Skull Island.\n\nYour first mate approaches: 'Captain, the crew is ready to set sail. But I should warn you - other treasure hunters are also searching for Stormwind's gold, and Skull Island is said to be cursed.'\n\n**What are your orders?**\nA) Set sail for Skull Island immediately\nB) Gather more information about the island first\nC) Recruit additional crew members\nD) Stock up on supplies and weapons"
+            }
+            
+            base_response = personality_responses.get(personality, personality_responses['friendly'])
+            return f"{base_response}\n\n{story_intros.get(game_type, story_intros['adventure'])}\n\n🎮 **The adventure begins!** Type your choice or describe your action. I'll adapt the story based on your decisions!"
+            
+    except Exception as e:
+        print(f"Error in handle_game_master: {e}")
+        return "🎮 I'd love to start an interactive adventure with you! Try saying: 'Start a fantasy adventure' or 'Begin a sci-fi story' or 'Create a mystery game'. I can be your AI Game Master for any type of interactive story you'd like to explore!"
+
+def handle_code_generation(text, personality='friendly'):
+    """Handle AI programming assistant requests for multiple languages"""
+    try:
+        print(f"💻 Processing code generation request: {text}")
+        
+        # Detect programming language
+        import re
+        
+        language = "python"  # default
+        if re.search(r'\b(javascript|js)\b', text.lower()):
+            language = "javascript"
+        elif re.search(r'\bjava\b', text.lower()) and not re.search(r'javascript', text.lower()):
+            language = "java"
+        elif re.search(r'\b(cpp|c\+\+)\b', text.lower()):
+            language = "cpp"
+        elif re.search(r'\bhtml\b', text.lower()):
+            language = "html"
+        elif re.search(r'\bcss\b', text.lower()):
+            language = "css"
+        elif re.search(r'\b(react|jsx)\b', text.lower()):
+            language = "react"
+        elif re.search(r'\b(node|nodejs)\b', text.lower()):
+            language = "nodejs"
+        elif re.search(r'\bsql\b', text.lower()):
+            language = "sql"
+        
+        # Extract what they want to build
+        task_match = re.search(r'(function|class|program|script|code|algorithm).*?(?:that|to|for)\s*(.+)', text.lower())
+        task = task_match.group(2) if task_match else "a helpful program"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"💻 I'd love to help you code in {language.upper()}!",
+            'professional': f"🔧 Initiating {language.upper()} programming assistance.",
+            'creative': f"✨ Let's craft some beautiful {language.upper()} code together!",
+            'witty': f"🤖 Time to make the computer dance with {language.upper()}!",
+            'empathetic': f"💪 Don't worry, we'll tackle this {language.upper()} challenge together!"
+        }
+        
+        # Language-specific examples and templates
+        code_examples = {
+            'python': {
+                'example': '''```python
+# Example: Simple function template
+def process_data(data):
+    """
+    Process and transform data
+    Args: data - input data to process
+    Returns: processed result
+    """
+    try:
+        result = []
+        for item in data:
+            # Add your processing logic here
+            processed_item = str(item).upper()
+            result.append(processed_item)
+        return result
+    except Exception as e:
+        print(f"Error processing data: {e}")
+        return None
+
+# Usage example
+sample_data = ["hello", "world", "python"]
+output = process_data(sample_data)
+print(output)  # ['HELLO', 'WORLD', 'PYTHON']
+```''',
+                'features': ['• Clean, readable syntax', '• Excellent for data science', '• Great for automation', '• Strong library ecosystem']
+            },
+            'javascript': {
+                'example': '''```javascript
+// Example: Modern JavaScript function
+const processData = async (data) => {
+    try {
+        const result = data.map(item => {
+            // Add your processing logic here
+            return item.toString().toUpperCase();
+        });
+        
+        return result;
+    } catch (error) {
+        console.error('Error processing data:', error);
+        return null;
+    }
+};
+
+// Usage example
+const sampleData = ["hello", "world", "javascript"];
+processData(sampleData)
+    .then(output => console.log(output)) // ['HELLO', 'WORLD', 'JAVASCRIPT']
+    .catch(err => console.error(err));
+```''',
+                'features': ['• Runs in browsers and servers', '• Asynchronous programming', '• Modern ES6+ features', '• Huge ecosystem (npm)']
+            },
+            'java': {
+                'example': '''```java
+// Example: Java class template
+import java.util.*;
+
+public class DataProcessor {
+    
+    public static List<String> processData(List<String> data) {
+        try {
+            List<String> result = new ArrayList<>();
+            
+            for (String item : data) {
+                // Add your processing logic here
+                String processedItem = item.toUpperCase();
+                result.add(processedItem);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error processing data: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    public static void main(String[] args) {
+        List<String> sampleData = Arrays.asList("hello", "world", "java");
+        List<String> output = processData(sampleData);
+        System.out.println(output); // [HELLO, WORLD, JAVA]
+    }
+}
+```''',
+                'features': ['• Platform independent', '• Strong typing system', '• Object-oriented', '• Enterprise-level scalability']
+            }
+        }
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        example_data = code_examples.get(language, code_examples['python'])
+        
+        return f"""{base_response}
+
+🎯 **Programming Language: {language.upper()}**
+📝 **Task: Create {task}**
+
+{example_data['example']}
+
+✨ **Why {language.upper()}?**
+{chr(10).join(example_data['features'])}
+
+💡 **Next Steps:**
+1. **Modify** the template above for your specific needs
+2. **Test** your code with sample data
+3. **Add error handling** for robust applications
+4. **Document** your functions clearly
+
+🔧 **Need specific help?** Ask me to:
+• "Explain this code step by step"
+• "Add error handling to this function"
+• "Optimize this algorithm"
+• "Convert this to {language} from another language"
+
+Ready to build something amazing? Let me know what specific functionality you need!"""
+        
+    except Exception as e:
+        print(f"Error in handle_code_generation: {e}")
+        return "💻 I'm your AI programming assistant! I can help you write code in Python, JavaScript, Java, C++, HTML, CSS, and more. Try asking: 'Write a Python function to sort data' or 'Create a JavaScript API call' or 'Generate a Java class for user management'. What would you like to code today?"
+
+def handle_quiz_generation(text, personality='friendly'):
+    """Handle quiz and trivia generation requests"""
+    try:
+        print(f"🧠 Processing quiz generation request: {text}")
+        
+        # Extract topic from the text
+        import re
+        
+        topic_match = re.search(r'(?:about|on|quiz|trivia).*?([a-zA-Z\s]+)', text.lower())
+        topic = topic_match.group(1).strip() if topic_match else "general knowledge"
+        
+        # Detect quiz type
+        quiz_type = "multiple_choice"  # default
+        if re.search(r'\btrue.*false\b', text.lower()):
+            quiz_type = "true_false"
+        elif re.search(r'\bopen.*ended\b', text.lower()):
+            quiz_type = "open_ended"
+        elif re.search(r'\bfill.*blank\b', text.lower()):
+            quiz_type = "fill_blank"
+        
+        # Detect difficulty
+        difficulty = "medium"  # default
+        if re.search(r'\b(easy|beginner|simple)\b', text.lower()):
+            difficulty = "easy"
+        elif re.search(r'\b(hard|difficult|advanced|expert)\b', text.lower()):
+            difficulty = "hard"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"🧠 Let's test your knowledge about {topic}!",
+            'professional': f"📊 Generating {difficulty} {topic} assessment.",
+            'creative': f"✨ Time for a fun {topic} brain challenge!",
+            'witty': f"🤓 Ready to show off your {topic} expertise?",
+            'empathetic': f"🌟 Let's learn together with this {topic} quiz!"
+        }
+        
+        # Sample quizzes for different topics
+        quiz_templates = {
+            'science': {
+                'multiple_choice': [
+                    {"q": "What is the chemical symbol for gold?", "options": ["A) Au", "B) Ag", "C) Gd", "D) Go"], "answer": "A"},
+                    {"q": "Which planet is known as the Red Planet?", "options": ["A) Venus", "B) Mars", "C) Jupiter", "D) Saturn"], "answer": "B"},
+                    {"q": "What is the speed of light in vacuum?", "options": ["A) 300,000 km/s", "B) 150,000 km/s", "C) 450,000 km/s", "D) 600,000 km/s"], "answer": "A"}
+                ],
+                'true_false': [
+                    {"q": "The human brain uses about 20% of the body's total energy.", "answer": "True"},
+                    {"q": "Lightning never strikes the same place twice.", "answer": "False"},
+                    {"q": "Water boils at 100°C at sea level.", "answer": "True"}
+                ]
+            },
+            'history': {
+                'multiple_choice': [
+                    {"q": "In which year did World War II end?", "options": ["A) 1944", "B) 1945", "C) 1946", "D) 1947"], "answer": "B"},
+                    {"q": "Who was the first person to walk on the moon?", "options": ["A) Buzz Aldrin", "B) John Glenn", "C) Neil Armstrong", "D) Alan Shepard"], "answer": "C"},
+                    {"q": "The Great Wall of China was built primarily to defend against invasions from which direction?", "options": ["A) South", "B) East", "C) West", "D) North"], "answer": "D"}
+                ],
+                'true_false': [
+                    {"q": "The Berlin Wall fell in 1989.", "answer": "True"},
+                    {"q": "Napoleon was born in France.", "answer": "False"},
+                    {"q": "The Titanic sank in 1912.", "answer": "True"}
+                ]
+            },
+            'technology': {
+                'multiple_choice': [
+                    {"q": "What does 'AI' stand for?", "options": ["A) Automated Intelligence", "B) Artificial Intelligence", "C) Advanced Interface", "D) Algorithmic Integration"], "answer": "B"},
+                    {"q": "Which programming language is known for data science?", "options": ["A) JavaScript", "B) Python", "C) Assembly", "D) COBOL"], "answer": "B"},
+                    {"q": "What does 'HTTP' stand for?", "options": ["A) Hypertext Transfer Protocol", "B) High Tech Transfer Process", "C) Hyperlink Text Transfer Protocol", "D) Home Transfer Text Protocol"], "answer": "A"}
+                ],
+                'true_false': [
+                    {"q": "Python is a compiled programming language.", "answer": "False"},
+                    {"q": "The first computer bug was an actual insect.", "answer": "True"},
+                    {"q": "WiFi stands for Wireless Fidelity.", "answer": "False"}
+                ]
+            }
+        }
+        
+        # Default to general knowledge if topic not found
+        if topic not in quiz_templates:
+            topic = 'science'  # fallback
+        
+        questions = quiz_templates[topic][quiz_type][:3]  # Get 3 questions
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        
+        quiz_content = f"""🎯 **{topic.title()} Quiz** ({difficulty.title()} Level)
+📚 **Format:** {quiz_type.replace('_', ' ').title()}
+
+"""
+        
+        for i, q in enumerate(questions, 1):
+            quiz_content += f"**Question {i}:** {q['q']}\n"
+            if 'options' in q:
+                quiz_content += f"{chr(10).join(q['options'])}\n"
+            quiz_content += f"*Answer: {q['answer']}*\n\n"
+        
+        return f"""{base_response}
+
+{quiz_content}
+
+🏆 **How did you do?**
+• 3/3 correct: Expert level! 🌟
+• 2/3 correct: Great job! 👏
+• 1/3 correct: Good effort! 📚
+• 0/3 correct: Learning opportunity! 💪
+
+🎮 **Want more quizzes?** Try asking for:
+• "Create a hard history quiz"
+• "Generate true/false science questions"
+• "Make an easy technology trivia"
+• "Quiz me about [any topic]"
+
+Ready for another challenge? What topic interests you most?"""
+        
+    except Exception as e:
+        print(f"Error in handle_quiz_generation: {e}")
+        return "🧠 I'm your AI quiz master! I can create personalized quizzes on any topic. Try asking: 'Create a science quiz', 'Generate history trivia', 'Make a true/false technology quiz', or 'Quiz me about [your topic]'. What would you like to be tested on today?"
+
+# ===============================================
 # � AI MUSIC & AUDIO GENERATION FUNCTIONS
 
 def generate_ai_music(prompt, duration=30, style="pop", quality="standard"):
