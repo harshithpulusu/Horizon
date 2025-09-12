@@ -4955,6 +4955,40 @@ INTENT_PATTERNS = {
         r'\bbrand.*logo\b', r'\bprofessional.*logo\b', r'\bcustom.*logo\b',
         r'\bvisual.*identity\b', r'\bbrand.*mark\b', r'\bicon.*design\b'
     ],
+    'game_master': [
+        r'\b(start|begin|create|generate).*story\b',
+        r'\b(start|begin|create|generate).*adventure\b',
+        r'\b(start|begin|create|generate).*game\b',
+        r'\btext.*adventure\b', r'\binteractive.*story\b',
+        r'\brpg.*game\b', r'\bdungeon.*master\b', r'\bgame.*master\b',
+        r'\bai.*storyteller\b', r'\bstory.*mode\b', r'\badventure.*mode\b',
+        r'\bplay.*game\b', r'\bgaming.*session\b', r'\bnarrative.*game\b',
+        r'\bstoryline\b', r'\bchoose.*adventure\b', r'\binteractive.*fiction\b',
+        r'\bcampaign.*story\b', r'\bquest.*adventure\b'
+    ],
+    'code_generator': [
+        r'\b(generate|create|make|write).*code\b',
+        r'\b(generate|create|make|write).*program\b',
+        r'\b(generate|create|make|write).*script\b',
+        r'\b(generate|create|make|write).*function\b',
+        r'\bcode.*for\b', r'\bprogram.*in\b', r'\bscript.*to\b',
+        r'\bpython.*code\b', r'\bjavascript.*code\b', r'\bjava.*code\b',
+        r'\bc\+\+.*code\b', r'\bhtml.*code\b', r'\bcss.*code\b',
+        r'\bsql.*query\b', r'\balgorithm.*for\b', r'\bprogramming.*help\b',
+        r'\bcode.*example\b', r'\bsample.*code\b', r'\bcode.*snippet\b',
+        r'\bai.*programmer\b', r'\bcoding.*assistant\b', r'\bdev.*help\b'
+    ],
+    'quiz_trivia': [
+        r'\b(generate|create|make).*quiz\b',
+        r'\b(generate|create|make).*trivia\b',
+        r'\b(generate|create|make).*questions\b',
+        r'\b(generate|create|make).*test\b',
+        r'\bquiz.*about\b', r'\btrivia.*about\b', r'\bquestions.*about\b',
+        r'\btest.*my.*knowledge\b', r'\bknowledge.*quiz\b',
+        r'\bai.*quiz\b', r'\bai.*trivia\b', r'\bpersonalized.*quiz\b',
+        r'\beducational.*quiz\b', r'\blearning.*quiz\b', r'\bchallenge.*me\b',
+        r'\bquiz.*game\b', r'\btrivia.*game\b', r'\bbrainstorm.*questions\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -5018,7 +5052,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generator', 'quiz_trivia']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
@@ -5080,6 +5114,12 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_audio_transcription(user_input)
         elif intent == 'logo_generation':
             response = handle_logo_generation(user_input)
+        elif intent == 'game_master':
+            response = handle_game_master(user_input)
+        elif intent == 'code_generator':
+            response = handle_code_generator(user_input)
+        elif intent == 'quiz_trivia':
+            response = handle_quiz_trivia(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
