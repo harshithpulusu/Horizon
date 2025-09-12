@@ -582,7 +582,17 @@ def init_db():
         
         # Add new columns to existing table if they don't exist
         try:
-            cursor.execute('ALTER TABLE conversations ADD COLUMN session_id TEXT')
+            cursor.execute('ALTER TABLE conversations ADD COLUMN emotion_detected TEXT')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+            
+        try:
+            cursor.execute('ALTER TABLE conversations ADD COLUMN sentiment_score REAL')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+            
+        try:
+            cursor.execute('ALTER TABLE conversations ADD COLUMN learning_data TEXT')
         except sqlite3.OperationalError:
             pass  # Column already exists
             
@@ -892,8 +902,13 @@ def analyze_emotion(text):
             emotion_scores[emotion] = score
         
         # Find dominant emotion
-        dominant_emotion = max(emotion_scores, key=emotion_scores.get) if max(emotion_scores.values()) > 0 else 'neutral'
-        emotion_confidence = min(emotion_scores[dominant_emotion] / 3.0, 1.0)  # Normalize to 0-1
+        max_score = max(emotion_scores.values()) if emotion_scores else 0
+        if max_score > 0:
+            dominant_emotion = max(emotion_scores, key=emotion_scores.get)
+            emotion_confidence = min(emotion_scores[dominant_emotion] / 3.0, 1.0)  # Normalize to 0-1
+        else:
+            dominant_emotion = 'neutral'
+            emotion_confidence = 0.0
         
         # Calculate sentiment score (-1 to 1)
         positive_words = ['good', 'great', 'awesome', 'perfect', 'love', 'amazing', 'wonderful', 'excellent', 'fantastic', 'best']
@@ -1943,6 +1958,228 @@ def handle_image_generation(text):
         print(f"Error in handle_image_generation: {e}")
         return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
 
+def handle_logo_generation(text):
+    """Handle AI logo generation requests using smart AI instead of ChatGPT"""
+    try:
+        print(f"🏷️ Processing logo generation request: {text}")
+        
+        # Extract brand information from the text using smart parsing
+        import re
+        
+        # Try to extract brand name and details
+        brand_patterns = [
+            r'logo.*for (.+?)(?:,|\.|$)',
+            r'(?:brand|company|business) (?:called |named )?(.+?)(?:,|\.|$)',
+            r'create.*logo.*(.+?)(?:,|\.|$)',
+            r'design.*logo.*(.+?)(?:,|\.|$)',
+            r'make.*logo.*(.+?)(?:,|\.|$)',
+            r'generate.*logo.*(.+?)(?:,|\.|$)',
+        ]
+        
+        brand_name = "YourBrand"
+        for pattern in brand_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                brand_name = match.group(1).strip()
+                # Clean up the brand name
+                brand_name = re.sub(r'\b(a|an|the|my|our|company|business|brand)\b', '', brand_name).strip()
+                if brand_name:
+                    break
+        
+        # Extract industry if mentioned
+        industry_keywords = {
+            'technology': ['tech', 'software', 'app', 'digital', 'ai', 'computer', 'coding'],
+            'healthcare': ['health', 'medical', 'clinic', 'hospital', 'care', 'wellness'],
+            'food': ['restaurant', 'cafe', 'food', 'kitchen', 'dining', 'bakery', 'coffee'],
+            'fashion': ['fashion', 'clothing', 'style', 'boutique', 'apparel'],
+            'finance': ['bank', 'finance', 'money', 'investment', 'financial'],
+            'education': ['school', 'education', 'learning', 'university', 'academy'],
+            'fitness': ['gym', 'fitness', 'workout', 'sports', 'athletic'],
+            'beauty': ['beauty', 'salon', 'spa', 'cosmetics', 'skincare'],
+            'automotive': ['car', 'auto', 'vehicle', 'garage', 'automotive'],
+            'real_estate': ['real estate', 'property', 'homes', 'realty']
+        }
+        
+        industry = 'general'
+        text_lower = text.lower()
+        for ind, keywords in industry_keywords.items():
+            if any(keyword in text_lower for keyword in keywords):
+                industry = ind
+                break
+        
+        # Extract style if mentioned
+        style_keywords = {
+            'modern': ['modern', 'contemporary', 'sleek', 'clean', 'minimalist'],
+            'vintage': ['vintage', 'retro', 'classic', 'traditional', 'old-school'],
+            'creative': ['creative', 'artistic', 'unique', 'innovative', 'abstract'],
+            'corporate': ['corporate', 'professional', 'business', 'formal'],
+            'playful': ['fun', 'playful', 'colorful', 'friendly', 'cheerful'],
+            'elegant': ['elegant', 'sophisticated', 'luxury', 'premium', 'refined']
+        }
+        
+        style = 'modern'  # Default style
+        for st, keywords in style_keywords.items():
+            if any(keyword in text_lower for keyword in keywords):
+                style = st
+                break
+        
+        print(f"🎯 Extracted: Brand='{brand_name}', Industry='{industry}', Style='{style}'")
+        
+        # Generate smart response using AI intelligence instead of ChatGPT
+        personality_responses = {
+            'friendly': f"I'd be happy to help you create a {style} logo for {brand_name}! 😊",
+            'professional': f"I shall assist you in developing a professional {style} logo for {brand_name}.",
+            'enthusiastic': f"WOW! I'm SO excited to create an AMAZING {style} logo for {brand_name}! 🚀",
+            'creative': f"Oh, what a delightfully creative challenge! A {style} logo for {brand_name} - how inspiring!",
+            'zen': f"Let us mindfully craft a {style} logo that embodies the essence of {brand_name}. 🧘‍♀️"
+        }
+        
+        # Try to generate the actual logo
+        try:
+            logo_url, error = generate_logo_design(brand_name, industry, style)
+            
+            if logo_url:
+                # Success - return positive response with bold, clickable URL
+                base_response = personality_responses.get('friendly', f"I've created a {style} logo for {brand_name}!")
+                return f"{base_response}\n\n🎨 Your logo has been generated! Click the button below to view it:\n\n<div style='text-align: center; margin: 15px 0;'><a href='{logo_url}' target='_blank' style='display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;' onmouseover='this.style.transform=\"scale(1.05)\"' onmouseout='this.style.transform=\"scale(1)\"'>🔗 VIEW YOUR LOGO</a></div>\n\n✨ The logo features a {style} design perfect for the {industry} industry. I've incorporated elements that reflect your brand's identity while ensuring it's professional and memorable.\n\n💡 Logo Tips:\n• Click the button above to view your logo\n• Right-click → Save As to download the image\n• Use it on business cards, websites, and marketing materials\n• Consider creating variations for different use cases\n• Make sure it looks good in both color and black & white\n\nWould you like me to create any variations or additional designs?"
+            else:
+                # Fallback response when generation fails
+                return f"🏷️ I'd love to create a {style} logo for {brand_name} in the {industry} industry! While I'm having some technical difficulties with image generation right now, I can definitely help you plan your logo design.\n\n🎨 For a {style} {industry} logo, I recommend:\n• Clean, professional typography\n• Colors that reflect your brand personality\n• Simple, memorable design elements\n• Scalable vector format\n\n💡 Consider including elements that represent:\n• Your industry ({industry})\n• Your brand values\n• Visual appeal in the {style} style\n\nWould you like specific suggestions for colors, fonts, or design elements for your {brand_name} logo?"
+                
+        except Exception as generation_error:
+            print(f"Logo generation error: {generation_error}")
+            return f"🏷️ I'd be happy to help design a {style} logo for {brand_name}! While I'm experiencing some technical issues with image generation, I can provide you with detailed design guidance.\n\n🎨 For your {industry} logo, consider:\n• {style.title()} aesthetic with clean lines\n• Professional color scheme\n• Memorable brand elements\n• Versatile design for multiple uses\n\nWould you like specific recommendations for your logo design?"
+        
+    except Exception as e:
+        print(f"Error in handle_logo_generation: {e}")
+        return "🏷️ I'd be happy to help you create a logo! Please provide more details about your brand name, industry, and preferred style, and I'll generate a professional logo design for you."
+
+def handle_logo_generation(text):
+    """Handle AI logo generation requests using smart AI and image generation APIs"""
+    try:
+        print(f"🏷️ Processing logo generation request: {text}")
+        
+        # Extract logo details from the text using smart AI patterns
+        logo_patterns = [
+            r'generate.*logo.*for (.+)',
+            r'create.*logo.*for (.+)', 
+            r'make.*logo.*for (.+)',
+            r'design.*logo.*for (.+)',
+            r'build.*logo.*for (.+)',
+            r'logo for (.+)',
+            r'brand.*for (.+)',
+            r'corporate.*logo.*for (.+)',
+            r'business.*logo.*for (.+)',
+            r'company.*logo.*for (.+)',
+            r'logo.*design.*for (.+)',
+            r'brand.*identity.*for (.+)',
+            r'visual.*identity.*for (.+)'
+        ]
+        
+        brand_name = ""
+        industry = "technology"  # default
+        style = "modern"  # default
+        
+        # Extract brand name
+        for pattern in logo_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                brand_info = match.group(1).strip()
+                
+                # Try to extract brand name (first word/phrase)
+                brand_parts = brand_info.split()
+                if brand_parts:
+                    # Look for industry keywords to separate brand name
+                    industry_keywords = [
+                        'tech', 'technology', 'software', 'app', 'digital', 'web', 'it',
+                        'restaurant', 'food', 'cafe', 'coffee', 'dining', 'kitchen',
+                        'health', 'medical', 'healthcare', 'clinic', 'hospital', 'wellness',
+                        'fashion', 'clothing', 'apparel', 'style', 'boutique',
+                        'finance', 'banking', 'investment', 'money', 'financial',
+                        'education', 'school', 'university', 'learning', 'training',
+                        'real estate', 'property', 'construction', 'building',
+                        'automotive', 'car', 'vehicle', 'auto', 'transport',
+                        'beauty', 'salon', 'spa', 'cosmetics', 'skincare',
+                        'sports', 'fitness', 'gym', 'athletic', 'exercise',
+                        'travel', 'tourism', 'hotel', 'vacation', 'adventure',
+                        'retail', 'shop', 'store', 'marketplace', 'commerce',
+                        'consulting', 'service', 'agency', 'firm', 'professional'
+                    ]
+                    
+                    # Extract industry if mentioned
+                    for keyword in industry_keywords:
+                        if keyword in brand_info.lower():
+                            industry = keyword
+                            brand_info = brand_info.lower().replace(keyword, '').strip()
+                            break
+                    
+                    # Clean up brand name
+                    brand_name = brand_info.strip()
+                    if brand_name:
+                        # Capitalize properly
+                        brand_name = ' '.join(word.capitalize() for word in brand_name.split())
+                    
+                break
+        
+        # Extract style hints from the text
+        style_keywords = {
+            'modern': ['modern', 'contemporary', 'clean', 'minimal', 'sleek', 'simple'],
+            'vintage': ['vintage', 'retro', 'classic', 'old-school', 'traditional', 'timeless'],
+            'creative': ['creative', 'artistic', 'unique', 'innovative', 'original', 'abstract'],
+            'corporate': ['corporate', 'professional', 'business', 'formal', 'enterprise', 'official'],
+            'playful': ['playful', 'fun', 'colorful', 'friendly', 'casual', 'bright'],
+            'elegant': ['elegant', 'sophisticated', 'luxury', 'premium', 'refined', 'classy']
+        }
+        
+        for style_type, keywords in style_keywords.items():
+            if any(keyword in text.lower() for keyword in keywords):
+                style = style_type
+                break
+        
+        # If no brand name extracted, try to get it from the whole text
+        if not brand_name:
+            # Look for quoted names or capitalized words
+            quoted_match = re.search(r'["\']([^"\']+)["\']', text)
+            if quoted_match:
+                brand_name = quoted_match.group(1)
+            else:
+                # Look for capitalized words as potential brand names
+                words = text.split()
+                capitalized_words = [word for word in words if word[0].isupper() and len(word) > 2]
+                if capitalized_words:
+                    brand_name = ' '.join(capitalized_words[:3])  # Take up to 3 words
+        
+        # Default brand name if none found
+        if not brand_name:
+            brand_name = "MyBrand"
+        
+        print(f"🏷️ Extracted details - Brand: '{brand_name}', Industry: '{industry}', Style: '{style}'")
+        
+        # Generate smart AI response about the logo creation process
+        smart_responses = [
+            f"🎨 Creating a {style} logo for {brand_name} in the {industry} industry! Let me design something perfect for your brand...",
+            f"🏷️ Designing a professional {style} logo for {brand_name}! This will be great for a {industry} business...",
+            f"✨ Working on a {style} logo design for {brand_name}! Perfect for the {industry} sector...",
+            f"🎯 Crafting a {style} brand identity for {brand_name}! This {industry} logo will look amazing...",
+            f"🚀 Generating a {style} logo for {brand_name}! Your {industry} brand deserves something special..."
+        ]
+        
+        import random
+        smart_response = random.choice(smart_responses)
+        
+        # Try to generate the actual logo using the AI image generation
+        logo_url, error = generate_logo_design(brand_name, industry, style)
+        
+        if logo_url:
+            return f"{smart_response}\n\n✅ Logo generated successfully! Your new {style} logo for {brand_name} is ready:\n\n<div style='text-align: center; margin: 15px 0;'><a href='{logo_url}' target='_blank' style='display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;' onmouseover='this.style.transform=\"scale(1.05)\"' onmouseout='this.style.transform=\"scale(1)\"'>🔗 CLICK HERE TO VIEW YOUR LOGO</a></div>\n\n✨ The logo features {style} design elements perfect for the {industry} industry. Feel free to request modifications or try different styles!"
+        else:
+            # Even if logo generation fails, provide helpful response
+            return f"{smart_response}\n\n💡 Here are some {style} logo design ideas for {brand_name} in the {industry} industry:\n\n• Clean, professional typography with your brand name\n• {industry.capitalize()} industry-relevant icons or symbols\n• {style.capitalize()} color scheme (think brand personality)\n• Scalable design that works on business cards and billboards\n• Memorable visual elements that represent your brand values\n\n🎨 Would you like me to try generating the logo again with different parameters, or would you prefer specific design suggestions?"
+        
+    except Exception as e:
+        print(f"Error in handle_logo_generation: {e}")
+        return "🏷️ I'd love to help you create a logo! Please describe your brand name, industry, and preferred style (modern, vintage, creative, etc.). For example: 'Create a modern logo for TechStart, a software company' or 'Design a vintage logo for Bella's Cafe, a coffee shop'."
+
 # ===============================================
 # � AI MUSIC & AUDIO GENERATION FUNCTIONS
 
@@ -2590,28 +2827,53 @@ def generate_3d_model(prompt, style="realistic"):
         return None, f"3D generation error: {str(e)}"
 
 def generate_logo_design(brand_name, industry, style="modern"):
-    """Generate logos and brand designs"""
+    """Generate logos and brand designs using AI image generation with smart fallbacks"""
     
     try:
         print(f"🏷️ Generating logo for: {brand_name} ({industry}, {style})")
         
-        # Enhanced logo prompt
+        # Enhanced logo prompt with industry-specific elements
         logo_prompt = f"professional logo design for {brand_name}, {industry} industry, {style} style"
         
+        # Industry-specific enhancements
+        industry_prompts = {
+            'technology': 'tech, digital, innovation, modern, circuit patterns, gear icons',
+            'healthcare': 'medical, health, care, cross symbol, healing, wellness, trust',
+            'finance': 'banking, money, security, stability, professional, trust, growth',
+            'restaurant': 'food, dining, chef hat, fork and knife, culinary, appetite',
+            'fashion': 'style, elegance, clothing, trendy, chic, sophisticated',
+            'education': 'learning, books, graduation cap, knowledge, growth, development',
+            'automotive': 'cars, speed, movement, wheels, engineering, power',
+            'beauty': 'elegance, style, cosmetics, wellness, luxury, refined',
+            'sports': 'athletic, fitness, energy, movement, strength, competition',
+            'travel': 'adventure, exploration, journey, compass, globe, destinations'
+        }
+        
+        # Add industry-specific elements
+        if industry in industry_prompts:
+            logo_prompt += f", {industry_prompts[industry]}"
+        
+        # Style-specific enhancements
         if style.lower() == "modern":
-            logo_prompt += ", clean lines, minimalist, contemporary design"
+            logo_prompt += ", clean lines, minimalist, contemporary design, geometric shapes, sans-serif typography"
         elif style.lower() == "vintage":
-            logo_prompt += ", retro aesthetic, classic typography, timeless design"
+            logo_prompt += ", retro aesthetic, classic typography, timeless design, aged textures, serif fonts"
         elif style.lower() == "creative":
-            logo_prompt += ", artistic flair, unique concept, innovative design"
+            logo_prompt += ", artistic flair, unique concept, innovative design, abstract elements, creative typography"
         elif style.lower() == "corporate":
-            logo_prompt += ", professional appearance, trustworthy, business-oriented"
+            logo_prompt += ", professional appearance, trustworthy, business-oriented, clean, authoritative"
+        elif style.lower() == "playful":
+            logo_prompt += ", fun, colorful, friendly, approachable, rounded shapes, vibrant colors"
+        elif style.lower() == "elegant":
+            logo_prompt += ", sophisticated, luxury, refined, premium, elegant typography, subtle colors"
         
-        logo_prompt += ", vector style, high contrast, suitable for business use"
+        logo_prompt += ", vector style, high contrast, suitable for business use, scalable, memorable branding"
         
-        # Try DALL-E for logo generation
-        if Config.OPENAI_API_KEY:
-            print("🎨 Using DALL-E for logo design...")
+        print(f"🎨 Enhanced logo prompt: {logo_prompt}")
+        
+        # Try DALL-E first (PRIMARY - best quality and most reliable)
+        if Config.OPENAI_API_KEY and client:
+            print("🎨 Using DALL-E for professional logo design...")
             
             try:
                 response = client.images.generate(
@@ -2619,32 +2881,23 @@ def generate_logo_design(brand_name, industry, style="modern"):
                     prompt=logo_prompt,
                     size="1024x1024",
                     quality="hd",
+                    style="vivid",  # More vibrant and professional
                     n=1,
                     response_format="url"
                 )
                 
                 image_url = response.data[0].url
                 
-                # Download and save logo
-                image_response = requests.get(image_url, timeout=30)
-                if image_response.status_code == 200:
-                    import uuid
-                    logo_id = str(uuid.uuid4())
-                    logo_filename = f"logo_{brand_name}_{logo_id}.png"
-                    logo_path = os.path.join(LOGOS_DIR, logo_filename)
-                    
-                    with open(logo_path, 'wb') as f:
-                        f.write(image_response.content)
-                    
-                    print(f"✅ Logo generated: {logo_filename}")
-                    return logo_filename, None
+                # Return the direct URL from DALL-E instead of saving locally
+                print(f"✅ DALL-E logo generated: {image_url}")
+                return image_url, None
                     
             except Exception as e:
                 print(f"⚠️ DALL-E logo error: {e}")
         
-        # Try Stability AI for logo generation
+        # Try Stability AI as backup (SECONDARY - good for artistic logos)
         if Config.STABILITY_API_KEY:
-            print("🎭 Using Stability AI for logo design...")
+            print("🎭 Using Stability AI for artistic logo design...")
             
             try:
                 headers = {
@@ -2654,16 +2907,19 @@ def generate_logo_design(brand_name, industry, style="modern"):
                 
                 payload = {
                     "text_prompts": [{"text": logo_prompt}],
-                    "cfg_scale": 7,
+                    "cfg_scale": 8,  # Higher for more adherence to prompt
                     "samples": 1,
-                    "steps": 50
+                    "steps": 50,
+                    "style_preset": "digital-art",  # Good for logos
+                    "width": 1024,
+                    "height": 1024
                 }
                 
                 response = requests.post(
                     "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
                     headers=headers,
                     json=payload,
-                    timeout=30
+                    timeout=60
                 )
                 
                 if response.status_code == 200:
@@ -2673,25 +2929,168 @@ def generate_logo_design(brand_name, industry, style="modern"):
                         import base64
                         import uuid
                         
+                        # Save the image temporarily to serve as URL
                         image_data = base64.b64decode(data["artifacts"][0]["base64"])
                         logo_id = str(uuid.uuid4())
-                        logo_filename = f"logo_stability_{brand_name}_{logo_id}.png"
+                        logo_filename = f"logo_stability_{brand_name.replace(' ', '_')}_{style}_{logo_id}.png"
                         logo_path = os.path.join(LOGOS_DIR, logo_filename)
                         
                         with open(logo_path, 'wb') as f:
                             f.write(image_data)
                         
-                        print(f"✅ Stability AI logo generated: {logo_filename}")
-                        return logo_filename, None
+                        # Return full URL that can be accessed directly
+                        logo_url = f"http://127.0.0.1:8080/static/generated_logos/{logo_filename}"
+                        print(f"✅ Stability AI logo generated: {logo_url}")
+                        return logo_url, None
+                else:
+                    print(f"⚠️ Stability AI API error: {response.status_code} - {response.text}")
                         
             except Exception as e:
                 print(f"⚠️ Stability AI logo error: {e}")
         
-        return None, "Logo generation failed - no working APIs"
+        # Fallback: Use Hugging Face for logo generation (TERTIARY)
+        if Config.HUGGINGFACE_API_KEY:
+            print("🤗 Using Hugging Face for backup logo generation...")
+            
+            try:
+                headers = {
+                    "Authorization": f"Bearer {Config.HUGGINGFACE_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "inputs": logo_prompt,
+                    "parameters": {
+                        "guidance_scale": 8.5,
+                        "num_inference_steps": 50,
+                        "width": 1024,
+                        "height": 1024
+                    }
+                }
+                
+                # Try multiple Hugging Face models
+                models = [
+                    "stabilityai/stable-diffusion-xl-base-1.0",
+                    "runwayml/stable-diffusion-v1-5",
+                    "CompVis/stable-diffusion-v1-4"
+                ]
+                
+                for model in models:
+                    try:
+                        response = requests.post(
+                            f"https://api-inference.huggingface.co/models/{model}",
+                            headers=headers,
+                            json=payload,
+                            timeout=60
+                        )
+                        
+                        if response.status_code == 200:
+                            import uuid
+                            logo_id = str(uuid.uuid4())
+                            logo_filename = f"logo_hf_{brand_name.replace(' ', '_')}_{style}_{logo_id}.png"
+                            logo_path = os.path.join(LOGOS_DIR, logo_filename)
+                            
+                            with open(logo_path, 'wb') as f:
+                                f.write(response.content)
+                            
+                            # Return full URL that can be accessed directly
+                            logo_url = f"http://127.0.0.1:8080/static/generated_logos/{logo_filename}"
+                            print(f"✅ Hugging Face logo generated: {logo_url}")
+                            return logo_url, None
+                        else:
+                            print(f"⚠️ Hugging Face model {model} failed: {response.status_code}")
+                    except Exception as model_error:
+                        print(f"⚠️ Hugging Face model {model} error: {model_error}")
+                        continue
+                        
+            except Exception as e:
+                print(f"⚠️ Hugging Face logo error: {e}")
+        
+        # Final fallback: Programmatic logo generation (LOCAL GENERATION)
+        print("🔧 Using local programmatic logo generation as final fallback...")
+        return generate_programmatic_logo(brand_name, industry, style)
         
     except Exception as e:
         print(f"❌ Logo generation error: {e}")
         return None, f"Logo error: {str(e)}"
+
+def generate_programmatic_logo(brand_name, industry, style):
+    """Generate a simple programmatic logo as final fallback"""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        import uuid
+        
+        # Create a 1024x1024 image
+        img = Image.new('RGB', (1024, 1024), 'white')
+        draw = ImageDraw.Draw(img)
+        
+        # Style-based color schemes
+        color_schemes = {
+            'modern': {'bg': '#f8f9fa', 'primary': '#007bff', 'secondary': '#6c757d'},
+            'vintage': {'bg': '#f5f5dc', 'primary': '#8b4513', 'secondary': '#daa520'},
+            'creative': {'bg': '#fff', 'primary': '#ff6b6b', 'secondary': '#4ecdc4'},
+            'corporate': {'bg': '#f8f9fa', 'primary': '#343a40', 'secondary': '#17a2b8'},
+            'playful': {'bg': '#fff9c4', 'primary': '#ff9800', 'secondary': '#e91e63'},
+            'elegant': {'bg': '#000', 'primary': '#gold', 'secondary': '#silver'}
+        }
+        
+        colors = color_schemes.get(style, color_schemes['modern'])
+        
+        # Draw background
+        img = Image.new('RGB', (1024, 1024), colors['bg'])
+        draw = ImageDraw.Draw(img)
+        
+        # Draw simple geometric logo based on industry
+        center = (512, 512)
+        
+        if industry in ['technology', 'software']:
+            # Draw tech-inspired geometric shapes
+            draw.rectangle([400, 400, 624, 624], fill=colors['primary'])
+            draw.rectangle([450, 450, 574, 574], fill=colors['bg'])
+        elif industry in ['healthcare', 'medical']:
+            # Draw a cross
+            draw.rectangle([462, 400, 562, 624], fill=colors['primary'])
+            draw.rectangle([400, 462, 624, 562], fill=colors['primary'])
+        else:
+            # Draw a simple circle
+            draw.ellipse([400, 400, 624, 624], fill=colors['primary'])
+        
+        # Add brand name text (simplified - might not have proper fonts)
+        try:
+            font_size = 80
+            # Try to use a system font
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", font_size)
+            except:
+                font = ImageFont.load_default()
+            
+            # Get text size and center it
+            text_bbox = draw.textbbox((0, 0), brand_name, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            text_x = (1024 - text_width) // 2
+            text_y = 700
+            
+            draw.text((text_x, text_y), brand_name, fill=colors['primary'], font=font)
+        except:
+            # Fallback without custom font
+            draw.text((400, 700), brand_name, fill=colors['primary'])
+        
+        # Save the logo and return URL
+        logo_id = str(uuid.uuid4())
+        logo_filename = f"logo_programmatic_{brand_name.replace(' ', '_')}_{style}_{logo_id}.png"
+        logo_path = os.path.join(LOGOS_DIR, logo_filename)
+        
+        img.save(logo_path)
+        
+        # Return full URL that can be accessed directly
+        logo_url = f"http://127.0.0.1:8080/static/generated_logos/{logo_filename}"
+        print(f"✅ Programmatic logo generated: {logo_url}")
+        return logo_url, None
+        
+    except Exception as e:
+        print(f"❌ Programmatic logo generation failed: {e}")
+        return None, f"All logo generation methods failed: {str(e)}"
 
 def upscale_image(image_path, scale_factor=2):
     """Upscale images using AI"""
@@ -4546,6 +4945,16 @@ INTENT_PATTERNS = {
         r'\btranscription\b', r'\bparse.*audio\b',
         r'\bsubtitles.*from.*audio\b'
     ],
+    'logo_generation': [
+        r'\b(generate|create|make|design|build).*logo\b',
+        r'\b(generate|create|make|design|build).*brand\b',
+        r'\b(generate|create|make|design|build).*emblem\b',
+        r'\blogo.*for\b', r'\bbrand.*identity\b', r'\bcorporate.*logo\b',
+        r'\blogo.*design\b', r'\bbusiness.*logo\b', r'\bcompany.*logo\b',
+        r'\bai.*logo\b', r'\blogo.*maker\b', r'\bdesign.*logo\b',
+        r'\bbrand.*logo\b', r'\bprofessional.*logo\b', r'\bcustom.*logo\b',
+        r'\bvisual.*identity\b', r'\bbrand.*mark\b', r'\bicon.*design\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -4577,6 +4986,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
         'timer': 0.93,     # Timer setting is pretty reliable
         'reminder': 0.91,  # Reminder setting is reliable
         'image_generation': 0.89,  # Image generation depends on API and prompt clarity
+        'logo_generation': 0.88,   # Logo generation depends on AI art models
         'greeting': 0.90,  # Greetings are straightforward
         'joke': 0.85,      # Jokes are subjective
         'general': 0.82    # General queries vary more
@@ -4608,17 +5018,34 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation']
     return intent in quick_commands
 
-def process_user_input(user_input, personality='friendly', session_id=None):
-    """Process user input and return appropriate response with conversation context"""
+def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
+    """Process user input and return appropriate response with conversation context and AI intelligence"""
     if not user_input or not user_input.strip():
-        return "I didn't quite catch that. Could you please say something?", session_id, False
+        return "I didn't quite catch that. Could you please say something?", session_id, False, {}
+    
+    # Initialize database if needed
+    init_db()
     
     # Recognize intent first
     intent = recognize_intent(user_input)
     context_used = False
+    ai_insights = {}
+    
+    # Analyze emotion for all inputs (quick commands and AI responses)
+    emotion_data = analyze_emotion(user_input)
+    detected_emotion = emotion_data.get('emotion', 'neutral')
+    sentiment_score = emotion_data.get('sentiment', 0.0)
+    
+    ai_insights = {
+        'emotion_detected': detected_emotion,
+        'emotion_confidence': emotion_data.get('confidence', 0.0),
+        'sentiment_score': sentiment_score,
+        'mood': classify_mood(sentiment_score),
+        'intent_detected': intent
+    }
     
     # Handle quick commands WITHOUT ChatGPT - completely local processing
     if is_quick_command(intent):
@@ -4651,26 +5078,41 @@ def process_user_input(user_input, personality='friendly', session_id=None):
             response = handle_voice_generation(user_input)
         elif intent == 'audio_transcription':
             response = handle_audio_transcription(user_input)
+        elif intent == 'logo_generation':
+            response = handle_logo_generation(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
             response = "Quick command processed locally!"
         
+        # Enhance response with emotional awareness even for quick commands
+        response = enhance_response_with_emotion(response, detected_emotion, personality)
+        
         # For quick commands, use a simple session or create one
         if not session_id:
             session_id = generate_session_id()
+            create_conversation_session(session_id, personality)
         
         # Quick commands get high confidence since they're deterministic
         confidence = 0.95
         
-        # Save conversation but mark as quick command (no ChatGPT used)
+        # Save conversation with emotion analysis
         save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
         
-        return response, session_id, context_used
+        # Update personality usage
+        update_personality_usage(personality)
+        
+        # Save simple user memory for quick commands
+        if len(user_input) > 10:
+            keywords = extract_keywords(user_input)
+            if keywords:
+                save_user_memory(user_id, 'quick_commands', f"command_{intent}", f"Used {intent}: {', '.join(keywords[:2])}", importance=0.3)
+        
+        return response, session_id, context_used, ai_insights
     
     # For non-quick commands, use full AI processing with conversation context
     else:
-        print(f"🤖 Complex query detected: {intent} - using ChatGPT with context")
+        print(f"🤖 Complex query detected: {intent} - using ChatGPT with context and AI intelligence")
         
         # Get or create session for context-aware conversations
         if not session_id:
@@ -4679,16 +5121,22 @@ def process_user_input(user_input, personality='friendly', session_id=None):
             if personality == 'friendly' and stored_personality != 'friendly':
                 personality = stored_personality
         
-        # Use AI model (ChatGPT or fallback) for complex questions with full context
-        response, context_used = ask_ai_model(user_input, personality, session_id)
+        # Use AI model (ChatGPT or fallback) for complex questions with full context and intelligence
+        response, context_used = ask_ai_model(user_input, personality, session_id, user_id)
         
         # Calculate confidence for AI responses
         confidence = calculate_realistic_confidence(user_input, response, 'chatgpt' if AI_MODEL_AVAILABLE else 'fallback', intent)
         
-        # Save conversation with full context information
+        # Get comprehensive AI insights
+        session_insights = get_ai_insights(session_id)
+        ai_insights.update(session_insights)
+        ai_insights['context_used'] = context_used
+        ai_insights['ai_learning_active'] = True
+        
+        # Save conversation with full context information and AI intelligence
         save_conversation(user_input, response, personality, session_id, intent, confidence, context_used)
         
-        return response, session_id, context_used
+        return response, session_id, context_used, ai_insights
 
 # Routes
 @app.route('/')
@@ -4823,13 +5271,12 @@ def api_generate_logo():
         if not brand_name:
             return jsonify({'error': 'Brand name is required'}), 400
         
-        filename, error = generate_logo_design(brand_name, industry, style)
+        logo_url, error = generate_logo_design(brand_name, industry, style)
         
-        if filename:
+        if logo_url:
             return jsonify({
                 'success': True,
-                'filename': filename,
-                'url': f'/static/generated_logos/{filename}'
+                'url': logo_url
             })
         else:
             return jsonify({'error': error or 'Logo generation failed'}), 500
@@ -4882,13 +5329,14 @@ def process_message():
         user_input = data.get('input', '').strip()
         personality = data.get('personality', 'friendly')
         session_id = data.get('session_id')  # Optional session ID from client
+        user_id = data.get('user_id', 'anonymous')  # User identifier for AI intelligence
         
         if not user_input:
             return jsonify({'error': 'No input provided'}), 400
         
-        # Process the input (quick commands bypass ChatGPT entirely)
+        # Process the input with AI intelligence features
         start_time = time.time()
-        response, session_id, context_used = process_user_input(user_input, personality, session_id)
+        response, session_id, context_used, ai_insights = process_user_input(user_input, personality, session_id, user_id)
         response_time = round(time.time() - start_time, 2)
         
         # Determine if this was a quick command or AI-powered response
@@ -4924,7 +5372,12 @@ def process_message():
             'context_used': context_used,
             'conversation_length': message_count,
             'has_context': message_count > 1,
-            'processing_type': 'local' if is_quick else 'ai_powered'
+            'processing_type': 'local' if is_quick else 'ai_powered',
+            'ai_insights': ai_insights,
+            'ai_intelligence_active': True,
+            'emotion_detected': ai_insights.get('emotion_detected', 'neutral') if ai_insights else 'neutral',
+            'sentiment_score': ai_insights.get('sentiment_score', 0.0) if ai_insights else 0.0,
+            'learning_active': True
         })
         
     except Exception as e:
@@ -5053,6 +5506,243 @@ def clear_conversation():
     except Exception as e:
         print(f"Error clearing conversation: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+# ===== AI INTELLIGENCE API ENDPOINTS =====
+
+@app.route('/api/ai-insights', methods=['GET'])
+def get_ai_insights_api():
+    """Get AI insights and intelligence data"""
+    try:
+        session_id = request.args.get('session_id')
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        if not session_id:
+            return jsonify({'error': 'Session ID required'}), 400
+        
+        # Get comprehensive AI insights
+        insights = get_ai_insights(session_id)
+        
+        # Get user memory
+        user_memories = retrieve_user_memory(user_id)
+        
+        # Get personality usage stats
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT personality_name, usage_count, user_rating 
+            FROM personality_profiles 
+            ORDER BY usage_count DESC
+        ''')
+        personality_stats = cursor.fetchall()
+        
+        # Get recent emotion analysis
+        cursor.execute('''
+            SELECT detected_emotion, emotion_confidence, sentiment_score, timestamp
+            FROM emotion_analysis 
+            WHERE session_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 10
+        ''', (session_id,))
+        recent_emotions = cursor.fetchall()
+        
+        # Get learning effectiveness
+        cursor.execute('''
+            SELECT learning_type, AVG(effectiveness_score) as avg_effectiveness, COUNT(*) as count
+            FROM ai_learning
+            GROUP BY learning_type
+        ''')
+        learning_stats = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'session_insights': insights,
+            'user_memories': {
+                'count': len(user_memories),
+                'memories': user_memories[:10]  # Top 10 memories
+            },
+            'personality_stats': [
+                {'name': p[0], 'usage_count': p[1], 'rating': p[2]} 
+                for p in personality_stats
+            ],
+            'recent_emotions': [
+                {
+                    'emotion': e[0], 
+                    'confidence': e[1], 
+                    'sentiment': e[2], 
+                    'timestamp': e[3]
+                } for e in recent_emotions
+            ],
+            'learning_stats': [
+                {
+                    'type': l[0], 
+                    'effectiveness': l[1], 
+                    'count': l[2]
+                } for l in learning_stats
+            ],
+            'ai_intelligence_active': True
+        })
+        
+    except Exception as e:
+        print(f"Error getting AI insights: {e}")
+        return jsonify({'error': 'Failed to get AI insights'}), 500
+
+@app.route('/api/personalities', methods=['GET'])
+def get_personalities():
+    """Get all available AI personalities"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT personality_name, personality_description, response_style, 
+                   emotional_traits, language_patterns, usage_count, user_rating
+            FROM personality_profiles
+            ORDER BY usage_count DESC
+        ''')
+        
+        personalities = cursor.fetchall()
+        conn.close()
+        
+        return jsonify({
+            'personalities': [
+                {
+                    'name': p[0],
+                    'description': p[1],
+                    'style': p[2],
+                    'traits': p[3].split(',') if p[3] else [],
+                    'patterns': p[4].split(',') if p[4] else [],
+                    'usage_count': p[5],
+                    'rating': p[6]
+                } for p in personalities
+            ]
+        })
+        
+    except Exception as e:
+        print(f"Error getting personalities: {e}")
+        return jsonify({'error': 'Failed to get personalities'}), 500
+
+@app.route('/api/personalities/rate', methods=['POST'])
+def rate_personality():
+    """Rate a personality"""
+    try:
+        data = request.get_json()
+        personality_name = data.get('personality')
+        rating = data.get('rating')
+        
+        if not personality_name or rating is None:
+            return jsonify({'error': 'Personality name and rating required'}), 400
+        
+        if not (1 <= rating <= 5):
+            return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Update personality rating (simple average for now)
+        cursor.execute('''
+            UPDATE personality_profiles 
+            SET user_rating = CASE 
+                WHEN user_rating IS NULL THEN ?
+                ELSE (user_rating + ?) / 2
+            END
+            WHERE personality_name = ?
+        ''', (rating, rating, personality_name))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': f'Rated {personality_name} personality'})
+        
+    except Exception as e:
+        print(f"Error rating personality: {e}")
+        return jsonify({'error': 'Failed to rate personality'}), 500
+
+@app.route('/api/memory', methods=['GET'])
+def get_user_memory_api():
+    """Get user memory data"""
+    try:
+        user_id = request.args.get('user_id', 'anonymous')
+        memory_type = request.args.get('type')
+        
+        memories = retrieve_user_memory(user_id, memory_type)
+        
+        return jsonify({
+            'user_id': user_id,
+            'memory_type': memory_type,
+            'memories': memories,
+            'count': len(memories)
+        })
+        
+    except Exception as e:
+        print(f"Error getting user memory: {e}")
+        return jsonify({'error': 'Failed to get user memory'}), 500
+
+@app.route('/api/memory', methods=['POST'])
+def save_user_memory_api():
+    """Save user memory data"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'anonymous')
+        memory_type = data.get('type')
+        key = data.get('key')
+        value = data.get('value')
+        importance = data.get('importance', 0.5)
+        
+        if not all([memory_type, key, value]):
+            return jsonify({'error': 'Type, key, and value required'}), 400
+        
+        save_user_memory(user_id, memory_type, key, value, importance)
+        
+        return jsonify({'success': True, 'message': 'Memory saved successfully'})
+        
+    except Exception as e:
+        print(f"Error saving user memory: {e}")
+        return jsonify({'error': 'Failed to save user memory'}), 500
+
+@app.route('/api/emotion-analysis', methods=['GET'])
+def get_emotion_analysis():
+    """Get emotion analysis for a session"""
+    try:
+        session_id = request.args.get('session_id')
+        
+        if not session_id:
+            return jsonify({'error': 'Session ID required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT detected_emotion, emotion_confidence, sentiment_score, 
+                   mood_classification, user_input, timestamp
+            FROM emotion_analysis 
+            WHERE session_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 50
+        ''', (session_id,))
+        
+        emotions = cursor.fetchall()
+        conn.close()
+        
+        return jsonify({
+            'session_id': session_id,
+            'emotions': [
+                {
+                    'emotion': e[0],
+                    'confidence': e[1],
+                    'sentiment_score': e[2],
+                    'mood': e[3],
+                    'user_input': e[4][:100] + '...' if len(e[4]) > 100 else e[4],
+                    'timestamp': e[5]
+                } for e in emotions
+            ],
+            'count': len(emotions)
+        })
+        
+    except Exception as e:
+        print(f"Error getting emotion analysis: {e}")
+        return jsonify({'error': 'Failed to get emotion analysis'}), 500
 
 @app.route('/api/timers-reminders', methods=['POST'])
 def manage_timers_reminders():

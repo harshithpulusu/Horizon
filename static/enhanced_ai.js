@@ -603,6 +603,21 @@ class EnhancedAIVoiceAssistant {
         }
     }
     
+    formatMarkdownLinks(text) {
+        // Convert markdown links [text](url) to HTML <a> tags
+        return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+            // Add target="_blank" for external links
+            const isExternal = url.startsWith('http://') || url.startsWith('https://');
+            const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+            
+            // Add special styling for logo links
+            const isLogoLink = linkText.toLowerCase().includes('logo') || linkText.toLowerCase().includes('view');
+            const className = isLogoLink ? ' class="logo-link"' : '';
+            
+            return `<a href="${url}"${target}${className}>${linkText}</a>`;
+        });
+    }
+    
     addMessage(sender, message, type, data = null, autoScroll = true) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
@@ -685,6 +700,12 @@ class EnhancedAIVoiceAssistant {
             // Clean up any extra line breaks
             displayMessage = displayMessage.replace(/\n\s*\n/g, '\n').trim();
         }
+        
+        // Convert markdown links to HTML (for clickable logo URLs)
+        displayMessage = this.formatMarkdownLinks(displayMessage);
+        
+        // Convert bold markdown to HTML
+        displayMessage = displayMessage.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         
         let messageContent = `
             <div class="message-header">
