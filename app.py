@@ -4956,38 +4956,46 @@ INTENT_PATTERNS = {
         r'\bvisual.*identity\b', r'\bbrand.*mark\b', r'\bicon.*design\b'
     ],
     'game_master': [
-        r'\b(start|begin|create|generate).*story\b',
-        r'\b(start|begin|create|generate).*adventure\b',
-        r'\b(start|begin|create|generate).*game\b',
+        r'\b(start|begin|create|play).*story\b',
+        r'\b(start|begin|create|play).*adventure\b',
+        r'\b(start|begin|create|play).*game\b',
         r'\btext.*adventure\b', r'\binteractive.*story\b',
-        r'\brpg.*game\b', r'\bdungeon.*master\b', r'\bgame.*master\b',
-        r'\bai.*storyteller\b', r'\bstory.*mode\b', r'\badventure.*mode\b',
-        r'\bplay.*game\b', r'\bgaming.*session\b', r'\bnarrative.*game\b',
-        r'\bstoryline\b', r'\bchoose.*adventure\b', r'\binteractive.*fiction\b',
-        r'\bcampaign.*story\b', r'\bquest.*adventure\b'
+        r'\brpg.*story\b', r'\bdungeons.*and.*dragons\b',
+        r'\bai.*game.*master\b', r'\bgame.*master\b', r'\bdm\b',
+        r'\bcreate.*character\b', r'\brole.*playing\b',
+        r'\badventure.*story\b', r'\bnarrative.*game\b',
+        r'\bstory.*time\b', r'\btell.*me.*story\b',
+        r'\bwhat.*happens.*next\b', r'\bcontinue.*story\b',
+        r'\bfantasy.*adventure\b', r'\bquest.*story\b'
     ],
-    'code_generator': [
-        r'\b(generate|create|make|write).*code\b',
-        r'\b(generate|create|make|write).*program\b',
-        r'\b(generate|create|make|write).*script\b',
-        r'\b(generate|create|make|write).*function\b',
-        r'\bcode.*for\b', r'\bprogram.*in\b', r'\bscript.*to\b',
-        r'\bpython.*code\b', r'\bjavascript.*code\b', r'\bjava.*code\b',
-        r'\bc\+\+.*code\b', r'\bhtml.*code\b', r'\bcss.*code\b',
-        r'\bsql.*query\b', r'\balgorithm.*for\b', r'\bprogramming.*help\b',
-        r'\bcode.*example\b', r'\bsample.*code\b', r'\bcode.*snippet\b',
-        r'\bai.*programmer\b', r'\bcoding.*assistant\b', r'\bdev.*help\b'
+    'code_generation': [
+        r'\b(write|create|generate|code).*python\b',
+        r'\b(write|create|generate|code).*javascript\b',
+        r'\b(write|create|generate|code).*java\b',
+        r'\b(write|create|generate|code).*cpp\b',
+        r'\b(write|create|generate|code).*html\b',
+        r'\b(write|create|generate|code).*css\b',
+        r'\bcode.*for\b', r'\bprogram.*for\b', r'\bscript.*for\b',
+        r'\bfunction.*that\b', r'\bclass.*that\b',
+        r'\bai.*programmer\b', r'\bai.*coding\b',
+        r'\bprogramming.*help\b', r'\bcode.*help\b',
+        r'\bdebug.*code\b', r'\bfix.*code\b',
+        r'\bexplain.*code\b', r'\bcode.*example\b',
+        r'\balgorithm.*for\b', r'\bdata.*structure\b',
+        r'\bapi.*code\b', r'\bdatabase.*code\b'
     ],
-    'quiz_trivia': [
-        r'\b(generate|create|make).*quiz\b',
-        r'\b(generate|create|make).*trivia\b',
-        r'\b(generate|create|make).*questions\b',
-        r'\b(generate|create|make).*test\b',
-        r'\bquiz.*about\b', r'\btrivia.*about\b', r'\bquestions.*about\b',
-        r'\btest.*my.*knowledge\b', r'\bknowledge.*quiz\b',
-        r'\bai.*quiz\b', r'\bai.*trivia\b', r'\bpersonalized.*quiz\b',
-        r'\beducational.*quiz\b', r'\blearning.*quiz\b', r'\bchallenge.*me\b',
-        r'\bquiz.*game\b', r'\btrivia.*game\b', r'\bbrainstorm.*questions\b'
+    'quiz_generation': [
+        r'\b(create|generate|make).*quiz\b',
+        r'\b(create|generate|make).*trivia\b',
+        r'\b(create|generate|make).*test\b',
+        r'\bquiz.*about\b', r'\btrivia.*about\b',
+        r'\btest.*my.*knowledge\b', r'\bquestion.*about\b',
+        r'\bai.*quiz\b', r'\bai.*trivia\b',
+        r'\bmultiple.*choice\b', r'\btrue.*false\b',
+        r'\bknowledge.*test\b', r'\blearn.*quiz\b',
+        r'\beducational.*quiz\b', r'\bstudent.*quiz\b',
+        r'\bpersonalized.*quiz\b', r'\bcustom.*quiz\b',
+        r'\bquiz.*questions\b', r'\btrivia.*questions\b'
     ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
@@ -5052,7 +5060,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generator', 'quiz_trivia']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
@@ -5115,11 +5123,11 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
         elif intent == 'logo_generation':
             response = handle_logo_generation(user_input)
         elif intent == 'game_master':
-            response = handle_game_master(user_input)
-        elif intent == 'code_generator':
-            response = handle_code_generator(user_input)
-        elif intent == 'quiz_trivia':
-            response = handle_quiz_trivia(user_input)
+            response = handle_game_master(user_input, session_id, personality)
+        elif intent == 'code_generation':
+            response = handle_code_generation(user_input, personality)
+        elif intent == 'quiz_generation':
+            response = handle_quiz_generation(user_input, personality)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
