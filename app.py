@@ -5502,6 +5502,54 @@ INTENT_PATTERNS = {
         r'\bpersonalized.*quiz\b', r'\bcustom.*quiz\b',
         r'\bquiz.*questions\b', r'\btrivia.*questions\b'
     ],
+    'story_generation': [
+        r'\b(write|create|generate|compose).*story\b',
+        r'\b(write|create|generate|compose).*novel\b',
+        r'\b(write|create|generate|compose).*script\b',
+        r'\b(write|create|generate|compose).*poem\b',
+        r'\b(write|create|generate|compose).*poetry\b',
+        r'\bstory.*about\b', r'\bnovel.*about\b', r'\bscript.*about\b',
+        r'\bpoem.*about\b', r'\bpoetry.*about\b',
+        r'\bai.*writer\b', r'\bai.*author\b', r'\bcreative.*writing\b',
+        r'\bfiction.*story\b', r'\bshort.*story\b', r'\bbook.*chapter\b',
+        r'\bscreenplay\b', r'\bmovie.*script\b', r'\bplay.*script\b',
+        r'\bhaiku\b', r'\bsonnet\b', r'\bverse\b', r'\brhyme\b',
+        r'\bnarrative\b', r'\btale.*about\b', r'\bepic.*story\b'
+    ],
+    'meme_generation': [
+        r'\b(create|generate|make).*meme\b',
+        r'\b(create|generate|make).*funny.*image\b',
+        r'\bmeme.*about\b', r'\bmeme.*with\b',
+        r'\bai.*meme\b', r'\bhumor.*image\b', r'\bfunny.*picture\b',
+        r'\bmeme.*template\b', r'\bmeme.*generator\b',
+        r'\bjoke.*image\b', r'\bcomedy.*meme\b', r'\bviral.*meme\b',
+        r'\binternet.*meme\b', r'\bcustom.*meme\b', r'\bmeme.*maker\b',
+        r'\bsarcastic.*meme\b', r'\brelatable.*meme\b'
+    ],
+    'comic_generation': [
+        r'\b(create|generate|make|draw).*comic\b',
+        r'\b(create|generate|make|draw).*comic.*strip\b',
+        r'\b(create|generate|make|draw).*comic.*panel\b',
+        r'\bcomic.*about\b', r'\bcomic.*story\b',
+        r'\bai.*comic\b', r'\bcomic.*creator\b', r'\bcomic.*book\b',
+        r'\bgraphic.*novel\b', r'\bsequential.*art\b',
+        r'\bsuperhero.*comic\b', r'\bcomic.*character\b',
+        r'\bstoryboard\b', r'\bcomic.*series\b', r'\bwebcomic\b',
+        r'\bmanga.*style\b', r'\bcartoon.*comic\b'
+    ],
+    'fashion_design': [
+        r'\b(design|create|generate|suggest).*fashion\b',
+        r'\b(design|create|generate|suggest).*clothing\b',
+        r'\b(design|create|generate|suggest).*outfit\b',
+        r'\b(design|create|generate|suggest).*style\b',
+        r'\bfashion.*advice\b', r'\bstyle.*advice\b', r'\boutfit.*advice\b',
+        r'\bai.*stylist\b', r'\bai.*fashion\b', r'\bfashion.*ai\b',
+        r'\bclothing.*recommendation\b', r'\bstyle.*recommendation\b',
+        r'\bfashion.*trend\b', r'\bstyle.*trend\b', r'\bwhat.*to.*wear\b',
+        r'\bdress.*for\b', r'\boutfit.*for\b', r'\bstyle.*for\b',
+        r'\bfashion.*designer\b', r'\bclothing.*design\b', r'\bwardrobe.*advice\b',
+        r'\bpersonal.*stylist\b', r'\bfashion.*consultation\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
