@@ -2410,7 +2410,7 @@ Ready to build something amazing? Let me know what specific functionality you ne
         return "💻 I'm your AI programming assistant! I can help you write code in Python, JavaScript, Java, C++, HTML, CSS, and more. Try asking: 'Write a Python function to sort data' or 'Create a JavaScript API call' or 'Generate a Java class for user management'. What would you like to code today?"
 
 def handle_quiz_generation(text, personality='friendly'):
-    """Handle quiz and trivia generation requests"""
+    """Handle quiz and trivia generation requests with interactive UI"""
     try:
         print(f"🧠 Processing quiz generation request: {text}")
         
@@ -2419,15 +2419,6 @@ def handle_quiz_generation(text, personality='friendly'):
         
         topic_match = re.search(r'(?:about|on|quiz|trivia).*?([a-zA-Z\s]+)', text.lower())
         topic = topic_match.group(1).strip() if topic_match else "general knowledge"
-        
-        # Detect quiz type
-        quiz_type = "multiple_choice"  # default
-        if re.search(r'\btrue.*false\b', text.lower()):
-            quiz_type = "true_false"
-        elif re.search(r'\bopen.*ended\b', text.lower()):
-            quiz_type = "open_ended"
-        elif re.search(r'\bfill.*blank\b', text.lower()):
-            quiz_type = "fill_blank"
         
         # Detect difficulty
         difficulty = "medium"  # default
@@ -2445,86 +2436,254 @@ def handle_quiz_generation(text, personality='friendly'):
             'empathetic': f"🌟 Let's learn together with this {topic} quiz!"
         }
         
-        # Sample quizzes for different topics
+        # Enhanced quiz database with more questions
         quiz_templates = {
-            'science': {
-                'multiple_choice': [
-                    {"q": "What is the chemical symbol for gold?", "options": ["A) Au", "B) Ag", "C) Gd", "D) Go"], "answer": "A"},
-                    {"q": "Which planet is known as the Red Planet?", "options": ["A) Venus", "B) Mars", "C) Jupiter", "D) Saturn"], "answer": "B"},
-                    {"q": "What is the speed of light in vacuum?", "options": ["A) 300,000 km/s", "B) 150,000 km/s", "C) 450,000 km/s", "D) 600,000 km/s"], "answer": "A"}
-                ],
-                'true_false': [
-                    {"q": "The human brain uses about 20% of the body's total energy.", "answer": "True"},
-                    {"q": "Lightning never strikes the same place twice.", "answer": "False"},
-                    {"q": "Water boils at 100°C at sea level.", "answer": "True"}
-                ]
-            },
-            'history': {
-                'multiple_choice': [
-                    {"q": "In which year did World War II end?", "options": ["A) 1944", "B) 1945", "C) 1946", "D) 1947"], "answer": "B"},
-                    {"q": "Who was the first person to walk on the moon?", "options": ["A) Buzz Aldrin", "B) John Glenn", "C) Neil Armstrong", "D) Alan Shepard"], "answer": "C"},
-                    {"q": "The Great Wall of China was built primarily to defend against invasions from which direction?", "options": ["A) South", "B) East", "C) West", "D) North"], "answer": "D"}
-                ],
-                'true_false': [
-                    {"q": "The Berlin Wall fell in 1989.", "answer": "True"},
-                    {"q": "Napoleon was born in France.", "answer": "False"},
-                    {"q": "The Titanic sank in 1912.", "answer": "True"}
-                ]
-            },
-            'technology': {
-                'multiple_choice': [
-                    {"q": "What does 'AI' stand for?", "options": ["A) Automated Intelligence", "B) Artificial Intelligence", "C) Advanced Interface", "D) Algorithmic Integration"], "answer": "B"},
-                    {"q": "Which programming language is known for data science?", "options": ["A) JavaScript", "B) Python", "C) Assembly", "D) COBOL"], "answer": "B"},
-                    {"q": "What does 'HTTP' stand for?", "options": ["A) Hypertext Transfer Protocol", "B) High Tech Transfer Process", "C) Hyperlink Text Transfer Protocol", "D) Home Transfer Text Protocol"], "answer": "A"}
-                ],
-                'true_false': [
-                    {"q": "Python is a compiled programming language.", "answer": "False"},
-                    {"q": "The first computer bug was an actual insect.", "answer": "True"},
-                    {"q": "WiFi stands for Wireless Fidelity.", "answer": "False"}
-                ]
-            }
+            'science': [
+                {"q": "What is the chemical symbol for gold?", "options": ["Au", "Ag", "Gd", "Go"], "correct": 0, "explanation": "Au comes from the Latin word 'aurum' meaning gold."},
+                {"q": "Which planet is known as the Red Planet?", "options": ["Venus", "Mars", "Jupiter", "Saturn"], "correct": 1, "explanation": "Mars appears red due to iron oxide (rust) on its surface."},
+                {"q": "What is the speed of light in vacuum?", "options": ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"], "correct": 0, "explanation": "Light travels at approximately 299,792,458 meters per second in a vacuum."},
+                {"q": "How many bones are in an adult human body?", "options": ["206", "186", "226", "246"], "correct": 0, "explanation": "Adults have 206 bones, while babies are born with about 270 bones."},
+                {"q": "What gas makes up about 78% of Earth's atmosphere?", "options": ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], "correct": 2, "explanation": "Nitrogen makes up about 78% of Earth's atmosphere, while oxygen is about 21%."},
+                {"q": "Which scientist developed the theory of relativity?", "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Stephen Hawking"], "correct": 1, "explanation": "Einstein published his special theory of relativity in 1905 and general relativity in 1915."},
+                {"q": "What is the hardest natural substance on Earth?", "options": ["Gold", "Iron", "Diamond", "Quartz"], "correct": 2, "explanation": "Diamond is the hardest natural material, rating 10 on the Mohs hardness scale."},
+                {"q": "Which organ in the human body produces insulin?", "options": ["Liver", "Kidney", "Pancreas", "Heart"], "correct": 2, "explanation": "The pancreas produces insulin to help regulate blood sugar levels."},
+                {"q": "What is the smallest unit of matter?", "options": ["Molecule", "Atom", "Proton", "Electron"], "correct": 1, "explanation": "Atoms are the basic building blocks of matter and the smallest units of elements."},
+                {"q": "How many chambers does a human heart have?", "options": ["2", "3", "4", "5"], "correct": 2, "explanation": "The human heart has four chambers: two atria and two ventricles."}
+            ],
+            'history': [
+                {"q": "In which year did World War II end?", "options": ["1944", "1945", "1946", "1947"], "correct": 1, "explanation": "WWII ended in 1945 with Japan's surrender on September 2, 1945."},
+                {"q": "Who was the first person to walk on the moon?", "options": ["Buzz Aldrin", "John Glenn", "Neil Armstrong", "Alan Shepard"], "correct": 2, "explanation": "Neil Armstrong was the first human to walk on the moon on July 20, 1969."},
+                {"q": "The Great Wall of China was built primarily to defend against invasions from which direction?", "options": ["South", "East", "West", "North"], "correct": 3, "explanation": "The Great Wall was built to protect against invasions from northern nomadic tribes."},
+                {"q": "Which ancient wonder of the world was located in Alexandria?", "options": ["Hanging Gardens", "Lighthouse", "Colossus", "Mausoleum"], "correct": 1, "explanation": "The Lighthouse of Alexandria was one of the Seven Wonders of the Ancient World."},
+                {"q": "Who painted the ceiling of the Sistine Chapel?", "options": ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"], "correct": 1, "explanation": "Michelangelo painted the Sistine Chapel ceiling between 1508 and 1512."},
+                {"q": "The Roman Empire was divided into two parts in which year?", "options": ["285 AD", "395 AD", "476 AD", "527 AD"], "correct": 1, "explanation": "The Roman Empire was permanently divided in 395 AD after Emperor Theodosius I's death."},
+                {"q": "Which queen ruled England during Shakespeare's time?", "options": ["Queen Victoria", "Queen Elizabeth I", "Queen Mary I", "Queen Anne"], "correct": 1, "explanation": "Queen Elizabeth I ruled during most of Shakespeare's career (1558-1603)."},
+                {"q": "The Declaration of Independence was signed in which year?", "options": ["1774", "1775", "1776", "1777"], "correct": 2, "explanation": "The Declaration of Independence was signed on July 4, 1776."},
+                {"q": "Who was the first President of the United States?", "options": ["John Adams", "Thomas Jefferson", "George Washington", "Benjamin Franklin"], "correct": 2, "explanation": "George Washington served as the first President from 1789 to 1797."},
+                {"q": "The Berlin Wall fell in which year?", "options": ["1987", "1989", "1991", "1993"], "correct": 1, "explanation": "The Berlin Wall fell on November 9, 1989, leading to German reunification."}
+            ],
+            'technology': [
+                {"q": "What does 'AI' stand for?", "options": ["Automated Intelligence", "Artificial Intelligence", "Advanced Interface", "Algorithmic Integration"], "correct": 1, "explanation": "AI stands for Artificial Intelligence, the simulation of human intelligence by machines."},
+                {"q": "Which programming language is most popular for data science?", "options": ["JavaScript", "Python", "Assembly", "COBOL"], "correct": 1, "explanation": "Python is widely used in data science due to its libraries like pandas, NumPy, and scikit-learn."},
+                {"q": "What does 'HTTP' stand for?", "options": ["Hypertext Transfer Protocol", "High Tech Transfer Process", "Hyperlink Text Transfer Protocol", "Home Transfer Text Protocol"], "correct": 0, "explanation": "HTTP is the protocol used for transferring web pages on the internet."},
+                {"q": "Who founded Microsoft?", "options": ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Jeff Bezos"], "correct": 1, "explanation": "Bill Gates co-founded Microsoft with Paul Allen in 1975."},
+                {"q": "What does 'URL' stand for?", "options": ["Universal Resource Locator", "Uniform Resource Locator", "Universal Reference Link", "Uniform Reference Locator"], "correct": 1, "explanation": "URL stands for Uniform Resource Locator, the address of a web resource."},
+                {"q": "Which company developed the iPhone?", "options": ["Google", "Samsung", "Apple", "Microsoft"], "correct": 2, "explanation": "Apple Inc. developed and released the first iPhone in 2007."},
+                {"q": "What does 'CPU' stand for?", "options": ["Computer Processing Unit", "Central Processing Unit", "Core Processing Unit", "Central Program Unit"], "correct": 1, "explanation": "CPU stands for Central Processing Unit, the main processor of a computer."},
+                {"q": "Which programming language was created by Guido van Rossum?", "options": ["Java", "Python", "C++", "JavaScript"], "correct": 1, "explanation": "Guido van Rossum created Python, first released in 1991."},
+                {"q": "What does 'RAM' stand for?", "options": ["Random Access Memory", "Read Access Memory", "Rapid Access Memory", "Remote Access Memory"], "correct": 0, "explanation": "RAM stands for Random Access Memory, the computer's short-term memory."},
+                {"q": "Which company owns YouTube?", "options": ["Facebook", "Apple", "Google", "Amazon"], "correct": 2, "explanation": "Google acquired YouTube in 2006 for $1.65 billion."}
+            ]
         }
         
-        # Default to general knowledge if topic not found
-        if topic not in quiz_templates:
-            topic = 'science'  # fallback
+        # Default to science if topic not found
+        available_questions = quiz_templates.get(topic, quiz_templates['science'])
         
-        questions = quiz_templates[topic][quiz_type][:3]  # Get 3 questions
+        # Randomly select one question to start
+        import random
+        question = random.choice(available_questions)
         
         base_response = personality_responses.get(personality, personality_responses['friendly'])
         
-        quiz_content = f"""🎯 **{topic.title()} Quiz** ({difficulty.title()} Level)
-📚 **Format:** {quiz_type.replace('_', ' ').title()}
-
-"""
+        # Generate unique quiz ID for session tracking
+        import uuid
+        quiz_id = str(uuid.uuid4())[:8]
         
-        for i, q in enumerate(questions, 1):
-            quiz_content += f"**Question {i}:** {q['q']}\n"
-            if 'options' in q:
-                quiz_content += f"{chr(10).join(q['options'])}\n"
-            quiz_content += f"*Answer: {q['answer']}*\n\n"
+        # Create interactive quiz HTML
+        quiz_html = f'''
+<div class="interactive-quiz" data-quiz-id="{quiz_id}" data-topic="{topic}" data-difficulty="{difficulty}">
+    <div class="quiz-header">
+        <h3>🎯 {topic.title()} Quiz ({difficulty.title()} Level)</h3>
+        <div class="quiz-progress">
+            <span class="question-counter">Question <span id="current-question">1</span> of 10</span>
+            <span class="score-display">Score: <span id="current-score">0</span>/10</span>
+        </div>
+    </div>
+    
+    <div class="quiz-question-container">
+        <div class="quiz-question">
+            <h4 id="question-text">{question['q']}</h4>
+        </div>
+        
+        <div class="quiz-options">
+            <button class="quiz-option" data-answer="0" data-correct="{question['correct']}" data-explanation="{question['explanation'].replace('"', '&quot;')}">{question['options'][0]}</button>
+            <button class="quiz-option" data-answer="1" data-correct="{question['correct']}" data-explanation="{question['explanation'].replace('"', '&quot;')}">{question['options'][1]}</button>
+            <button class="quiz-option" data-answer="2" data-correct="{question['correct']}" data-explanation="{question['explanation'].replace('"', '&quot;')}">{question['options'][2]}</button>
+            <button class="quiz-option" data-answer="3" data-correct="{question['correct']}" data-explanation="{question['explanation'].replace('"', '&quot;')}">{question['options'][3]}</button>
+        </div>
+        
+        <div class="quiz-feedback" id="quiz-feedback" style="display: none;">
+            <div class="feedback-text" id="feedback-text"></div>
+            <div class="explanation" id="explanation-text"></div>
+            <button class="next-question-btn" id="next-btn" onclick="nextQuestion()" style="display: none;">Next Question ➡️</button>
+        </div>
+    </div>
+    
+    <div class="quiz-final-results" id="final-results" style="display: none;">
+        <h3>🏆 Quiz Complete!</h3>
+        <div class="final-score" id="final-score-text"></div>
+        <div class="performance-message" id="performance-message"></div>
+        <button class="new-quiz-btn" onclick="startNewQuiz()">Start New Quiz 🎮</button>
+    </div>
+</div>'''
+
+        # Add JavaScript as a separate string to avoid f-string conflicts
+        javascript_code = f'''
+<script>
+let currentQuizData = {{
+    topic: "{topic}",
+    difficulty: "{difficulty}",
+    currentQuestion: 1,
+    score: 0,
+    totalQuestions: 10,
+    questions: {str(available_questions)},
+    answered: false
+}};
+
+// Add event listeners for quiz options
+document.addEventListener('DOMContentLoaded', function() {{
+    setupQuizButtons();
+}});
+
+function setupQuizButtons() {{
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(option => {{
+        option.addEventListener('click', function() {{
+            if (currentQuizData.answered) return;
+            
+            const selectedAnswer = parseInt(this.getAttribute('data-answer'));
+            const correctAnswer = parseInt(this.getAttribute('data-correct'));
+            const explanation = this.getAttribute('data-explanation');
+            
+            answerQuestion(selectedAnswer, correctAnswer, explanation);
+        }});
+    }});
+}}
+
+function answerQuestion(selectedAnswer, correctAnswer, explanation) {{
+    if (currentQuizData.answered) return;
+    
+    currentQuizData.answered = true;
+    const options = document.querySelectorAll('.quiz-option');
+    const feedback = document.getElementById('quiz-feedback');
+    const feedbackText = document.getElementById('feedback-text');
+    const explanationText = document.getElementById('explanation-text');
+    const nextBtn = document.getElementById('next-btn');
+    
+    // Disable all buttons
+    options.forEach(option => option.disabled = true);
+    
+    // Show correct/incorrect feedback
+    options[selectedAnswer].classList.add(selectedAnswer === correctAnswer ? 'correct' : 'incorrect');
+    options[correctAnswer].classList.add('correct');
+    
+    // Update score
+    if (selectedAnswer === correctAnswer) {{
+        currentQuizData.score++;
+        feedbackText.innerHTML = '✅ Correct!';
+        feedbackText.className = 'feedback-text correct-feedback';
+    }} else {{
+        feedbackText.innerHTML = '❌ Incorrect';
+        feedbackText.className = 'feedback-text incorrect-feedback';
+    }}
+    
+    // Show explanation
+    explanationText.innerHTML = explanation;
+    
+    // Update score display
+    document.getElementById('current-score').textContent = currentQuizData.score;
+    
+    // Show feedback and next button
+    feedback.style.display = 'block';
+    nextBtn.style.display = 'inline-block';
+}}
+
+function nextQuestion() {{
+    currentQuizData.currentQuestion++;
+    
+    if (currentQuizData.currentQuestion > currentQuizData.totalQuestions) {{
+        showFinalResults();
+        return;
+    }}
+    
+    // Reset for next question
+    currentQuizData.answered = false;
+    
+    // Get new random question
+    const question = currentQuizData.questions[Math.floor(Math.random() * currentQuizData.questions.length)];
+    
+    // Update question display
+    document.getElementById('question-text').textContent = question.q;
+    document.getElementById('current-question').textContent = currentQuizData.currentQuestion;
+    
+    // Reset options
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((option, index) => {{
+        option.textContent = question.options[index];
+        option.disabled = false;
+        option.className = 'quiz-option';
+        option.setAttribute('data-answer', index);
+        option.setAttribute('data-correct', question.correct);
+        option.setAttribute('data-explanation', question.explanation);
+    }});
+    
+    // Hide feedback
+    document.getElementById('quiz-feedback').style.display = 'none';
+    
+    // Re-setup event listeners
+    setupQuizButtons();
+}}
+
+function showFinalResults() {{
+    const quizContainer = document.querySelector('.quiz-question-container');
+    const finalResults = document.getElementById('final-results');
+    const finalScoreText = document.getElementById('final-score-text');
+    const performanceMessage = document.getElementById('performance-message');
+    
+    quizContainer.style.display = 'none';
+    finalResults.style.display = 'block';
+    
+    const percentage = Math.round((currentQuizData.score / currentQuizData.totalQuestions) * 100);
+    finalScoreText.innerHTML = `You scored ${{currentQuizData.score}} out of ${{currentQuizData.totalQuestions}} (${{percentage}}%)`;
+    
+    let message = '';
+    if (percentage >= 90) {{
+        message = '🌟 Outstanding! You are a true expert!';
+    }} else if (percentage >= 80) {{
+        message = '🎉 Excellent work! You know your stuff!';
+    }} else if (percentage >= 70) {{
+        message = '👏 Good job! You are doing well!';
+    }} else if (percentage >= 60) {{
+        message = '📚 Not bad! Keep learning and improving!';
+    }} else {{
+        message = '💪 Keep studying! There is always room to grow!';
+    }}
+    
+    performanceMessage.innerHTML = message;
+}}
+
+function startNewQuiz() {{
+    location.reload(); // Simple way to restart - could be made more elegant
+}}
+</script>'''
         
         return f"""{base_response}
 
-{quiz_content}
+{quiz_html}
 
-🏆 **How did you do?**
-• 3/3 correct: Expert level! 🌟
-• 2/3 correct: Great job! 👏
-• 1/3 correct: Good effort! 📚
-• 0/3 correct: Learning opportunity! 💪
+{javascript_code}
 
-🎮 **Want more quizzes?** Try asking for:
-• "Create a hard history quiz"
-• "Generate true/false science questions"
-• "Make an easy technology trivia"
-• "Quiz me about [any topic]"
+🎮 **How to play:**
+• Click on the answer you think is correct
+• ✅ Green = Correct, ❌ Red = Wrong
+• See explanations after each answer
+• Complete 10 questions to see your final score!
 
-Ready for another challenge? What topic interests you most?"""
+Ready to test your knowledge? Click your first answer above! 🧠"""
         
     except Exception as e:
         print(f"Error in handle_quiz_generation: {e}")
-        return "🧠 I'm your AI quiz master! I can create personalized quizzes on any topic. Try asking: 'Create a science quiz', 'Generate history trivia', 'Make a true/false technology quiz', or 'Quiz me about [your topic]'. What would you like to be tested on today?"
+        return "🧠 I'm your AI quiz master! I can create interactive quizzes on any topic. Try asking: 'Create a science quiz', 'Generate history trivia', or 'Quiz me about technology'. What would you like to be tested on today?"
 
 # ===============================================
 # � AI MUSIC & AUDIO GENERATION FUNCTIONS

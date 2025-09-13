@@ -506,7 +506,7 @@ class AdvancedAIProcessor:
             system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
             
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-5-nano",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_input}
