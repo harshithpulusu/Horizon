@@ -6635,6 +6635,161 @@ def serve_generated_logo(filename):
     except FileNotFoundError:
         return jsonify({'error': 'Logo not found'}), 404
 
+@app.route('/api/personality', methods=['POST'])
+def update_personality():
+    """Update personality for the current session"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        personality = data.get('personality', 'friendly')
+        session_id = data.get('session_id')
+        
+        # Validate personality
+        valid_personalities = [
+            'friendly', 'professional', 'casual', 'enthusiastic', 'witty', 
+            'sarcastic', 'zen', 'scientist', 'pirate', 'shakespearean', 
+            'valley_girl', 'cowboy', 'robot'
+        ]
+        
+        if personality not in valid_personalities:
+            return jsonify({'error': f'Invalid personality. Valid options: {", ".join(valid_personalities)}'}), 400
+        
+        # Update session personality if session exists
+        if session_id:
+            try:
+                conn = sqlite3.connect('ai_memory.db')
+                cursor = conn.cursor()
+                
+                # Update the session's personality
+                cursor.execute('''
+                    UPDATE conversation_sessions 
+                    SET personality = ?, updated_at = ? 
+                    WHERE session_id = ?
+                ''', (personality, datetime.now().isoformat(), session_id))
+                
+                conn.commit()
+                conn.close()
+                
+                print(f"✅ Updated session {session_id} personality to: {personality}")
+                
+            except Exception as e:
+                print(f"Error updating session personality: {e}")
+        
+        # Update personality usage statistics
+        update_personality_usage(personality)
+        
+        return jsonify({
+            'success': True,
+            'personality': personality,
+            'session_id': session_id,
+            'message': f'Personality updated to {personality}'
+        })
+        
+    except Exception as e:
+        print(f"Error in update_personality: {e}")
+        return jsonify({'error': 'Failed to update personality'}), 500
+
+@app.route('/api/personality', methods=['GET'])
+def get_personality_info():
+    """Get available personalities and current session personality"""
+    try:
+        session_id = request.args.get('session_id')
+        
+        personalities = {
+            'friendly': {
+                'name': 'Friendly',
+                'description': 'Warm, welcoming, and supportive with encouraging responses',
+                'emoji': '😊'
+            },
+            'professional': {
+                'name': 'Professional', 
+                'description': 'Formal, structured, and business-oriented communication',
+                'emoji': '💼'
+            },
+            'casual': {
+                'name': 'Casual',
+                'description': 'Relaxed, laid-back with informal and conversational tone',
+                'emoji': '😎'
+            },
+            'enthusiastic': {
+                'name': 'Enthusiastic',
+                'description': 'High-energy, exciting, and passionate about everything',
+                'emoji': '🎉'
+            },
+            'witty': {
+                'name': 'Witty',
+                'description': 'Clever humor, wordplay, and intelligent observations',
+                'emoji': '🧠'
+            },
+            'sarcastic': {
+                'name': 'Sarcastic',
+                'description': 'Dry humor with subtle sarcasm while remaining helpful',
+                'emoji': '🙄'
+            },
+            'zen': {
+                'name': 'Zen',
+                'description': 'Peaceful, meditative, and mindful responses',
+                'emoji': '🧘‍♀️'
+            },
+            'scientist': {
+                'name': 'Scientific',
+                'description': 'Data-driven, logical, and evidence-based communication',
+                'emoji': '🔬'
+            },
+            'pirate': {
+                'name': 'Pirate',
+                'description': 'Swashbuckling adventure with nautical terminology',
+                'emoji': '🏴‍☠️'
+            },
+            'shakespearean': {
+                'name': 'Shakespearean',
+                'description': 'Eloquent, dramatic, and poetic Old English style',
+                'emoji': '🎭'
+            },
+            'valley_girl': {
+                'name': 'Valley Girl',
+                'description': 'Bubbly, trendy, and enthusiastic California style',
+                'emoji': '💁‍♀️'
+            },
+            'cowboy': {
+                'name': 'Cowboy',
+                'description': 'Rootin\' tootin\' frontier wisdom and charm',
+                'emoji': '🤠'
+            },
+            'robot': {
+                'name': 'Robot',
+                'description': 'Logical, mechanical, and computational responses',
+                'emoji': '🤖'
+            }
+        }
+        
+        current_personality = 'friendly'  # default
+        
+        # Get current session personality if session exists
+        if session_id:
+            try:
+                conn = sqlite3.connect('ai_memory.db')
+                cursor = conn.cursor()
+                cursor.execute('SELECT personality FROM conversation_sessions WHERE session_id = ?', (session_id,))
+                result = cursor.fetchone()
+                if result:
+                    current_personality = result[0]
+                conn.close()
+            except Exception as e:
+                print(f"Error getting session personality: {e}")
+        
+        return jsonify({
+            'personalities': personalities,
+            'current_personality': current_personality,
+            'session_id': session_id
+        })
+        
+    except Exception as e:
+        print(f"Error in get_personality_info: {e}")
+        return jsonify({'error': 'Failed to get personality info'}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
     
