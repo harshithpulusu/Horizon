@@ -2685,6 +2685,579 @@ Ready to test your knowledge? Click your first answer above! 🧠"""
         print(f"Error in handle_quiz_generation: {e}")
         return "🧠 I'm your AI quiz master! I can create interactive quizzes on any topic. Try asking: 'Create a science quiz', 'Generate history trivia', or 'Quiz me about technology'. What would you like to be tested on today?"
 
+def handle_story_generation(text, personality='friendly'):
+    """Handle story, novel, script, and poetry generation requests"""
+    try:
+        print(f"📖 Processing story generation request: {text}")
+        
+        # Detect story type
+        import re
+        story_type = "story"  # default
+        if re.search(r'\b(novel|book|chapter)\b', text.lower()):
+            story_type = "novel"
+        elif re.search(r'\b(script|screenplay|movie|play)\b', text.lower()):
+            story_type = "script"
+        elif re.search(r'\b(poem|poetry|haiku|sonnet|verse|rhyme)\b', text.lower()):
+            story_type = "poetry"
+        
+        # Detect genre
+        genre = "general"
+        if re.search(r'\b(fantasy|magic|dragon|wizard|elf)\b', text.lower()):
+            genre = "fantasy"
+        elif re.search(r'\b(sci-?fi|space|robot|alien|future)\b', text.lower()):
+            genre = "sci-fi"
+        elif re.search(r'\b(mystery|detective|crime|murder)\b', text.lower()):
+            genre = "mystery"
+        elif re.search(r'\b(horror|scary|ghost|vampire|zombie)\b', text.lower()):
+            genre = "horror"
+        elif re.search(r'\b(romance|love|relationship)\b', text.lower()):
+            genre = "romance"
+        elif re.search(r'\b(adventure|quest|journey|explore)\b', text.lower()):
+            genre = "adventure"
+        elif re.search(r'\b(comedy|funny|humor|laugh)\b', text.lower()):
+            genre = "comedy"
+        
+        # Extract theme/topic
+        theme_match = re.search(r'(?:about|story.*of|novel.*about|script.*about|poem.*about)[\s]*([^,.!?]+)', text.lower())
+        theme = theme_match.group(1).strip() if theme_match else "an interesting topic"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"📚 I'd love to help you create a wonderful {story_type}!",
+            'professional': f"📝 I shall assist you in crafting a {story_type} with professional quality.",
+            'creative': f"✨ Let's unleash our creativity and write an amazing {story_type}!",
+            'witty': f"🖋️ Ah, a {story_type}! Time to weave some literary magic!",
+            'enthusiastic': f"📖 OH WOW! I'm SO excited to write this {story_type} with you!!!"
+        }
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        
+        # Story templates based on type and genre
+        if story_type == "poetry":
+            poetry_templates = {
+                'fantasy': [
+                    "In realms where dragons soar on high,\nAnd magic dances through the sky,\nA hero's quest begins today,\nTo chase the darkness all away.",
+                    "Beneath the ancient wizard's tower,\nLies secrets of forgotten power,\nThe crystal gleams with mystic light,\nTo guide the lost through endless night."
+                ],
+                'sci-fi': [
+                    "Among the stars so bright and far,\nWe sail through space from star to star,\nThe future calls with voices clear,\nTo those who dare to venture here.",
+                    "In circuits made of light and code,\nArtificial minds decode,\nThe mysteries of time and space,\nAs humanity finds its place."
+                ],
+                'romance': [
+                    "Two hearts that beat as one tonight,\nUnder moon's enchanting light,\nA love that grows with each new day,\nNo force on earth can take away.",
+                    "In whispered words and gentle touch,\nA love that means so very much,\nThrough seasons change and years go by,\nOur hearts will never say goodbye."
+                ],
+                'general': [
+                    "Life's a journey, winding road,\nWith stories yet to be told,\nEach moment brings a chance to see,\nThe wonder of what we can be.",
+                    "In quiet moments of the day,\nWhen thoughts and dreams begin to play,\nWe find the magic all around,\nIn simple joys that can be found."
+                ]
+            }
+            
+            poems = poetry_templates.get(genre, poetry_templates['general'])
+            content = random.choice(poems)
+            
+        elif story_type == "script":
+            script_content = f"""**{theme.title()} - {genre.title()} Script**
+
+**FADE IN:**
+
+**EXT. OPENING SCENE - DAY**
+
+*The camera opens on a {genre} setting. Our protagonist stands at the threshold of adventure.*
+
+**PROTAGONIST**
+(looking determined)
+Today everything changes. I can feel it.
+
+**CHARACTER 2**
+(concerned)
+Are you sure about this? There's no going back once we start.
+
+**PROTAGONIST**
+(with conviction)
+Some things are worth the risk. This is one of them.
+
+*The protagonist takes a deep breath and steps forward into the unknown.*
+
+**FADE TO:**
+
+**INT. NEXT SCENE - CONTINUOUS**
+
+*The story unfolds as our characters face the challenges ahead...*
+
+**[SCENE CONTINUES...]**
+
+🎬 **Script Structure:**
+• **Act I**: Setup and introduction ({genre} elements)
+• **Act II**: Conflict and character development
+• **Act III**: Resolution and character growth
+
+**Next scenes could include:**
+- Character backstory revelation
+- Major plot twist involving {theme}
+- Climactic {genre} sequence
+- Emotional character resolution"""
+            
+            content = script_content
+            
+        elif story_type == "novel":
+            novel_content = f"""**{theme.title()} - A {genre.title()} Novel**
+
+**Chapter 1: The Beginning**
+
+{get_novel_opening(genre, theme)}
+
+**Story Outline:**
+
+**📚 Part I: Discovery**
+- Introduction of main character and world
+- Inciting incident involving {theme}
+- First glimpse of the {genre} elements
+
+**📚 Part II: Development** 
+- Character faces initial challenges
+- Supporting characters introduced
+- Plot thickens with {genre} complications
+
+**📚 Part III: Crisis**
+- Major conflict reaches peak
+- Character's beliefs/world challenged
+- Dark moment before resolution
+
+**📚 Part IV: Resolution**
+- Character growth and triumph
+- {genre} elements resolved satisfyingly
+- New equilibrium established
+
+**🎯 Writing Tips for Your {genre.title()} Novel:**
+• Develop rich, multi-dimensional characters
+• Build your {genre} world consistently
+• Create tension through {theme}-related conflicts
+• Research {genre} conventions and tropes
+• Plan character arcs alongside plot progression
+
+**💡 Next Chapter Ideas:**
+- Character background exploration
+- Introduction of antagonist/conflict
+- World-building and atmosphere
+- Dialogue-driven character development"""
+            
+            content = novel_content
+            
+        else:  # Regular story
+            story_content = f"""**{theme.title()} - A {genre.title()} Story**
+
+{get_story_opening(genre, theme)}
+
+**🎭 Story Development:**
+
+**Beginning**: {get_story_beginning(genre, theme)}
+
+**Middle**: The plot thickens as our protagonist discovers that {theme} is more complex than initially thought. {get_genre_complications(genre)}
+
+**End**: After facing seemingly insurmountable challenges, the character learns that {get_genre_lesson(genre)} and finds a way to resolve the conflict surrounding {theme}.
+
+**🎨 Story Elements:**
+• **Genre**: {genre.title()}
+• **Theme**: {theme}
+• **Tone**: {get_genre_tone(genre)}
+• **Setting**: {get_genre_setting(genre)}
+• **Conflict**: {get_genre_conflict(genre, theme)}
+
+**✍️ Continue Your Story:**
+- Develop character backstories
+- Add supporting characters
+- Build tension through obstacles
+- Create memorable dialogue
+- Plan your story's climax and resolution
+
+**🎯 Writing Prompts for Next Sections:**
+• What happens when the character faces their first major obstacle?
+• How does the {genre} setting influence the character's decisions?
+• What unexpected ally or enemy might appear?
+• How will {theme} evolve throughout the story?"""
+            
+            content = story_content
+        
+        return f"""{base_response}
+
+{content}
+
+**🚀 Story Generation Features:**
+• **Multiple Formats**: Stories, novels, scripts, poetry
+• **Genre Variety**: Fantasy, sci-fi, mystery, romance, horror, comedy, adventure
+• **Personalized Content**: Based on your specific themes and interests
+• **Writing Guidance**: Structure tips and continuation ideas
+
+**📝 Want More?** Try asking for:
+• "Write a fantasy poem about dragons"
+• "Create a sci-fi script about time travel"  
+• "Generate a mystery novel about a missing artifact"
+• "Compose a romantic story about {theme}"
+
+Ready to continue your literary journey? What story would you like to explore next? ✨"""
+        
+    except Exception as e:
+        print(f"Error in handle_story_generation: {e}")
+        return "📖 I'm your AI story creator! I can write novels, scripts, poetry, and stories in any genre. Try asking: 'Write a fantasy story about dragons', 'Create a sci-fi script', 'Compose a love poem', or 'Generate a mystery novel'. What literary adventure shall we embark on today?"
+
+def get_novel_opening(genre, theme):
+    """Generate novel opening based on genre"""
+    openings = {
+        'fantasy': f"The ancient prophecy had spoken of this day, when {theme} would either save or doom the realm of Aethermoor. Lyra stood at the edge of the Whispering Woods, her fingers tracing the mystical runes carved into her grandmother's pendant. The magic hummed beneath her skin, responding to the approaching darkness that threatened everything she held dear.",
+        
+        'sci-fi': f"The year was 2387, and {theme} had become humanity's greatest obsession. Captain Nova Martinez stared out at the swirling nebula beyond the viewport of the starship Prometheus, knowing that somewhere in that cosmic maelstrom lay the answer to a question that had plagued civilization for centuries.",
+        
+        'mystery': f"Detective Sarah Chen had seen many strange cases in her twenty years on the force, but nothing quite like this. The victim lay perfectly positioned in the center of the locked room, with no signs of struggle and no apparent cause of death. The only clue was a single word carved into the antique desk: '{theme.title()}'.",
+        
+        'horror': f"The old Victorian house on Elm Street had been empty for fifty years, and for good reason. Local legends spoke of {theme} as the source of the terrible events that had driven the previous owners to madness. But Sarah had always been skeptical of ghost stories... until now.",
+        
+        'romance': f"Emma had given up on love after her last heartbreak, throwing herself into her work at the botanical garden. But when she discovered the mysterious love letters hidden in the old oak tree, each one signed with a single word - '{theme}' - she began to believe that perhaps fairy tales could still come true.",
+        
+        'adventure': f"The map was ancient, its edges yellow with age, and it promised to lead to something extraordinary related to {theme}. Jake had inherited it from his grandfather, along with a cryptic warning: 'Some treasures are worth more than gold, but they exact a price that few are willing to pay.'",
+        
+        'comedy': f"Life as a professional {theme} consultant was not what Emma had imagined when she graduated from college. Between dealing with eccentric clients, navigating office politics, and trying to convince people that yes, {theme} was indeed a real and serious profession, every day brought a new adventure in absurdity."
+    }
+    
+    return openings.get(genre, f"It was a day like any other when everything changed. The protagonist had always thought {theme} was just a simple part of life, but today would prove that sometimes the most ordinary things hold the most extraordinary secrets.")
+
+def get_story_opening(genre, theme):
+    """Generate story opening based on genre"""
+    openings = {
+        'fantasy': f"In a land where magic flowed like rivers and {theme} held the power to reshape reality, a young hero discovered their destiny was far greater than they ever imagined.",
+        
+        'sci-fi': f"The transmission from deep space contained only three words: '{theme} is coming.' Dr. Elena Vasquez stared at the message, knowing that humanity's future hung in the balance.",
+        
+        'mystery': f"The case of {theme} had baffled police for months. Detective Morgan knew there was more to this puzzle than met the eye, and today, a breakthrough was finally within reach.",
+        
+        'horror': f"They said {theme} was just a legend, a story to frighten children. But as the shadows lengthened and strange sounds echoed through the house, Sarah began to realize that some legends are terrifyingly real.",
+        
+        'romance': f"Claire never believed in love at first sight until she met Alex at the {theme} festival. One look across the crowded square, and everything changed.",
+        
+        'adventure': f"The ancient artifact related to {theme} was said to grant incredible power to whoever could solve its mysteries. Adventure-seeker Jake was about to discover if the legends were true.",
+        
+        'comedy': f"When life gives you {theme}, apparently you're supposed to make the best of it. Too bad nobody told Marcus that before he accidentally became the world's most reluctant expert on the subject."
+    }
+    
+    return openings.get(genre, f"Once upon a time, in a world not so different from our own, {theme} became the center of an extraordinary tale that would change everything.")
+
+def get_story_beginning(genre, theme):
+    return f"Our protagonist encounters {theme} for the first time, setting off a chain of events that will challenge everything they thought they knew about {genre} adventures."
+
+def get_genre_complications(genre):
+    complications = {
+        'fantasy': "Magical forces beyond their control begin to interfere, and ancient enemies emerge from the shadows.",
+        'sci-fi': "Technology fails at the worst possible moment, and alien influences complicate the mission.",
+        'mystery': "False clues lead down dangerous paths, and the truth becomes more elusive than ever.",
+        'horror': "The supernatural forces grow stronger, and reality itself begins to unravel.",
+        'romance': "Misunderstandings threaten to tear the lovers apart, and external pressures mount.",
+        'adventure': "Dangerous obstacles block the path, and unexpected enemies emerge.",
+        'comedy': "Everything that can go wrong does go wrong, leading to increasingly absurd situations."
+    }
+    return complications.get(genre, "Unexpected challenges arise that test the character's resolve and ingenuity.")
+
+def get_genre_lesson(genre):
+    lessons = {
+        'fantasy': "true magic comes from within and the power of friendship",
+        'sci-fi': "technology is only as good as the humanity that guides it",
+        'mystery': "the truth is often hidden in plain sight",
+        'horror': "courage can overcome even the darkest fears",
+        'romance': "real love requires trust, communication, and vulnerability",
+        'adventure': "the greatest treasures are the experiences and friendships gained along the way",
+        'comedy': "laughter truly is the best medicine, and perspective is everything"
+    }
+    return lessons.get(genre, "perseverance and self-discovery lead to personal growth")
+
+def get_genre_tone(genre):
+    tones = {
+        'fantasy': "Mystical and wonder-filled",
+        'sci-fi': "Futuristic and thought-provoking", 
+        'mystery': "Suspenseful and intriguing",
+        'horror': "Dark and atmospheric",
+        'romance': "Emotional and heartwarming",
+        'adventure': "Exciting and fast-paced",
+        'comedy': "Light-hearted and humorous"
+    }
+    return tones.get(genre, "Engaging and thoughtful")
+
+def get_genre_setting(genre):
+    settings = {
+        'fantasy': "Magical realm with mystical creatures",
+        'sci-fi': "Future world or space setting",
+        'mystery': "Modern city or small town with secrets",
+        'horror': "Isolated or haunted location", 
+        'romance': "Romantic locations that bring hearts together",
+        'adventure': "Exotic locations full of danger and discovery",
+        'comedy': "Everyday settings where humor can flourish"
+    }
+    return settings.get(genre, "Contemporary setting with unique elements")
+
+def get_genre_conflict(genre, theme):
+    conflicts = {
+        'fantasy': f"Magical forces threaten the world, and {theme} holds the key to salvation",
+        'sci-fi': f"Technological or alien challenges that relate to {theme}",
+        'mystery': f"A puzzling crime or disappearance involving {theme}",
+        'horror': f"Supernatural threats connected to {theme}",
+        'romance': f"Obstacles to love that involve {theme}",
+        'adventure': f"A quest or journey centered around {theme}",
+        'comedy': f"Humorous misunderstandings and mishaps involving {theme}"
+    }
+    return conflicts.get(genre, f"Challenges and obstacles related to {theme}")
+
+def handle_meme_generation(text, personality='friendly'):
+    """Handle meme generation requests with AI humor"""
+    try:
+        print(f"😂 Processing meme generation request: {text}")
+        
+        # Extract meme topic/theme
+        import re
+        
+        topic_match = re.search(r'(?:meme.*about|meme.*with|funny.*about)[\s]*([^,.!?]+)', text.lower())
+        topic = topic_match.group(1).strip() if topic_match else "life"
+        
+        # Detect meme style
+        meme_style = "relatable"  # default
+        if re.search(r'\b(sarcastic|sassy|ironic)\b', text.lower()):
+            meme_style = "sarcastic"
+        elif re.search(r'\b(wholesome|positive|uplifting)\b', text.lower()):
+            meme_style = "wholesome"
+        elif re.search(r'\b(dark|edgy|brutal)\b', text.lower()):
+            meme_style = "dark_humor"
+        elif re.search(r'\b(office|work|job)\b', text.lower()):
+            meme_style = "office"
+        elif re.search(r'\b(student|school|college)\b', text.lower()):
+            meme_style = "student"
+        elif re.search(r'\b(pet|cat|dog|animal)\b', text.lower()):
+            meme_style = "pet"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"😄 I'd love to create a hilarious meme about {topic}!",
+            'witty': f"😏 Ah, time to craft some comedic gold about {topic}!",
+            'sarcastic': f"🙄 Oh great, another meme about {topic}... this should be fun.",
+            'enthusiastic': f"🤣 OMG YES! Let's make the FUNNIEST meme about {topic} EVER!!!",
+            'casual': f"😂 Dude, I got you covered with some {topic} memes!"
+        }
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        
+        # Meme templates based on style and topic
+        meme_templates = {
+            'relatable': [
+                {
+                    'template': 'Distracted Boyfriend',
+                    'setup': f'Me looking at {topic}',
+                    'punchline': f'My responsibilities vs My obsession with {topic}',
+                    'format': '**[Distracted Boyfriend Meme]**\\n👨 Me\\n👩‍🦰 My responsibilities\\n👩 {topic}\\n\\n*Caption: When {topic} is more interesting than being productive*'
+                },
+                {
+                    'template': 'Drake Pointing', 
+                    'setup': f'Drake rejecting vs Drake approving',
+                    'punchline': f'Doing work vs Thinking about {topic}',
+                    'format': '**[Drake Pointing Meme]**\\n🙅‍♂️ Drake rejecting: Being productive\\n👉 Drake pointing: Spending hours on {topic}\\n\\n*Me every single day*'
+                },
+                {
+                    'template': 'This Is Fine',
+                    'setup': f'Dog in burning room',
+                    'punchline': f'Everything falling apart but still focused on {topic}',
+                    'format': '**[This Is Fine Meme]**\\n🔥🐕🔥 "This is fine"\\n\\n*Me when my life is chaos but {topic} is going well*'
+                }
+            ],
+            'sarcastic': [
+                {
+                    'template': 'Surprised Pikachu',
+                    'setup': f'When {topic} goes wrong',
+                    'punchline': f'*shocked pikachu face*',
+                    'format': '**[Surprised Pikachu Meme]**\\n⚡😲 *Surprised Pikachu face*\\n\\n*Me when {topic} doesn\\'t work exactly as I expected after doing zero research*'
+                },
+                {
+                    'template': 'Roll Safe',
+                    'setup': f'Smart guy pointing to head',
+                    'punchline': f'Can\\'t fail at {topic} if you never try',
+                    'format': '**[Roll Safe Meme]**\\n🧠👉 *Tapping head*\\n\\n"Can\\'t be bad at {topic} if you never actually try {topic}"'
+                },
+                {
+                    'template': 'Mocking SpongeBob',
+                    'setup': f'Alternating caps about {topic}',
+                    'punchline': f'{topic} is important',
+                    'format': '**[Mocking SpongeBob Meme]**\\n🧽 *sPonGeBob mOcKiNg mEmE*\\n\\n"{topic.upper()} iS sO iMpOrTaNt"\\n\\n*Me making fun of people who take {topic} too seriously*'
+                }
+            ],
+            'wholesome': [
+                {
+                    'template': 'Wholesome Award',
+                    'setup': f'When someone enjoys {topic}',
+                    'punchline': f'Everyone supporting them',
+                    'format': '**[Wholesome Award Meme]**\\n🏆💝 *Wholesome seal of approval*\\n\\n*When someone finds joy in {topic} and everyone supports their happiness*'
+                },
+                {
+                    'template': 'Happy Drake',
+                    'setup': f'Drake happy about {topic}',
+                    'punchline': f'Sharing {topic} with friends',
+                    'format': '**[Happy Drake Meme]**\\n😊👉 Drake approving: Enjoying {topic} alone\\n🤗👉 Drake super approving: Sharing {topic} with friends so they can enjoy it too'
+                }
+            ],
+            'office': [
+                {
+                    'template': 'Office Worker',
+                    'setup': f'Monday morning vs {topic}',
+                    'punchline': f'Motivation levels',
+                    'format': '**[Office Worker Meme]**\\n😴 Monday morning energy: 2%\\n⚡ Energy when talking about {topic}: 150%\\n\\n*Every office worker ever*'
+                },
+                {
+                    'template': 'Meeting Meme',
+                    'setup': f'Corporate meeting about {topic}',
+                    'punchline': f'Everyone pretending to understand',
+                    'format': '**[Meeting Meme]**\\n👔🏢 "So we need to optimize our {topic} strategy"\\n\\n*Everyone nodding like they know what that means*'
+                }
+            ],
+            'student': [
+                {
+                    'template': 'Procrastination',
+                    'setup': f'Studying vs {topic}',
+                    'punchline': f'Priorities',
+                    'format': '**[Student Procrastination Meme]**\\n📚 Assignment due tomorrow: *I sleep*\\n🎮 New {topic} content: *REAL STUFF*\\n\\n*Student priorities in a nutshell*'
+                },
+                {
+                    'template': 'Exam Panic',
+                    'setup': f'Knowing nothing about the test',
+                    'punchline': f'But expert at {topic}',
+                    'format': '**[Exam Panic Meme]**\\n📝 Test: *I know nothing*\\n🧠 Random {topic} facts: *I am the master*\\n\\n*Brain storage allocation*'
+                }
+            ],
+            'pet': [
+                {
+                    'template': 'Dog vs Cat',
+                    'setup': f'Pets and {topic}',
+                    'punchline': f'Different reactions',
+                    'format': '**[Dog vs Cat Meme]**\\n🐕 Dog: *Excited about everything including {topic}*\\n🐱 Cat: *Judges your {topic} choices silently*\\n\\n*Pet personalities*'
+                },
+                {
+                    'template': 'Pet Logic',
+                    'setup': f'Pet\\'s understanding of {topic}',
+                    'punchline': f'Wholesome confusion',
+                    'format': '**[Pet Logic Meme]**\\n🐾 *Pet confused by {topic}*\\n\\n"Human doing weird {topic} thing again... but I love them anyway"\\n\\n*Unconditional pet love*'
+                }
+            ]
+        }
+        
+        # Get memes for the detected style
+        available_memes = meme_templates.get(meme_style, meme_templates['relatable'])
+        selected_meme = random.choice(available_memes)
+        
+        # Generate additional meme ideas
+        additional_ideas = generate_meme_ideas(topic, meme_style)
+        
+        meme_content = f"""🎭 **{topic.title()} Meme Generator**
+
+{selected_meme['format']}
+
+---
+
+**💡 More Meme Ideas for "{topic}":**
+
+{additional_ideas}
+
+**🎨 Meme Creation Options:**
+• **Style**: {meme_style.replace('_', ' ').title()}
+• **Topic**: {topic}
+• **Template**: {selected_meme['template']}
+• **Humor Level**: {get_humor_level(meme_style)}
+
+**📱 Popular Meme Formats for {topic}:**
+• Distracted Boyfriend • Drake Pointing • Surprised Pikachu
+• This Is Fine • Roll Safe • Mocking SpongeBob • Woman Yelling at Cat
+• Change My Mind • Expanding Brain • Two Buttons • Hide the Pain Harold
+
+**🔥 Trending Meme Styles:**
+• **Relatable**: Everyday situations everyone understands
+• **Sarcastic**: Dry humor and eye-rolling moments  
+• **Wholesome**: Feel-good, positive content
+• **Dark Humor**: Edgy but still funny content
+• **Office**: Work-related humor and corporate life
+• **Student**: School, college, and academic struggles"""
+
+        return f"""{base_response}
+
+{meme_content}
+
+**🚀 Meme Features:**
+• **AI Humor**: Contextually funny content based on your topic
+• **Multiple Styles**: From wholesome to sarcastic to relatable
+• **Custom Templates**: Adapted to your specific interests
+• **Trending Formats**: Using popular meme templates
+
+**😂 Want More Memes?** Try asking for:
+• "Create a sarcastic meme about work"
+• "Generate a wholesome pet meme"
+• "Make a student meme about exams"
+• "Funny office meme about meetings"
+
+Ready to go viral? What's your next meme idea? 🔥"""
+        
+    except Exception as e:
+        print(f"Error in handle_meme_generation: {e}")
+        return "😂 I'm your AI meme master! I can create hilarious memes on any topic with different styles - sarcastic, wholesome, relatable, office humor, student life, and more! Try asking: 'Create a funny meme about coffee', 'Generate a sarcastic work meme', or 'Make a wholesome pet meme'. What should we meme about today?"
+
+def generate_meme_ideas(topic, style):
+    """Generate additional meme ideas based on topic and style"""
+    import random
+    
+    idea_templates = {
+        'relatable': [
+            f"• **Two Buttons**: *Sweating guy choosing between doing work and learning more about {topic}*",
+            f"• **Expanding Brain**: *Brain getting bigger from basic to advanced {topic} knowledge*",
+            f"• **Woman Yelling at Cat**: *Me explaining {topic} to my cat who doesn't care*",
+            f"• **Hide the Pain Harold**: *Smiling through {topic}-related struggles*"
+        ],
+        'sarcastic': [
+            f"• **Change My Mind**: *{topic} is overrated - Change my mind*",
+            f"• **Kermit Drinking Tea**: *People who don't understand {topic}... but that's none of my business*",
+            f"• **First Time?**: *You guys are just discovering {topic}?*",
+            f"• **Is This a Pigeon?**: *Pointing at basic concept* - Is this advanced {topic}?*"
+        ],
+        'wholesome': [
+            f"• **Happy Seal**: *When someone else gets excited about {topic} too*",
+            f"• **Supportive Friends**: *Me hyping up my friend's {topic} achievements*",
+            f"• **Proud Parent**: *My {topic} collection vs me showing it off to friends*",
+            f"• **Group Hug**: *The {topic} community welcoming new members*"
+        ],
+        'office': [
+            f"• **Boss Makes a Dollar**: *Boss makes a dollar, I make a dime, that's why I research {topic} on company time*",
+            f"• **This Meeting Could Have Been an Email**: *About {topic}*",
+            f"• **Office Space**: *PC Load Letter? What does that mean for {topic}?*",
+            f"• **Dilbert**: *Manager explaining {topic} strategy with buzzwords*"
+        ],
+        'student': [
+            f"• **Procrastination**: *Assignment due in 2 hours vs researching {topic} for fun*",
+            f"• **Group Project**: *Everyone contributing to {topic} assignment*",
+            f"• **All-Nighter**: *3 AM and still reading about {topic}*",
+            f"• **Professor**: *This {topic} exam will be easy... the exam:*"
+        ],
+        'pet': [
+            f"• **Doge**: *Much {topic}, very interest, such wow*",
+            f"• **Grumpy Cat**: *Had fun once about {topic}... it was awful*",
+            f"• **Cat Keyboard**: *Cat helps with {topic} research*",
+            f"• **Dog with Glasses**: *I have no idea what {topic} is but I'm excited*"
+        ]
+    }
+    
+    ideas = idea_templates.get(style, idea_templates['relatable'])
+    return "\\n".join(random.sample(ideas, min(3, len(ideas))))
+
+def get_humor_level(style):
+    """Get humor intensity description"""
+    levels = {
+        'relatable': 'Universal and accessible',
+        'sarcastic': 'Dry and witty',
+        'wholesome': 'Feel-good and heartwarming',
+        'dark_humor': 'Edgy but tasteful',
+        'office': 'Corporate comedy gold',
+        'student': 'Academic struggle humor',
+        'pet': 'Adorably funny'
+    }
+    return levels.get(style, 'Hilariously entertaining')
+
 # ===============================================
 # � AI MUSIC & AUDIO GENERATION FUNCTIONS
 
