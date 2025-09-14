@@ -3005,245 +3005,8 @@ def get_genre_conflict(genre, theme):
     return conflicts.get(genre, f"Challenges and obstacles related to {theme}")
 
 def handle_meme_generation(text, personality='friendly'):
-    """Handle meme generation requests with AI humor"""
-    try:
-        print(f"😂 Processing meme generation request: {text}")
-        
-        # Extract meme topic/theme
-        import re
-        
-        topic_match = re.search(r'(?:meme.*about|meme.*with|funny.*about)[\s]*([^,.!?]+)', text.lower())
-        topic = topic_match.group(1).strip() if topic_match else "life"
-        
-        # Detect meme style
-        meme_style = "relatable"  # default
-        if re.search(r'\b(sarcastic|sassy|ironic)\b', text.lower()):
-            meme_style = "sarcastic"
-        elif re.search(r'\b(wholesome|positive|uplifting)\b', text.lower()):
-            meme_style = "wholesome"
-        elif re.search(r'\b(dark|edgy|brutal)\b', text.lower()):
-            meme_style = "dark_humor"
-        elif re.search(r'\b(office|work|job)\b', text.lower()):
-            meme_style = "office"
-        elif re.search(r'\b(student|school|college)\b', text.lower()):
-            meme_style = "student"
-        elif re.search(r'\b(pet|cat|dog|animal)\b', text.lower()):
-            meme_style = "pet"
-        
-        # Personality-based responses
-        personality_responses = {
-            'friendly': f"😄 I'd love to create a hilarious meme about {topic}!",
-            'witty': f"😏 Ah, time to craft some comedic gold about {topic}!",
-            'sarcastic': f"🙄 Oh great, another meme about {topic}... this should be fun.",
-            'enthusiastic': f"🤣 OMG YES! Let's make the FUNNIEST meme about {topic} EVER!!!",
-            'casual': f"😂 Dude, I got you covered with some {topic} memes!"
-        }
-        
-        base_response = personality_responses.get(personality, personality_responses['friendly'])
-        
-        # Meme templates based on style and topic
-        meme_templates = {
-            'relatable': [
-                {
-                    'template': 'Distracted Boyfriend',
-                    'setup': f'Me looking at {topic}',
-                    'punchline': f'My responsibilities vs My obsession with {topic}',
-                    'format': '**[Distracted Boyfriend Meme]**\\n👨 Me\\n👩‍🦰 My responsibilities\\n👩 {topic}\\n\\n*Caption: When {topic} is more interesting than being productive*'
-                },
-                {
-                    'template': 'Drake Pointing', 
-                    'setup': f'Drake rejecting vs Drake approving',
-                    'punchline': f'Doing work vs Thinking about {topic}',
-                    'format': '**[Drake Pointing Meme]**\\n🙅‍♂️ Drake rejecting: Being productive\\n👉 Drake pointing: Spending hours on {topic}\\n\\n*Me every single day*'
-                },
-                {
-                    'template': 'This Is Fine',
-                    'setup': f'Dog in burning room',
-                    'punchline': f'Everything falling apart but still focused on {topic}',
-                    'format': '**[This Is Fine Meme]**\\n🔥🐕🔥 "This is fine"\\n\\n*Me when my life is chaos but {topic} is going well*'
-                }
-            ],
-            'sarcastic': [
-                {
-                    'template': 'Surprised Pikachu',
-                    'setup': f'When {topic} goes wrong',
-                    'punchline': f'*shocked pikachu face*',
-                    'format': '**[Surprised Pikachu Meme]**\\n⚡😲 *Surprised Pikachu face*\\n\\n*Me when {topic} doesn\\'t work exactly as I expected after doing zero research*'
-                },
-                {
-                    'template': 'Roll Safe',
-                    'setup': f'Smart guy pointing to head',
-                    'punchline': f'Can\\'t fail at {topic} if you never try',
-                    'format': '**[Roll Safe Meme]**\\n🧠👉 *Tapping head*\\n\\n"Can\\'t be bad at {topic} if you never actually try {topic}"'
-                },
-                {
-                    'template': 'Mocking SpongeBob',
-                    'setup': f'Alternating caps about {topic}',
-                    'punchline': f'{topic} is important',
-                    'format': '**[Mocking SpongeBob Meme]**\\n🧽 *sPonGeBob mOcKiNg mEmE*\\n\\n"{topic.upper()} iS sO iMpOrTaNt"\\n\\n*Me making fun of people who take {topic} too seriously*'
-                }
-            ],
-            'wholesome': [
-                {
-                    'template': 'Wholesome Award',
-                    'setup': f'When someone enjoys {topic}',
-                    'punchline': f'Everyone supporting them',
-                    'format': '**[Wholesome Award Meme]**\\n🏆💝 *Wholesome seal of approval*\\n\\n*When someone finds joy in {topic} and everyone supports their happiness*'
-                },
-                {
-                    'template': 'Happy Drake',
-                    'setup': f'Drake happy about {topic}',
-                    'punchline': f'Sharing {topic} with friends',
-                    'format': '**[Happy Drake Meme]**\\n😊👉 Drake approving: Enjoying {topic} alone\\n🤗👉 Drake super approving: Sharing {topic} with friends so they can enjoy it too'
-                }
-            ],
-            'office': [
-                {
-                    'template': 'Office Worker',
-                    'setup': f'Monday morning vs {topic}',
-                    'punchline': f'Motivation levels',
-                    'format': '**[Office Worker Meme]**\\n😴 Monday morning energy: 2%\\n⚡ Energy when talking about {topic}: 150%\\n\\n*Every office worker ever*'
-                },
-                {
-                    'template': 'Meeting Meme',
-                    'setup': f'Corporate meeting about {topic}',
-                    'punchline': f'Everyone pretending to understand',
-                    'format': '**[Meeting Meme]**\\n👔🏢 "So we need to optimize our {topic} strategy"\\n\\n*Everyone nodding like they know what that means*'
-                }
-            ],
-            'student': [
-                {
-                    'template': 'Procrastination',
-                    'setup': f'Studying vs {topic}',
-                    'punchline': f'Priorities',
-                    'format': '**[Student Procrastination Meme]**\\n📚 Assignment due tomorrow: *I sleep*\\n🎮 New {topic} content: *REAL STUFF*\\n\\n*Student priorities in a nutshell*'
-                },
-                {
-                    'template': 'Exam Panic',
-                    'setup': f'Knowing nothing about the test',
-                    'punchline': f'But expert at {topic}',
-                    'format': '**[Exam Panic Meme]**\\n📝 Test: *I know nothing*\\n🧠 Random {topic} facts: *I am the master*\\n\\n*Brain storage allocation*'
-                }
-            ],
-            'pet': [
-                {
-                    'template': 'Dog vs Cat',
-                    'setup': f'Pets and {topic}',
-                    'punchline': f'Different reactions',
-                    'format': '**[Dog vs Cat Meme]**\\n🐕 Dog: *Excited about everything including {topic}*\\n🐱 Cat: *Judges your {topic} choices silently*\\n\\n*Pet personalities*'
-                },
-                {
-                    'template': 'Pet Logic',
-                    'setup': f'Pet\\'s understanding of {topic}',
-                    'punchline': f'Wholesome confusion',
-                    'format': '**[Pet Logic Meme]**\\n🐾 *Pet confused by {topic}*\\n\\n"Human doing weird {topic} thing again... but I love them anyway"\\n\\n*Unconditional pet love*'
-                }
-            ]
-        }
-        
-        # Get memes for the detected style
-        available_memes = meme_templates.get(meme_style, meme_templates['relatable'])
-        selected_meme = random.choice(available_memes)
-        
-        # Generate additional meme ideas
-        additional_ideas = generate_meme_ideas(topic, meme_style)
-        
-        meme_content = f"""🎭 **{topic.title()} Meme Generator**
-
-{selected_meme['format']}
-
----
-
-**💡 More Meme Ideas for "{topic}":**
-
-{additional_ideas}
-
-**🎨 Meme Creation Options:**
-• **Style**: {meme_style.replace('_', ' ').title()}
-• **Topic**: {topic}
-• **Template**: {selected_meme['template']}
-• **Humor Level**: {get_humor_level(meme_style)}
-
-**📱 Popular Meme Formats for {topic}:**
-• Distracted Boyfriend • Drake Pointing • Surprised Pikachu
-• This Is Fine • Roll Safe • Mocking SpongeBob • Woman Yelling at Cat
-• Change My Mind • Expanding Brain • Two Buttons • Hide the Pain Harold
-
-**🔥 Trending Meme Styles:**
-• **Relatable**: Everyday situations everyone understands
-• **Sarcastic**: Dry humor and eye-rolling moments  
-• **Wholesome**: Feel-good, positive content
-• **Dark Humor**: Edgy but still funny content
-• **Office**: Work-related humor and corporate life
-• **Student**: School, college, and academic struggles"""
-
-        return f"""{base_response}
-
-{meme_content}
-
-**🚀 Meme Features:**
-• **AI Humor**: Contextually funny content based on your topic
-• **Multiple Styles**: From wholesome to sarcastic to relatable
-• **Custom Templates**: Adapted to your specific interests
-• **Trending Formats**: Using popular meme templates
-
-**😂 Want More Memes?** Try asking for:
-• "Create a sarcastic meme about work"
-• "Generate a wholesome pet meme"
-• "Make a student meme about exams"
-• "Funny office meme about meetings"
-
-Ready to go viral? What's your next meme idea? 🔥"""
-        
-    except Exception as e:
-        print(f"Error in handle_meme_generation: {e}")
-        return "😂 I'm your AI meme master! I can create hilarious memes on any topic with different styles - sarcastic, wholesome, relatable, office humor, student life, and more! Try asking: 'Create a funny meme about coffee', 'Generate a sarcastic work meme', or 'Make a wholesome pet meme'. What should we meme about today?"
-
-def generate_meme_ideas(topic, style):
-    """Generate additional meme ideas based on topic and style"""
-    import random
-    
-    idea_templates = {
-        'relatable': [
-            f"• **Two Buttons**: *Sweating guy choosing between doing work and learning more about {topic}*",
-            f"• **Expanding Brain**: *Brain getting bigger from basic to advanced {topic} knowledge*",
-            f"• **Woman Yelling at Cat**: *Me explaining {topic} to my cat who doesn't care*",
-            f"• **Hide the Pain Harold**: *Smiling through {topic}-related struggles*"
-        ],
-        'sarcastic': [
-            f"• **Change My Mind**: *{topic} is overrated - Change my mind*",
-            f"• **Kermit Drinking Tea**: *People who don't understand {topic}... but that's none of my business*",
-            f"• **First Time?**: *You guys are just discovering {topic}?*",
-            f"• **Is This a Pigeon?**: *Pointing at basic concept* - Is this advanced {topic}?*"
-        ],
-        'wholesome': [
-            f"• **Happy Seal**: *When someone else gets excited about {topic} too*",
-            f"• **Supportive Friends**: *Me hyping up my friend's {topic} achievements*",
-            f"• **Proud Parent**: *My {topic} collection vs me showing it off to friends*",
-            f"• **Group Hug**: *The {topic} community welcoming new members*"
-        ],
-        'office': [
-            f"• **Boss Makes a Dollar**: *Boss makes a dollar, I make a dime, that's why I research {topic} on company time*",
-            f"• **This Meeting Could Have Been an Email**: *About {topic}*",
-            f"• **Office Space**: *PC Load Letter? What does that mean for {topic}?*",
-            f"• **Dilbert**: *Manager explaining {topic} strategy with buzzwords*"
-        ],
-        'student': [
-            f"• **Procrastination**: *Assignment due in 2 hours vs researching {topic} for fun*",
-            f"• **Group Project**: *Everyone contributing to {topic} assignment*",
-            f"• **All-Nighter**: *3 AM and still reading about {topic}*",
-            f"• **Professor**: *This {topic} exam will be easy... the exam:*"
-        ],
-        'pet': [
-            f"• **Doge**: *Much {topic}, very interest, such wow*",
-            f"• **Grumpy Cat**: *Had fun once about {topic}... it was awful*",
-            f"• **Cat Keyboard**: *Cat helps with {topic} research*",
-            f"• **Dog with Glasses**: *I have no idea what {topic} is but I'm excited*"
-        ]
-    }
-    
-    ideas = idea_templates.get(style, idea_templates['relatable'])
-    return "\\n".join(random.sample(ideas, min(3, len(ideas))))
+    """Handle meme generation requests"""
+    return "😂 Meme generation is coming soon! I can help you with story writing, comic creation, and fashion design instead. Try asking: 'Write a story about adventure', 'Create a comic about superheroes', or 'Design an outfit for work'."
 
 def get_humor_level(style):
     """Get humor intensity description"""
@@ -3257,6 +3020,588 @@ def get_humor_level(style):
         'pet': 'Adorably funny'
     }
     return levels.get(style, 'Hilariously entertaining')
+
+def get_audience(style):
+    """Get target audience for meme style"""
+    audiences = {
+        'relatable': 'Everyone - universal appeal',
+        'sarcastic': 'People who appreciate dry humor',
+        'wholesome': 'Family-friendly, all ages',
+        'office': 'Working professionals',
+        'student': 'Students and academics',
+        'pet': 'Pet lovers and animal enthusiasts'
+    }
+    return audiences.get(style, 'General audience')
+
+def generate_bonus_meme_ideas(topic, style):
+    """Generate additional meme ideas for the topic and style"""
+    ideas = [
+        f"• Alternative {style} take: {topic} + current trending meme format",
+        f"• Crossover idea: {topic} meets classic internet culture",
+        f"• Series potential: Daily {topic} {style} memes",
+        f"• Interactive: Ask followers to add their own {topic} experiences"
+    ]
+    return '\n'.join(ideas)
+
+def handle_comic_generation(text, personality='friendly'):
+    """Handle comic strip and comic panel generation requests"""
+    try:
+        print(f"📚 Processing comic generation request: {text}")
+        
+        # Extract comic topic/theme
+        import re
+        
+        topic_match = re.search(r'(?:comic.*about|comic.*with|story.*about)[\s]*([^,.!?]+)', text.lower())
+        topic = topic_match.group(1).strip() if topic_match else "everyday life"
+        
+        # Detect comic style
+        comic_style = "slice_of_life"  # default
+        if re.search(r'\b(superhero|hero|villain|power)\b', text.lower()):
+            comic_style = "superhero"
+        elif re.search(r'\b(manga|anime|japanese)\b', text.lower()):
+            comic_style = "manga"
+        elif re.search(r'\b(webcomic|web|online)\b', text.lower()):
+            comic_style = "webcomic"
+        elif re.search(r'\b(newspaper|daily|strip)\b', text.lower()):
+            comic_style = "newspaper"
+        elif re.search(r'\b(graphic.*novel|serious|drama)\b', text.lower()):
+            comic_style = "graphic_novel"
+        elif re.search(r'\b(funny|humor|comedy|joke)\b', text.lower()):
+            comic_style = "comedy"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"🎨 I'd love to help you create an amazing comic about {topic}!",
+            'creative': f"✨ Let's bring {topic} to life through sequential art!",
+            'enthusiastic': f"📚 WOW! Creating comics about {topic} is going to be EPIC!!!",
+            'professional': f"🖋️ I shall assist you in developing a comic narrative about {topic}.",
+            'witty': f"💭 Time to draw some laughs with a {topic} comic!"
+        }
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        
+        # Generate comic structure based on style
+        comic_content = generate_comic_structure(topic, comic_style)
+        
+        return f"""{base_response}
+
+{comic_content}
+
+**🎨 Comic Creation Features:**
+• **Multiple Styles**: Superhero, manga, webcomic, newspaper strips, graphic novels
+• **Story Structure**: Complete panel layouts with dialogue and action
+• **Character Development**: Protagonist and supporting character suggestions
+• **Visual Guidance**: Panel composition and artistic direction
+
+**📚 Want More Comics?** Try asking for:
+• "Create a superhero comic about time travel"
+• "Generate a manga-style comic about school life"
+• "Make a funny webcomic about pets"
+• "Design a newspaper comic strip about office work"
+
+Ready to publish your comic? What's your next story idea? ✏️"""
+        
+    except Exception as e:
+        print(f"Error in handle_comic_generation: {e}")
+        return "📚 I'm your AI comic creator! I can design comic strips, graphic novels, superhero stories, manga-style comics, and webcomics on any topic. Try asking: 'Create a superhero comic about saving the city', 'Generate a funny comic strip about cats', or 'Make a manga about school adventures'. What comic story shall we create today?"
+
+def generate_comic_structure(topic, style):
+    """Generate comic structure based on topic and style"""
+    
+    if style == "superhero":
+        return f"""**🦸 {topic.title()} - Superhero Comic**
+
+**Panel 1**: 📱 Wide establishing shot
+*Scene: City skyline at dusk. Something related to {topic} is causing chaos in the distance.*
+**Narration**: "In a world where {topic} threatens everything we hold dear..."
+
+**Panel 2**: 👤 Close-up on protagonist
+*Hero looking determined, costume reflecting their {topic}-related powers.*
+**Hero**: "Not on my watch. Time to stop this {topic} madness!"
+
+**Panel 3**: 💥 Action panel
+*Hero leaping into action, using their {topic}-powered abilities.*
+**Sound Effect**: "WHOOSH!" "ZAP!" 
+
+**Panel 4**: 😨 Reaction shot
+*Citizens looking up in amazement and relief.*
+**Citizen**: "It's the {topic.title()} Guardian! We're saved!"
+
+**Panel 5**: 🏆 Resolution panel
+*Hero standing victorious, {topic} crisis resolved.*
+**Hero**: "Remember, with great {topic} comes great responsibility."
+
+**🎭 Character Profiles:**
+• **Hero Name**: The {topic.title()} Guardian
+• **Powers**: {topic}-based abilities, super strength, flight
+• **Secret Identity**: Ordinary person who discovered {topic} powers
+• **Motivation**: Protect the world from {topic}-related threats
+
+**🏢 Setting**: Modern metropolis where {topic} technology/magic exists
+**🎯 Story Arc**: Origin story → First villain → Team-up → Major crisis → Resolution"""
+
+    elif style == "manga":
+        return f"""**🌸 {topic.title()} - Manga Comic**
+
+**Page 1, Panel 1**: 🏫 Establishing shot
+*Japanese high school, cherry blossoms falling. Focus on {topic} club building.*
+
+**Page 1, Panel 2**: 😊 Character introduction
+*Protagonist (big anime eyes, expressive) discovering {topic} for the first time.*
+**Protagonist**: "Eh?! What is this {topic}? It's... incredible!"
+
+**Page 1, Panel 3**: ✨ Reaction panel
+*Sparkly background, protagonist's eyes shining with determination.*
+**Protagonist**: "I'll become the best at {topic} in all of Japan!"
+
+**Page 2, Panel 1**: 👥 Group shot
+*Meeting the {topic} club members, each with distinct personalities.*
+**Club President**: "Welcome to the {topic} club! We've been waiting for someone like you!"
+
+**Page 2, Panel 2**: 💪 Training montage panel
+*Multiple small panels showing {topic} practice and improvement.*
+**Narration**: "Days turned to weeks as our hero trained relentlessly..."
+
+**Page 2, Panel 3**: 🎌 Tournament announcement
+*Large panel with dramatic tournament poster about {topic} competition.*
+**Announcement**: "The National {topic.title()} Championship begins tomorrow!"
+
+**🎌 Character Archetypes:**
+• **Protagonist**: Enthusiastic beginner with hidden talent
+• **Mentor**: Wise senpai who guides {topic} training
+• **Rival**: Skilled opponent who challenges growth
+• **Support**: Cheerful friend who believes in protagonist
+
+**🏫 Setting**: Japanese school with strong {topic} culture
+**📈 Story Progression**: Discovery → Training → Friendship → Competition → Growth"""
+
+    elif style == "webcomic":
+        return f"""**💻 {topic.title()} - Webcomic Series**
+
+**Episode 1: "Getting Started"**
+
+**Panel 1**: 🏠 Simple room background
+*Protagonist at computer/doing {topic}-related activity.*
+**Protagonist**: "Okay, time to finally get serious about {topic}."
+
+**Panel 2**: 😅 Close-up, slightly concerned expression
+**Protagonist**: "How hard could it be, right?"
+
+**Panel 3**: 📚 Montage of research
+*Multiple browser tabs, books, videos about {topic}.*
+**Protagonist**: "...Oh. Oh no."
+
+**Panel 4**: 😵 Overwhelmed expression
+*Protagonist surrounded by {topic} information.*
+**Protagonist**: "There's SO MUCH to learn about {topic}!"
+
+**Panel 5**: 😤 Determined face
+**Protagonist**: "But I'm not giving up! Day 1 of my {topic} journey starts now!"
+
+**Episode Ideas:**
+• **Episode 2**: "First Attempt" - Things go hilariously wrong
+• **Episode 3**: "Expert Advice" - Getting help from {topic} pros  
+• **Episode 4**: "Small Victory" - First success with {topic}
+• **Episode 5**: "Community" - Finding other {topic} enthusiasts
+
+**🎨 Art Style**: Simple, expressive characters with clean lines
+**📱 Format**: Vertical scroll format, mobile-friendly
+**🎯 Tone**: Relatable, humorous, encouraging
+**👥 Audience**: People interested in {topic} or learning new skills"""
+
+    elif style == "newspaper":
+        return f"""**📰 {topic.title()} - Daily Comic Strip**
+
+**Strip 1**: "Monday Morning"
+**Panel 1**: 😴 Character waking up
+**Character**: "Another Monday... time for {topic}."
+
+**Panel 2**: ☕ At breakfast table
+**Partner**: "Still obsessed with {topic}, I see."
+
+**Panel 3**: 😊 Character leaving happily
+**Character**: "It's not obsession, it's passion!"
+
+---
+
+**Strip 2**: "The Expert"
+**Panel 1**: 👥 Character talking to friend
+**Character**: "I'm getting really good at {topic}!"
+
+**Panel 2**: 🤔 Friend looking skeptical
+**Friend**: "Really? Show me."
+
+**Panel 3**: 😅 Character failing at {topic}
+**Character**: "...I said I'm getting good, not that I'm there yet!"
+
+---
+
+**Strip 3**: "Weekend Plans"
+**Panel 1**: 📅 Looking at calendar
+**Partner**: "What are your weekend plans?"
+
+**Panel 2**: 😍 Character excited
+**Character**: "More {topic} practice!"
+
+**Panel 3**: 🙄 Partner's reaction
+**Partner**: "I should have seen that coming."
+
+**📰 Series Concept**: Daily life humor centered around {topic}
+**👥 Characters**: Enthusiast + Patient partner/friends
+**🎯 Format**: 3-panel daily strips, Sunday color strips
+**📅 Themes**: Monday struggles, weekend enthusiasm, learning curves"""
+
+    else:  # slice_of_life or general
+        return f"""**🎭 {topic.title()} - Slice of Life Comic**
+
+**Chapter 1: "Discovery"**
+
+**Panel 1**: 🏠 Everyday setting
+*Ordinary moment that leads to discovering {topic}.*
+**Narration**: "Sometimes the most ordinary days lead to extraordinary discoveries..."
+
+**Panel 2**: 👀 Moment of realization
+*Character noticing something special about {topic}.*
+**Character**: "Wait... there's something different about this {topic}."
+
+**Panel 3**: 🤔 Investigation panel
+*Character exploring and learning more about {topic}.*
+**Character**: "I never realized {topic} could be so interesting!"
+
+**Panel 4**: 💡 Understanding
+*Character having an "aha!" moment about {topic}.*
+**Character**: "This changes everything I thought I knew!"
+
+**Panel 5**: 🌅 New perspective
+*Character looking at the world differently because of {topic}.*
+**Character**: "I can't wait to see where this {topic} journey takes me."
+
+**📖 Story Themes:**
+• **Growth**: Learning and personal development through {topic}
+• **Community**: Meeting others who share {topic} interests  
+• **Challenges**: Overcoming obstacles related to {topic}
+• **Discovery**: Finding unexpected aspects of {topic}
+
+**🎨 Visual Style**: Realistic but warm, detailed backgrounds
+**📚 Chapter Structure**: 
+- Discovery → Learning → Community → Challenges → Growth
+**👥 Supporting Cast**: Mentors, fellow enthusiasts, skeptics turned believers"""
+
+def handle_fashion_design(text, personality='friendly'):
+    """Handle fashion design and style recommendation requests"""
+    try:
+        print(f"👗 Processing fashion design request: {text}")
+        
+        # Extract style preferences and occasion
+        import re
+        
+        occasion_match = re.search(r'(?:for|dress.*for|outfit.*for|style.*for)[\s]*([^,.!?]+)', text.lower())
+        occasion = occasion_match.group(1).strip() if occasion_match else "everyday wear"
+        
+        # Detect style preference
+        style_pref = "casual"  # default
+        if re.search(r'\b(formal|business|professional|office)\b', text.lower()):
+            style_pref = "formal"
+        elif re.search(r'\b(party|club|night.*out|evening)\b', text.lower()):
+            style_pref = "party"
+        elif re.search(r'\b(bohemian|boho|hippie|free.*spirit)\b', text.lower()):
+            style_pref = "bohemian"
+        elif re.search(r'\b(minimalist|simple|clean|basic)\b', text.lower()):
+            style_pref = "minimalist"
+        elif re.search(r'\b(vintage|retro|classic|old.*school)\b', text.lower()):
+            style_pref = "vintage"
+        elif re.search(r'\b(edgy|punk|alternative|rock)\b', text.lower()):
+            style_pref = "edgy"
+        elif re.search(r'\b(romantic|feminine|soft|delicate)\b', text.lower()):
+            style_pref = "romantic"
+        elif re.search(r'\b(sporty|athletic|active|gym)\b', text.lower()):
+            style_pref = "sporty"
+        
+        # Detect season/weather
+        season = "current"
+        if re.search(r'\b(winter|cold|snow|warm.*clothes)\b', text.lower()):
+            season = "winter"
+        elif re.search(r'\b(summer|hot|beach|light.*clothes)\b', text.lower()):
+            season = "summer"
+        elif re.search(r'\b(spring|mild|transitional)\b', text.lower()):
+            season = "spring"
+        elif re.search(r'\b(fall|autumn|layering)\b', text.lower()):
+            season = "fall"
+        
+        # Personality-based responses
+        personality_responses = {
+            'friendly': f"👗 I'd love to help you create the perfect {style_pref} look for {occasion}!",
+            'professional': f"✨ I shall provide you with sophisticated fashion recommendations for {occasion}.",
+            'enthusiastic': f"💃 OMG YES! Let's create an AMAZING {style_pref} outfit for {occasion}!!!",
+            'creative': f"🎨 Time to unleash some serious style creativity for your {occasion} look!",
+            'witty': f"👠 Fashion emergency? I've got the perfect {style_pref} prescription for {occasion}!"
+        }
+        
+        base_response = personality_responses.get(personality, personality_responses['friendly'])
+        
+        # Generate fashion recommendations
+        fashion_content = generate_fashion_recommendations(occasion, style_pref, season)
+        
+        return f"""{base_response}
+
+{fashion_content}
+
+**✨ AI Fashion Features:**
+• **Personalized Styling**: Outfits tailored to your preferences and occasion
+• **Season-Appropriate**: Weather and climate considerations
+• **Style Variety**: From casual to formal, bohemian to minimalist
+• **Accessory Guidance**: Complete head-to-toe styling advice
+
+**👗 Want More Style Ideas?** Try asking for:
+• "Design a professional outfit for work meetings"
+• "Create a bohemian look for a music festival"  
+• "Suggest minimalist winter clothes"
+• "Party outfit for a night out"
+
+Ready to upgrade your wardrobe? What's your next style challenge? 💫"""
+        
+    except Exception as e:
+        print(f"Error in handle_fashion_design: {e}")
+        return "👗 I'm your AI fashion stylist! I can design outfits, suggest clothing combinations, and provide style advice for any occasion - from casual everyday looks to formal events, bohemian vibes to minimalist aesthetics. Try asking: 'Design a professional outfit for work', 'Create a party look for tonight', or 'Suggest casual weekend clothes'. What style adventure shall we embark on today?"
+
+def generate_fashion_recommendations(occasion, style, season):
+    """Generate detailed fashion recommendations"""
+    
+    # Style-based outfit formulas
+    style_guides = {
+        'casual': {
+            'tops': ['comfortable t-shirt', 'soft sweater', 'casual blouse', 'hoodie'],
+            'bottoms': ['well-fitted jeans', 'comfortable leggings', 'casual chinos', 'denim shorts'],
+            'shoes': ['white sneakers', 'comfortable flats', 'casual boots', 'canvas shoes'],
+            'accessories': ['crossbody bag', 'simple watch', 'baseball cap', 'sunglasses']
+        },
+        'formal': {
+            'tops': ['crisp button-down shirt', 'silk blouse', 'tailored blazer', 'elegant sweater'],
+            'bottoms': ['dress pants', 'pencil skirt', 'tailored trousers', 'midi dress'],
+            'shoes': ['pointed-toe pumps', 'oxford shoes', 'elegant flats', 'ankle boots'],
+            'accessories': ['structured handbag', 'classic watch', 'pearl earrings', 'silk scarf']
+        },
+        'party': {
+            'tops': ['sequined top', 'silk camisole', 'off-shoulder blouse', 'bodysuit'],
+            'bottoms': ['mini skirt', 'wide-leg pants', 'leather leggings', 'cocktail dress'],
+            'shoes': ['statement heels', 'strappy sandals', 'ankle boots', 'platform shoes'],
+            'accessories': ['clutch bag', 'statement jewelry', 'bold earrings', 'cocktail ring']
+        },
+        'bohemian': {
+            'tops': ['flowy blouse', 'peasant top', 'crochet vest', 'kimono cardigan'],
+            'bottoms': ['maxi skirt', 'wide-leg pants', 'flowy dress', 'palazzo pants'],
+            'shoes': ['ankle boots', 'sandals', 'moccasins', 'wedges'],
+            'accessories': ['fringe bag', 'layered necklaces', 'hair bands', 'wooden bangles']
+        },
+        'minimalist': {
+            'tops': ['white button-down', 'cashmere sweater', 'simple turtleneck', 'clean blazer'],
+            'bottoms': ['straight-leg trousers', 'midi skirt', 'tailored shorts', 'slip dress'],
+            'shoes': ['leather loafers', 'white sneakers', 'simple flats', 'clean boots'],
+            'accessories': ['structured tote', 'delicate jewelry', 'classic watch', 'simple belt']
+        },
+        'vintage': {
+            'tops': ['vintage band tee', 'retro blouse', 'cardigan', 'vintage blazer'],
+            'bottoms': ['high-waisted jeans', 'A-line skirt', 'vintage dress', 'wide-leg trousers'],
+            'shoes': ['retro sneakers', 'mary janes', 'oxford shoes', 'vintage boots'],
+            'accessories': ['vintage handbag', 'cat-eye sunglasses', 'pearl accessories', 'vintage scarf']
+        },
+        'edgy': {
+            'tops': ['band t-shirt', 'leather jacket', 'mesh top', 'graphic tee'],
+            'bottoms': ['ripped jeans', 'leather pants', 'mini skirt', 'cargo pants'],
+            'shoes': ['combat boots', 'platform shoes', 'chunky sneakers', 'ankle boots'],
+            'accessories': ['chain bag', 'studded accessories', 'bold jewelry', 'statement belt']
+        },
+        'romantic': {
+            'tops': ['lace blouse', 'silk camisole', 'ruffled top', 'floral print shirt'],
+            'bottoms': ['flowy skirt', 'soft pants', 'feminine dress', 'pleated skirt'],
+            'shoes': ['ballet flats', 'low heels', 'delicate sandals', 'mary janes'],
+            'accessories': ['small purse', 'delicate jewelry', 'hair ribbons', 'floral accessories']
+        },
+        'sporty': {
+            'tops': ['athletic tank', 'sports bra', 'performance tee', 'zip-up hoodie'],
+            'bottoms': ['leggings', 'track pants', 'athletic shorts', 'joggers'],
+            'shoes': ['running shoes', 'cross-trainers', 'athletic sandals', 'slip-on sneakers'],
+            'accessories': ['gym bag', 'fitness tracker', 'baseball cap', 'water bottle']
+        }
+    }
+    
+    # Get style components
+    components = style_guides.get(style, style_guides['casual'])
+    
+    # Season-specific modifications
+    seasonal_tips = {
+        'winter': {
+            'layers': ['wool coat', 'warm scarf', 'gloves', 'thermal layers'],
+            'fabrics': ['wool', 'cashmere', 'fleece', 'thermal materials'],
+            'colors': ['deep burgundy', 'forest green', 'navy', 'charcoal gray']
+        },
+        'summer': {
+            'layers': ['light cardigan', 'sun hat', 'sunglasses', 'lightweight scarf'],
+            'fabrics': ['cotton', 'linen', 'breathable synthetics', 'lightweight materials'],
+            'colors': ['white', 'pastels', 'bright colors', 'light neutrals']
+        },
+        'spring': {
+            'layers': ['light jacket', 'cardigan', 'light scarf', 'transitional pieces'],
+            'fabrics': ['cotton blends', 'light wool', 'denim', 'jersey'],
+            'colors': ['soft pastels', 'fresh greens', 'light blues', 'coral']
+        },
+        'fall': {
+            'layers': ['trench coat', 'sweaters', 'boots', 'layering pieces'],
+            'fabrics': ['wool', 'corduroy', 'denim', 'knits'],
+            'colors': ['warm browns', 'burnt orange', 'deep reds', 'mustard yellow']
+        }
+    }
+    
+    # Build recommendation
+    import random
+    
+    selected_top = random.choice(components['tops'])
+    selected_bottom = random.choice(components['bottoms'])
+    selected_shoes = random.choice(components['shoes'])
+    selected_accessory = random.choice(components['accessories'])
+    
+    seasonal_info = seasonal_tips.get(season, seasonal_tips['current'])
+    
+    outfit_description = f"""👗 **{style.title()} Outfit for {occasion.title()}**
+
+**🎯 Complete Look:**
+• **Top**: {selected_top.title()}
+• **Bottom**: {selected_bottom.title()}  
+• **Shoes**: {selected_shoes.title()}
+• **Key Accessory**: {selected_accessory.title()}
+
+**🌟 Style Details:**
+• **Aesthetic**: {style.title()} with modern touches
+• **Occasion**: Perfect for {occasion}
+• **Comfort Level**: Stylish yet comfortable for all-day wear
+• **Versatility**: Can be dressed up or down with accessories
+
+**🎨 Color Palette Suggestions:**
+{get_color_palette(style, season)}
+
+**✨ Styling Tips:**
+• **Fit**: Ensure proper proportions - if top is loose, bottom should be fitted
+• **Balance**: Mix textures and patterns for visual interest
+• **Layering**: {get_layering_tips(style, season)}
+• **Accessories**: {get_accessory_tips(style)}
+
+**👜 Complete Accessory List:**
+• **Bag**: {get_bag_suggestion(style, occasion)}
+• **Jewelry**: {get_jewelry_suggestion(style)}
+• **Outerwear**: {get_outerwear_suggestion(style, season)}
+• **Extras**: {get_extra_accessories(style)}
+
+**🛍️ Shopping List:**
+1. {selected_top.title()}
+2. {selected_bottom.title()}
+3. {selected_shoes.title()}
+4. {selected_accessory.title()}
+5. Complementary accessories
+
+**💡 Mix & Match Ideas:**
+• Swap the top for a {random.choice(components['tops'])} for variety
+• Try the bottom with a {random.choice(components['tops'])} for different occasions
+• Change shoes to {random.choice(components['shoes'])} for comfort
+• Add a {random.choice(components['accessories'])} for extra style"""
+
+    return outfit_description
+
+def get_color_palette(style, season):
+    """Generate color palette suggestions"""
+    palettes = {
+        'casual': ['Navy & white', 'Denim blue & cream', 'Olive green & beige', 'Gray & soft pink'],
+        'formal': ['Black & white', 'Navy & cream', 'Charcoal & burgundy', 'Camel & ivory'],
+        'party': ['Black & gold', 'Deep red & black', 'Emerald & silver', 'Purple & metallic'],
+        'bohemian': ['Earthy browns & cream', 'Rust & olive', 'Mustard & burgundy', 'Terracotta & sage'],
+        'minimalist': ['All white', 'Black & white', 'Beige & cream', 'Gray tones'],
+        'vintage': ['Dusty rose & cream', 'Mint green & white', 'Mustard & brown', 'Navy & red'],
+        'edgy': ['All black', 'Black & silver', 'Dark red & black', 'Leather brown & black'],
+        'romantic': ['Blush pink & white', 'Lavender & cream', 'Soft yellow & white', 'Rose & ivory'],
+        'sporty': ['Black & neon', 'Gray & bright colors', 'Navy & white', 'Color blocking']
+    }
+    return ' • '.join(palettes.get(style, palettes['casual']))
+
+def get_layering_tips(style, season):
+    """Get layering suggestions"""
+    if season == 'winter':
+        return "Layer with cozy sweaters and warm outerwear"
+    elif season == 'summer':
+        return "Keep layers light - think cardigans and light scarves"
+    elif season == 'spring':
+        return "Perfect for transitional layering pieces"
+    elif season == 'fall':
+        return "Ideal for cozy sweaters and stylish jackets"
+    else:
+        return "Layer according to current weather and comfort"
+
+def get_accessory_tips(style):
+    """Get style-specific accessory tips"""
+    tips = {
+        'casual': "Keep accessories simple and functional",
+        'formal': "Choose classic, high-quality pieces",
+        'party': "Go bold with statement accessories",
+        'bohemian': "Layer jewelry and add natural textures",
+        'minimalist': "Less is more - choose one statement piece",
+        'vintage': "Mix authentic vintage with vintage-inspired pieces",
+        'edgy': "Add metal details and bold statements",
+        'romantic': "Focus on delicate, feminine details",
+        'sporty': "Keep accessories functional and comfortable"
+    }
+    return tips.get(style, "Choose accessories that complement your personal style")
+
+def get_bag_suggestion(style, occasion):
+    """Suggest appropriate bag for style and occasion"""
+    suggestions = {
+        'casual': 'Canvas tote or crossbody bag',
+        'formal': 'Structured handbag or briefcase',
+        'party': 'Clutch or small evening bag',
+        'bohemian': 'Fringe bag or woven tote',
+        'minimalist': 'Clean-lined tote or simple clutch',
+        'vintage': 'Vintage-style handbag or satchel',
+        'edgy': 'Chain bag or studded purse',
+        'romantic': 'Small feminine purse or delicate bag',
+        'sporty': 'Backpack or gym bag'
+    }
+    return suggestions.get(style, 'Versatile handbag')
+
+def get_jewelry_suggestion(style):
+    """Suggest jewelry for style"""
+    suggestions = {
+        'casual': 'Simple studs and delicate chain',
+        'formal': 'Pearl or gold classic pieces',
+        'party': 'Statement earrings and bold necklace',
+        'bohemian': 'Layered necklaces and natural stones',
+        'minimalist': 'One quality piece - watch or simple necklace',
+        'vintage': 'Art deco or vintage-inspired pieces',
+        'edgy': 'Bold metal pieces and chains',
+        'romantic': 'Delicate pearls and soft metals',
+        'sporty': 'Fitness tracker and simple studs'
+    }
+    return suggestions.get(style, 'Personal preference pieces')
+
+def get_outerwear_suggestion(style, season):
+    """Suggest outerwear based on style and season"""
+    if season == 'winter':
+        return {'casual': 'Puffer jacket', 'formal': 'Wool coat', 'party': 'Faux fur jacket'}.get(style, 'Warm coat')
+    elif season == 'summer':
+        return {'casual': 'Light cardigan', 'formal': 'Blazer', 'party': 'Light wrap'}.get(style, 'Light layer')
+    else:
+        return {'casual': 'Denim jacket', 'formal': 'Trench coat', 'party': 'Statement jacket'}.get(style, 'Versatile jacket')
+
+def get_extra_accessories(style):
+    """Get additional accessory suggestions"""
+    extras = {
+        'casual': 'Baseball cap and sunglasses',
+        'formal': 'Silk scarf and classic watch',
+        'party': 'Statement hair accessory',
+        'bohemian': 'Hair band and anklet',
+        'minimalist': 'Quality leather belt',
+        'vintage': 'Cat-eye sunglasses',
+        'edgy': 'Studded belt and bold rings',
+        'romantic': 'Hair ribbon and delicate bracelet',
+        'sporty': 'Athletic headband and water bottle'
+    }
+    return extras.get(style, 'Personal style accessories')
 
 # ===============================================
 # � AI MUSIC & AUDIO GENERATION FUNCTIONS
@@ -6123,6 +6468,53 @@ INTENT_PATTERNS = {
         r'\bfashion.*designer\b', r'\bclothing.*design\b', r'\bwardrobe.*advice\b',
         r'\bpersonal.*stylist\b', r'\bfashion.*consultation\b'
     ],
+    'ar_integration': [
+        r'\b(ar|augmented.*reality)\b',
+        r'\b(camera|cam).*overlay\b', r'\b(camera|cam).*filter\b',
+        r'\baugmented.*reality.*camera\b', r'\bar.*camera\b',
+        r'\bvirtual.*overlay\b', r'\bdigital.*overlay\b',
+        r'\bar.*filter\b', r'\bar.*effect\b', r'\bar.*experience\b',
+        r'\bcamera.*ar\b', r'\breal.*time.*overlay\b',
+        r'\binteractive.*camera\b', r'\bsmart.*camera\b',
+        r'\bmixed.*reality\b', r'\bholographic.*display\b',
+        r'\bar.*integration\b', r'\baugment.*camera\b',
+        r'\bvirtual.*reality.*camera\b', r'\b3d.*overlay\b'
+    ],
+    'dream_journal': [
+        r'\b(dream|dreams).*journal\b', r'\b(dream|dreams).*analysis\b',
+        r'\b(dream|dreams).*interpretation\b', r'\b(dream|dreams).*meaning\b',
+        r'\banalyze.*dream\b', r'\binterpret.*dream\b',
+        r'\bdream.*analyzer\b', r'\bdream.*interpreter\b',
+        r'\bwhat.*does.*dream.*mean\b', r'\bdream.*symbolism\b',
+        r'\bdream.*psychology\b', r'\bsleep.*analysis\b',
+        r'\bsubconscious.*analysis\b', r'\bdream.*diary\b',
+        r'\bai.*dream\b', r'\bdream.*ai\b', r'\bdream.*tracker\b',
+        r'\brecord.*dream\b', r'\blog.*dream\b', r'\bsave.*dream\b'
+    ],
+    'time_capsule': [
+        r'\b(time.*capsule|timecapsule)\b', r'\bfuture.*prediction\b',
+        r'\bpredict.*future\b', r'\bfuture.*trends\b',
+        r'\btrend.*prediction\b', r'\bfuture.*forecast\b',
+        r'\btime.*travel.*simulation\b', r'\bfuture.*scenario\b',
+        r'\bcreate.*time.*capsule\b', r'\bmake.*time.*capsule\b',
+        r'\bfuturistic.*prediction\b', r'\btomorrow.*prediction\b',
+        r'\bai.*prophecy\b', r'\bai.*fortune.*telling\b',
+        r'\bpredict.*what.*will.*happen\b', r'\bfuture.*analysis\b',
+        r'\btrend.*analysis\b', r'\bfuture.*insights\b'
+    ],
+    'virtual_world_builder': [
+        r'\b(virtual.*world|virtual.*environment)\b',
+        r'\b(build|create|generate|design).*virtual.*world\b',
+        r'\bworld.*builder\b', r'\benvironment.*builder\b',
+        r'\b3d.*world\b', r'\bvirtual.*reality.*world\b',
+        r'\bcreate.*universe\b', r'\bbuild.*universe\b',
+        r'\bvirtual.*landscape\b', r'\bdigital.*world\b',
+        r'\bsimulated.*environment\b', r'\bai.*world\b',
+        r'\bprocedural.*generation\b', r'\bworld.*generation\b',
+        r'\bcustom.*environment\b', r'\bvirtual.*physics\b',
+        r'\bimmersive.*world\b', r'\binteractive.*environment\b',
+        r'\bsandbox.*world\b', r'\bopen.*world.*creator\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -6186,7 +6578,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
@@ -6254,6 +6646,14 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_code_generation(user_input, personality)
         elif intent == 'quiz_generation':
             response = handle_quiz_generation(user_input, personality)
+        elif intent == 'story_generation':
+            response = handle_story_generation(user_input, personality)
+        elif intent == 'meme_generation':
+            response = handle_meme_generation(user_input, personality)
+        elif intent == 'comic_generation':
+            response = handle_comic_generation(user_input, personality)
+        elif intent == 'fashion_design':
+            response = handle_fashion_design(user_input, personality)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
