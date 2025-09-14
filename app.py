@@ -7363,7 +7363,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design', 'ar_integration', 'dream_journal', 'time_capsule', 'virtual_world_builder']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
@@ -7439,6 +7439,14 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_comic_generation(user_input, personality)
         elif intent == 'fashion_design':
             response = handle_fashion_design(user_input, personality)
+        elif intent == 'ar_integration':
+            response = handle_ar_integration(user_input, personality)
+        elif intent == 'dream_journal':
+            response = handle_dream_journal(user_input, personality)
+        elif intent == 'time_capsule':
+            response = handle_time_capsule(user_input, personality)
+        elif intent == 'virtual_world_builder':
+            response = handle_virtual_world_builder(user_input, personality)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
