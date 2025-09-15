@@ -3868,7 +3868,7 @@ def generate_practical_ar_guide(ar_type):
     guides = {
         'face_filter': """**� How to Create AR Face Filters - Step by Step**
 
-<strong>📱 Platform Options (Choose One):</strong><br><br>
+**📱 Platform Options (Choose One):**
 
 **Option 1: Meta Spark AR Studio (Easiest - No Coding)**<br>
 • Download: spark.ar → Download Spark AR Studio (Free)<br>
@@ -3904,12 +3904,11 @@ def generate_practical_ar_guide(ar_type):
 • Color-changing hair (45 min tutorial)<br>
 • Floating text/emojis (20 min tutorial)<br><br>
 
-<strong>📚 Learning Resources:</strong><br><br>
-
-• YouTube: "Spark AR Tutorial for Beginners"<br>
-• Official docs: spark.ar/learn<br>
-• Community: Facebook AR Creators group<br>
-• Practice: Start with templates, modify slowly""",
+**📚 Learning Resources:**
+• **YouTube**: "Spark AR Tutorial for Beginners"
+• **Official docs**: spark.ar/learn
+• **Community**: Facebook AR Creators group
+• **Practice**: Start with templates, modify slowly""",
 
         'object_recognition': """**🔍 Build Object Recognition AR - Practical Guide**
 
