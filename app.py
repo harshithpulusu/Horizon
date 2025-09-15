@@ -3868,45 +3868,48 @@ def generate_practical_ar_guide(ar_type):
     guides = {
         'face_filter': """**� How to Create AR Face Filters - Step by Step**
 
-**📱 Platform Options (Choose One):**
+<strong>📱 Platform Options (Choose One):</strong><br><br>
 
-**Option 1: Meta Spark AR Studio (Easiest - No Coding)**
-• **Download**: spark.ar → Download Spark AR Studio (Free)
-• **Best for**: Instagram, Facebook filters
-• **Time to first filter**: 30 minutes
-• **Skill level**: Beginner-friendly
+**Option 1: Meta Spark AR Studio (Easiest - No Coding)**<br>
+• Download: spark.ar → Download Spark AR Studio (Free)<br>
+• Best for: Instagram, Facebook filters<br>
+• Time to first filter: 30 minutes<br>
+• Skill level: Beginner-friendly<br><br>
 
-**Option 2: Snapchat Lens Studio (Creative Focus)**
-• **Download**: lensstudio.snapchat.com (Free)
-• **Best for**: Snapchat lenses, creative effects
-• **Time to first filter**: 45 minutes
-• **Skill level**: Beginner to intermediate
+**Option 2: Snapchat Lens Studio (Creative Focus)**<br>
+• Download: lensstudio.snapchat.com (Free)<br>
+• Best for: Snapchat lenses, creative effects<br>
+• Time to first filter: 45 minutes<br>
+• Skill level: Beginner to intermediate<br><br>
 
-**Option 3: TikTok Effect House (Trending Platform)**
-• **Download**: effecthouse.tiktok.com (Free)
-• **Best for**: TikTok effects, viral content
-• **Time to first filter**: 1 hour
-• **Skill level**: Beginner
+**Option 3: TikTok Effect House (Trending Platform)**<br>
+• Download: effecthouse.tiktok.com (Free)<br>
+• Best for: TikTok effects, viral content<br>
+• Time to first filter: 1 hour<br>
+• Skill level: Beginner<br><br>
 
-**🛠️ Quick Start Tutorial (Spark AR):**
-1. **Install Spark AR Studio** from spark.ar
-2. **Open new project** → Face Tracker template
-3. **Add 3D object** → Import your model or use built-in
-4. **Attach to face** → Drag to face tracker in scene
-5. **Test on phone** → Spark AR Player app
-6. **Publish** → Submit to Instagram/Facebook
+<strong>🛠️ Quick Start Tutorial (Spark AR):</strong><br><br>
 
-**💡 Beginner Filter Ideas:**
-• **Cat ears and whiskers** (30 min tutorial)
-• **Sunglasses overlay** (15 min tutorial) 
-• **Color-changing hair** (45 min tutorial)
-• **Floating text/emojis** (20 min tutorial)
+1. Install Spark AR Studio from spark.ar<br>
+2. Open new project → Face Tracker template<br>
+3. Add 3D object → Import your model or use built-in<br>
+4. Attach to face → Drag to face tracker in scene<br>
+5. Test on phone → Spark AR Player app<br>
+6. Publish → Submit to Instagram/Facebook<br><br>
 
-**📚 Learning Resources:**
-• **YouTube**: "Spark AR Tutorial for Beginners"
-• **Official docs**: spark.ar/learn
-• **Community**: Facebook AR Creators group
-• **Practice**: Start with templates, modify slowly""",
+<strong>💡 Beginner Filter Ideas:</strong><br><br>
+
+• Cat ears and whiskers (30 min tutorial)<br>
+• Sunglasses overlay (15 min tutorial)<br>
+• Color-changing hair (45 min tutorial)<br>
+• Floating text/emojis (20 min tutorial)<br><br>
+
+<strong>📚 Learning Resources:</strong><br><br>
+
+• YouTube: "Spark AR Tutorial for Beginners"<br>
+• Official docs: spark.ar/learn<br>
+• Community: Facebook AR Creators group<br>
+• Practice: Start with templates, modify slowly""",
 
         'object_recognition': """**🔍 Build Object Recognition AR - Practical Guide**
 
