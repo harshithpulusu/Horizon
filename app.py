@@ -3644,24 +3644,27 @@ def handle_ar_integration(text, personality='friendly'):
         # Generate practical AR guidance
         ar_guidance = generate_practical_ar_guide(ar_type)
         
-        return f"""{base_response}
+        # Format the response with HTML line breaks for proper display
+        formatted_response = f"""{base_response}<br><br>
 
-{ar_guidance}
+{ar_guidance}<br><br>
 
-**🎯 Next Steps:**
-1. **Choose your platform** from the options above
-2. **Download the recommended tools**
-3. **Follow the step-by-step tutorial**
-4. **Test your first filter**
-5. **Share your creation!**
+<strong>🎯 Next Steps:</strong><br>
+1. <strong>Choose your platform</strong> from the options above<br>
+2. <strong>Download the recommended tools</strong><br>
+3. <strong>Follow the step-by-step tutorial</strong><br>
+4. <strong>Test your first filter</strong><br>
+5. <strong>Share your creation!</strong><br><br>
 
-**💡 Need help with a specific step?** Ask me:
-• "How do I set up Spark AR Studio?"
-• "Show me face tracking code examples"
-• "Help me publish my AR filter"
-• "What are the best AR development practices?"
+<strong>💡 Need help with a specific step?</strong> Ask me:<br>
+• "How do I set up Spark AR Studio?"<br>
+• "Show me face tracking code examples"<br>
+• "Help me publish my AR filter"<br>
+• "What are the best AR development practices?"<br><br>
 
 Ready to start building? Which platform interests you most? 🚀"""
+        
+        return formatted_response
         
     except Exception as e:
         print(f"Error in handle_ar_integration: {e}")
