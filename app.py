@@ -23,6 +23,15 @@ import io
 import base64
 from config import Config
 
+# Google Gemini AI imports
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+    print("✨ Google Gemini AI loaded successfully")
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("⚠️ Google Gemini AI not available")
+
 # Video generation imports
 try:
     from PIL import Image, ImageDraw, ImageFont
