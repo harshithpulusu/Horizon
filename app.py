@@ -1939,12 +1939,21 @@ def handle_gemini_image_generation(text):
             # This would be the future API call for Gemini image generation
             # response = model.generate_image(prompt=enhanced_prompt)
             
-            # For now, return a message about Gemini text capabilities
-            return f"🎨✨ Gemini AI is ready for image generation! Currently optimizing for Veo3 image capabilities. Your prompt: '{prompt}' has been processed. Falling back to DALL-E for now."
+            # For now, return a message about Gemini text capabilities and fall back to DALL-E
+            if AI_MODEL_AVAILABLE and client:
+                print("🔄 Gemini image generation not yet available via API. Falling back to DALL-E...")
+                return handle_dalle_image_generation(text)
+            else:
+                return f"🎨✨ Gemini AI processed your prompt: '{prompt}'. However, Veo3 image generation is not yet available through the public API. Please ensure you have either Gemini image generation access or DALL-E configured for image creation."
             
         except Exception as api_error:
             print(f"Gemini API error: {api_error}")
-            return f"🎨 Gemini encountered an issue: {api_error}. Falling back to DALL-E."
+            # Fall back to DALL-E if available
+            if AI_MODEL_AVAILABLE and client:
+                print("🔄 Falling back to DALL-E for image generation...")
+                return handle_dalle_image_generation(text)
+            else:
+                return f"🎨 Gemini encountered an issue: {api_error}. No fallback image generation available."
         
     except Exception as e:
         print(f"Error in handle_gemini_image_generation: {e}")
