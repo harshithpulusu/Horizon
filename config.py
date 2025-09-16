@@ -8,6 +8,7 @@ load_dotenv()
 class Config:
     # Core AI APIs
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAFl8KrjvNuafGJc03CZqr8Cqzdki9z2AA')
     
     # 🎵 Music & Audio APIs
     SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID', '')
