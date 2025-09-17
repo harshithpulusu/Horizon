@@ -882,6 +882,134 @@ def init_db():
                 datetime.now().isoformat()
             ))
         
+        # Custom AI Model Training Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS custom_models (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_name TEXT UNIQUE NOT NULL,
+                model_type TEXT NOT NULL,
+                creator_id TEXT,
+                description TEXT,
+                training_data_path TEXT,
+                model_file_path TEXT,
+                config_json TEXT,
+                training_status TEXT DEFAULT 'pending',
+                training_progress REAL DEFAULT 0.0,
+                accuracy_score REAL,
+                loss_score REAL,
+                model_size_mb REAL,
+                created_at TEXT,
+                updated_at TEXT,
+                is_public INTEGER DEFAULT 0,
+                download_count INTEGER DEFAULT 0,
+                rating_average REAL DEFAULT 0.0,
+                rating_count INTEGER DEFAULT 0,
+                tags TEXT,
+                version TEXT DEFAULT '1.0.0'
+            )
+        ''')
+        
+        # Training Sessions for progress tracking
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS training_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER,
+                session_id TEXT UNIQUE,
+                training_config TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                status TEXT DEFAULT 'running',
+                current_epoch INTEGER DEFAULT 0,
+                total_epochs INTEGER,
+                current_loss REAL,
+                current_accuracy REAL,
+                logs TEXT,
+                error_message TEXT,
+                FOREIGN KEY (model_id) REFERENCES custom_models (id)
+            )
+        ''')
+        
+        # Training Data Management
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS training_datasets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                dataset_name TEXT UNIQUE NOT NULL,
+                dataset_type TEXT NOT NULL,
+                file_path TEXT,
+                file_size_mb REAL,
+                sample_count INTEGER,
+                feature_count INTEGER,
+                description TEXT,
+                creator_id TEXT,
+                created_at TEXT,
+                is_public INTEGER DEFAULT 0,
+                format_type TEXT,
+                preprocessing_config TEXT
+            )
+        ''')
+        
+        # AI Model Marketplace
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS model_marketplace (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER,
+                title TEXT NOT NULL,
+                description TEXT,
+                category TEXT,
+                price REAL DEFAULT 0.0,
+                license_type TEXT DEFAULT 'MIT',
+                demo_url TEXT,
+                documentation_url TEXT,
+                featured INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'active',
+                view_count INTEGER DEFAULT 0,
+                last_updated TEXT,
+                FOREIGN KEY (model_id) REFERENCES custom_models (id)
+            )
+        ''')
+        
+        # Model Reviews and Ratings
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS model_reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER,
+                reviewer_id TEXT,
+                rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+                review_text TEXT,
+                created_at TEXT,
+                helpful_votes INTEGER DEFAULT 0,
+                FOREIGN KEY (model_id) REFERENCES custom_models (id)
+            )
+        ''')
+        
+        # Model Downloads and Usage Analytics
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS model_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER,
+                user_id TEXT,
+                action_type TEXT,
+                timestamp TEXT,
+                user_agent TEXT,
+                ip_address TEXT,
+                success INTEGER DEFAULT 1,
+                FOREIGN KEY (model_id) REFERENCES custom_models (id)
+            )
+        ''')
+        
+        # Model Dependencies and Requirements
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS model_dependencies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_id INTEGER,
+                dependency_name TEXT,
+                dependency_version TEXT,
+                dependency_type TEXT,
+                required INTEGER DEFAULT 1,
+                FOREIGN KEY (model_id) REFERENCES custom_models (id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
