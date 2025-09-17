@@ -42,6 +42,22 @@ except ImportError:
     IMAGEN_AVAILABLE = False
     print("⚠️ Google Imagen AI not available")
 
+# Machine Learning Training imports
+try:
+    import torch
+    import torch.nn as nn
+    from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification, Trainer, TrainingArguments
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score, classification_report
+    import pandas as pd
+    import numpy as np
+    import joblib
+    ML_TRAINING_AVAILABLE = True
+    print("🧠 ML Training capabilities loaded successfully")
+except ImportError as e:
+    ML_TRAINING_AVAILABLE = False
+    print(f"⚠️ ML Training not available: {e}")
+
 # Video generation imports
 try:
     from PIL import Image, ImageDraw, ImageFont
