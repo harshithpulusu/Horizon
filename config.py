@@ -10,6 +10,11 @@ class Config:
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAFl8KrjvNuafGJc03CZqr8Cqzdki9z2AA')
     
+    # Google Cloud Configuration for Imagen
+    GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', 'horizon-ai-project')
+    GOOGLE_CLOUD_REGION = os.getenv('GOOGLE_CLOUD_REGION', 'us-central1')
+    GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', '')
+    
     # 🎵 Music & Audio APIs
     SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID', '')
     SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET', '')

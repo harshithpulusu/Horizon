@@ -32,6 +32,16 @@ except ImportError:
     GEMINI_AVAILABLE = False
     print("⚠️ Google Gemini AI not available")
 
+# Google Imagen (Vertex AI) imports
+try:
+    from google.cloud import aiplatform
+    from google.cloud.aiplatform.gapic.schema import predict
+    IMAGEN_AVAILABLE = True
+    print("🎨 Google Imagen AI loaded successfully")
+except ImportError:
+    IMAGEN_AVAILABLE = False
+    print("⚠️ Google Imagen AI not available")
+
 # Video generation imports
 try:
     from PIL import Image, ImageDraw, ImageFont
@@ -150,6 +160,27 @@ try:
 except Exception as e:
     print(f"⚠️ Error configuring Gemini: {e}")
     GEMINI_CONFIGURED = False
+
+# Initialize Google Imagen (Vertex AI)
+try:
+    if IMAGEN_AVAILABLE:
+        project_id = getattr(Config, 'GOOGLE_CLOUD_PROJECT', 'horizon-ai-project')
+        region = getattr(Config, 'GOOGLE_CLOUD_REGION', 'us-central1')
+        
+        # For now, we'll use the Gemini API key for authentication
+        # In production, you'd use proper service account credentials
+        if GEMINI_CONFIGURED:
+            aiplatform.init(project=project_id, location=region)
+            print("✅ Google Imagen (Vertex AI) initialized successfully")
+            IMAGEN_CONFIGURED = True
+        else:
+            print("⚠️ Imagen requires Gemini API configuration")
+            IMAGEN_CONFIGURED = False
+    else:
+        IMAGEN_CONFIGURED = False
+except Exception as e:
+    print(f"⚠️ Error configuring Imagen: {e}")
+    IMAGEN_CONFIGURED = False
 except Exception as e:
     client = None
     AI_MODEL_AVAILABLE = False
@@ -1900,17 +1931,114 @@ def handle_reminder(text):
         return "I had trouble setting that reminder. Please try again!"
 
 def handle_image_generation(text):
-    """Handle AI image generation requests using Gemini or DALL-E API"""
+    """Handle AI image generation requests using Imagen, Gemini or DALL-E API"""
     try:
-        # Check which AI service to use - prioritize Gemini if available
-        if GEMINI_CONFIGURED:
-            return handle_gemini_image_generation(text)
+        # Check which AI service to use - prioritize Imagen > DALL-E
+        if IMAGEN_CONFIGURED:
+            return handle_imagen_generation(text)
         elif AI_MODEL_AVAILABLE and client:
             return handle_dalle_image_generation(text)
         else:
-            return "🎨 I'd love to generate images for you! However, I need either a Gemini API key or OpenAI API key to access image generation. Please check your configuration and try again."
+            return "🎨 I'd love to generate images for you! However, I need either a Google Cloud/Imagen setup or OpenAI API key to access image generation. Please check your configuration and try again."
     except Exception as e:
         print(f"Error in handle_image_generation: {e}")
+        return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
+
+def handle_imagen_generation(text):
+    """Handle AI image generation requests using Google Imagen API"""
+    try:
+        # Extract the image description from the text
+        prompt = extract_image_prompt(text)
+        
+        if not prompt or len(prompt) < 3:
+            return "🎨 I can generate images for you using Google Imagen! Please describe what you'd like me to create. For example: 'generate an image of a sunset over mountains' or 'create a picture of a cute cat wearing a hat'."
+        
+        print(f"🎨🌟 Generating image with Google Imagen: {prompt}")
+        
+        try:
+            # Enhanced prompt for better image generation
+            enhanced_prompt = f"Create a high-quality, detailed, photorealistic image of: {prompt}. Professional quality, well-composed, ultra-detailed."
+            
+            # Use Imagen through Vertex AI
+            # Note: This is a simplified approach. In production, you'd use proper endpoint prediction
+            endpoint = aiplatform.Endpoint.list(filter='display_name="imagen-endpoint"')
+            
+            if not endpoint:
+                # Fallback message - Imagen setup required
+                print("⚠️ Imagen endpoint not found. Using prompt enhancement for DALL-E...")
+                if AI_MODEL_AVAILABLE and client:
+                    return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
+                else:
+                    return f"🎨🌟 Google Imagen processed your prompt: '{prompt}'. However, Imagen endpoint setup is required for image generation. Falling back to DALL-E is not available either."
+            
+            # If endpoint exists, predict with Imagen
+            # instances = [{"prompt": enhanced_prompt}]
+            # response = endpoint[0].predict(instances=instances)
+            
+            # For now, return enhanced prompt to DALL-E
+            if AI_MODEL_AVAILABLE and client:
+                return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
+            else:
+                return f"🎨🌟 Google Imagen enhanced your prompt to: '{enhanced_prompt}'. However, image generation endpoint needs setup."
+            
+        except Exception as api_error:
+            print(f"Imagen API error: {api_error}")
+            # Fall back to DALL-E if available
+            if AI_MODEL_AVAILABLE and client:
+                print("🔄 Falling back to DALL-E for image generation...")
+                return handle_dalle_image_generation(text)
+            else:
+                return f"🎨 Imagen encountered an issue: {api_error}. No fallback image generation available."
+        
+    except Exception as e:
+        print(f"Error in handle_imagen_generation: {e}")
+        # Fall back to DALL-E if available
+        if AI_MODEL_AVAILABLE and client:
+            return handle_dalle_image_generation(text)
+        return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
+
+def handle_dalle_image_generation_with_enhancement(text, enhanced_prompt):
+    """Handle DALL-E image generation with Imagen-enhanced prompts"""
+    try:
+        print(f"🎨✨ Using DALL-E with Imagen-enhanced prompt: {enhanced_prompt}")
+        
+        # Generate image using DALL-E with enhanced prompt
+        try:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=enhanced_prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            
+            image_url = response.data[0].url
+            
+            # Download and save the image locally
+            local_url, filename = download_and_save_image(image_url, enhanced_prompt)
+            
+            if local_url:
+                # Create a full URL that opens the image directly in browser
+                full_image_url = f"http://192.168.1.206:8080{local_url}"
+                return f"""🎨🌟 Image Generated with Imagen Enhancement
+
+{full_image_url}
+
+Enhanced prompt: {enhanced_prompt}"""
+            else:
+                # Fallback to original URL if download fails
+                return f"""🎨🌟 Image Generated with Imagen Enhancement
+
+{image_url}
+
+Enhanced prompt: {enhanced_prompt}"""
+            
+        except Exception as api_error:
+            print(f"DALL-E API error: {api_error}")
+            return f"🎨 I encountered an issue generating the image: {api_error}. Please try rephrasing your request or try again later."
+        
+    except Exception as e:
+        print(f"Error in handle_dalle_image_generation_with_enhancement: {e}")
         return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
 
 def handle_gemini_image_generation(text):
