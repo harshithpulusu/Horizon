@@ -5711,6 +5711,766 @@ def get_marketplace_overview():
         print(f"Error getting marketplace overview: {e}")
         return "🏪 Model Marketplace is loading... Please try again in a moment."
 
+# ===== PROMPT ENGINEERING LAB FUNCTIONS =====
+
+def handle_prompt_engineering(text):
+    """Handle prompt engineering lab requests"""
+    try:
+        print(f"🧪 Processing prompt engineering request: {text}")
+        
+        # Analyze the request type
+        text_lower = text.lower()
+        
+        if any(keyword in text_lower for keyword in ['create', 'new template', 'build prompt']):
+            return create_prompt_template_interface()
+        elif any(keyword in text_lower for keyword in ['test', 'experiment', 'ab test', 'compare']):
+            return create_prompt_experiment_interface()
+        elif any(keyword in text_lower for keyword in ['optimize', 'improve', 'enhance']):
+            return get_prompt_optimization_suggestions()
+        elif any(keyword in text_lower for keyword in ['templates', 'library', 'browse']):
+            return get_prompt_template_library()
+        elif any(keyword in text_lower for keyword in ['analytics', 'performance', 'stats']):
+            return get_prompt_analytics_overview()
+        else:
+            return get_prompt_lab_overview()
+            
+    except Exception as e:
+        print(f"Error in prompt engineering handler: {e}")
+        return "🧪 Prompt Engineering Lab is loading... Please try again in a moment."
+
+def get_prompt_lab_overview():
+    """Get overview of prompt engineering lab capabilities"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get template statistics
+        cursor.execute('SELECT COUNT(*) FROM prompt_templates')
+        template_count = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM prompt_experiments')
+        experiment_count = cursor.fetchone()[0]
+        
+        # Get recent templates
+        cursor.execute('''
+            SELECT template_name, category, usage_count, rating_average
+            FROM prompt_templates
+            ORDER BY created_at DESC
+            LIMIT 5
+        ''')
+        recent_templates = cursor.fetchall()
+        
+        # Get active experiments
+        cursor.execute('''
+            SELECT experiment_name, status, total_tests, winner
+            FROM prompt_experiments
+            WHERE status = 'running'
+            ORDER BY created_at DESC
+            LIMIT 3
+        ''')
+        active_experiments = cursor.fetchall()
+        
+        conn.close()
+        
+        response = f"""🧪 **Prompt Engineering Lab**
+
+📊 **Lab Statistics**:
+• **{template_count}** Prompt Templates
+• **{experiment_count}** A/B Experiments
+• Advanced optimization tools
+• Performance analytics
+
+🔬 **Recent Templates**:"""
+        
+        if recent_templates:
+            for template in recent_templates:
+                name, category, usage, rating = template
+                response += f"\n• **{name}** ({category}) - Used {usage}x - {rating:.1f}⭐"
+        else:
+            response += "\n• No templates yet - create your first one!"
+        
+        if active_experiments:
+            response += f"\n\n⚗️ **Active Experiments**:"
+            for exp in active_experiments:
+                name, status, tests, winner = exp
+                response += f"\n• **{name}** - {tests} tests - {status}"
+        
+        response += """
+
+🎯 **Lab Features**:
+• **Template Builder** - Create reusable prompt templates
+• **A/B Testing** - Compare prompt variants scientifically  
+• **Optimization Engine** - AI-powered prompt improvements
+• **Performance Analytics** - Track success metrics
+• **Template Library** - Browse community templates
+
+🚀 **Quick Actions**:
+• "Create new template" - Build a prompt template
+• "Start A/B test" - Compare two prompts
+• "Optimize my prompt" - Get AI suggestions
+• "Browse templates" - Explore template library
+• "Show analytics" - View performance data"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting prompt lab overview: {e}")
+        return "🧪 Prompt Engineering Lab is loading... Please try again in a moment."
+
+def create_prompt_template_interface():
+    """Create interface for building new prompt templates"""
+    return """🧪 **Create New Prompt Template**
+
+I'll help you create a professional prompt template! Here's how to structure it:
+
+**Template Components**:
+• **Name**: Give your template a descriptive name
+• **Category**: Choose a category (writing, analysis, creative, etc.)
+• **Variables**: Define placeholders like {topic}, {style}, {audience}
+• **Core Prompt**: Write the main prompt with variables
+
+**Example Template**:
+```
+Name: "Blog Post Writer"
+Category: "Content Creation"
+Variables: {topic}, {audience}, {tone}, {length}
+
+Prompt: "Write a {length} blog post about {topic} for {audience}. 
+Use a {tone} tone and include practical examples. Structure with 
+clear headings and actionable insights."
+```
+
+🎯 **Ready to create?** Say something like:
+• "Template: Email Marketing Writer"
+• "Create social media template"
+• "Build analysis prompt template"
+
+I'll guide you through each step and help optimize your prompt for maximum effectiveness!"""
+
+def create_prompt_experiment_interface():
+    """Create interface for A/B testing prompts"""
+    return """⚗️ **Prompt A/B Testing Lab**
+
+Let's set up a scientific comparison between two prompt variants!
+
+**Experiment Setup**:
+• **Hypothesis**: What do you want to test?
+• **Prompt A**: Your baseline prompt
+• **Prompt B**: Your variant to test against
+• **Success Metrics**: How will you measure success?
+• **Test Inputs**: Sample data to test both prompts
+
+**Common Test Scenarios**:
+• **Clarity Test**: Formal vs conversational tone
+• **Length Test**: Brief vs detailed instructions
+• **Structure Test**: Bullet points vs paragraphs
+• **Context Test**: With vs without examples
+
+**Example Experiment**:
+```
+Hypothesis: "More specific examples improve output quality"
+
+Prompt A: "Write a product description"
+Prompt B: "Write a product description with specific benefits, 
+features, and target customer use cases"
+
+Metrics: Clarity score, engagement potential, completeness
+```
+
+🔬 **Ready to start testing?** Say:
+• "Test formal vs casual prompts"
+• "Compare short vs detailed instructions"
+• "Experiment with different structures"
+
+I'll help you design the perfect experiment and analyze the results!"""
+
+def get_prompt_optimization_suggestions():
+    """Get AI-powered prompt optimization suggestions"""
+    return """🎯 **Prompt Optimization Engine**
+
+Let me analyze and improve your prompts using advanced optimization techniques!
+
+**Optimization Areas**:
+
+**🎪 Clarity & Specificity**
+• Remove ambiguous language
+• Add specific constraints and examples
+• Define expected output format
+
+**🎭 Context & Role Definition**  
+• Establish clear AI persona/role
+• Provide relevant background context
+• Set appropriate expertise level
+
+**📊 Structure & Format**
+• Use numbered steps for complex tasks
+• Include examples and templates
+• Specify desired output structure
+
+**🎨 Creativity & Engagement**
+• Balance creativity with constraints
+• Use engaging language and examples
+• Include variety in instruction style
+
+**📈 Performance Optimization**
+• Test different phrasings
+• Optimize for consistent results
+• Reduce hallucination risks
+
+**🔬 How to optimize**:
+• **Paste your prompt** - I'll analyze and suggest improvements
+• **Describe your goal** - I'll create an optimized version
+• **Share your challenges** - I'll provide targeted solutions
+
+Example: "Optimize this prompt: 'Write a blog post about AI'"
+
+I'll transform it into a high-performance template with specific instructions, context, and structure!"""
+
+def get_prompt_template_library():
+    """Browse the prompt template library"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get template categories
+        cursor.execute('''
+            SELECT category, COUNT(*) as count
+            FROM prompt_templates
+            GROUP BY category
+            ORDER BY count DESC
+        ''')
+        categories = cursor.fetchall()
+        
+        # Get top-rated templates
+        cursor.execute('''
+            SELECT template_name, category, description, rating_average, usage_count
+            FROM prompt_templates
+            WHERE is_public = 1
+            ORDER BY rating_average DESC, usage_count DESC
+            LIMIT 8
+        ''')
+        top_templates = cursor.fetchall()
+        
+        conn.close()
+        
+        response = """📚 **Prompt Template Library**
+
+🏆 **Top-Rated Templates**:"""
+        
+        if top_templates:
+            for template in top_templates:
+                name, category, desc, rating, usage = template
+                short_desc = (desc[:50] + "...") if len(desc) > 50 else desc
+                response += f"\n• **{name}** ({category}) - {rating:.1f}⭐ - Used {usage}x\n  *{short_desc}*"
+        else:
+            response += "\n• Library is being built - be the first to contribute!"
+        
+        if categories:
+            response += f"\n\n📂 **Categories Available**:"
+            for category, count in categories:
+                response += f"\n• **{category}** ({count} templates)"
+        
+        response += """
+
+🎯 **Popular Categories**:
+• **Content Creation** - Blog posts, social media, marketing copy
+• **Data Analysis** - Research, insights, report generation
+• **Creative Writing** - Stories, poems, character development
+• **Business Communication** - Emails, proposals, presentations
+• **Code & Technical** - Documentation, debugging, explanations
+• **Education** - Lesson plans, explanations, study guides
+
+🔍 **Find Templates**:
+• "Show me [category] templates"
+• "Find templates for [use case]"
+• "Browse creative writing prompts"
+• "Get business email templates"
+
+📝 **Use Templates**:
+Simply say "Use [template name]" and I'll apply it with your specific inputs!"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting template library: {e}")
+        return "📚 Template Library is loading... Please try again in a moment."
+
+def get_prompt_analytics_overview():
+    """Get prompt performance analytics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get template performance stats
+        cursor.execute('''
+            SELECT 
+                AVG(avg_response_time) as avg_time,
+                AVG(avg_rating) as avg_rating,
+                AVG(success_rate) as avg_success,
+                COUNT(*) as total_analytics
+            FROM prompt_analytics
+            WHERE date >= date('now', '-30 days')
+        ''')
+        overall_stats = cursor.fetchone()
+        
+        # Get top performing templates
+        cursor.execute('''
+            SELECT pt.template_name, pt.category, 
+                   AVG(pa.avg_rating) as rating,
+                   SUM(pa.usage_count) as total_usage,
+                   AVG(pa.success_rate) as success_rate
+            FROM prompt_templates pt
+            JOIN prompt_analytics pa ON pt.id = pa.prompt_id
+            WHERE pa.date >= date('now', '-30 days')
+            GROUP BY pt.id
+            ORDER BY rating DESC, success_rate DESC
+            LIMIT 5
+        ''')
+        top_performers = cursor.fetchall()
+        
+        # Get improvement insights
+        cursor.execute('''
+            SELECT title, description, impact_level, confidence_score
+            FROM improvement_insights
+            WHERE insight_type = 'prompt_optimization'
+            ORDER BY priority DESC, confidence_score DESC
+            LIMIT 3
+        ''')
+        insights = cursor.fetchall()
+        
+        conn.close()
+        
+        if overall_stats[0]:
+            avg_time, avg_rating, avg_success, total_analytics = overall_stats
+            response = f"""📊 **Prompt Analytics Dashboard**
+
+📈 **30-Day Performance**:
+• **Average Rating**: {avg_rating:.1f}/5.0 ⭐
+• **Success Rate**: {avg_success:.1f}% ✅
+• **Avg Response Time**: {avg_time:.2f}s ⚡
+• **Analytics Records**: {total_analytics} data points"""
+        else:
+            response = """📊 **Prompt Analytics Dashboard**
+
+📈 **30-Day Performance**:
+• **Building Analytics** - Start using templates to see data!
+• Performance tracking active
+• Insights engine ready"""
+        
+        if top_performers:
+            response += f"\n\n🏆 **Top Performing Templates**:"
+            for template in top_performers:
+                name, category, rating, usage, success = template
+                response += f"\n• **{name}** ({category}) - {rating:.1f}⭐ - {success:.1f}% success - {usage} uses"
+        
+        if insights:
+            response += f"\n\n💡 **Optimization Insights**:"
+            for insight in insights:
+                title, desc, impact, confidence = insight
+                response += f"\n• **{title}** ({impact} impact, {confidence:.0f}% confidence)\n  *{desc}*"
+        
+        response += """
+
+📊 **Analytics Features**:
+• **Template Performance** - Success rates and user ratings
+• **Response Time Tracking** - Optimize for speed
+• **Usage Patterns** - Understand what works
+• **A/B Test Results** - Statistical significance testing
+• **Improvement Suggestions** - AI-powered optimization tips
+
+🔍 **Detailed Analytics**:
+• "Show template performance"
+• "Analyze my prompts"
+• "Get optimization tips"
+• "View experiment results"
+
+📈 **Performance Tracking**:
+All your prompts are automatically analyzed for performance, helping you continuously improve your AI interactions!"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting prompt analytics: {e}")
+        return "📊 Analytics dashboard is loading... Please try again in a moment."
+
+# ===== AI PERFORMANCE ANALYTICS FUNCTIONS =====
+
+def handle_ai_performance_analytics(text):
+    """Handle AI performance analytics requests"""
+    try:
+        print(f"📊 Processing performance analytics request: {text}")
+        
+        text_lower = text.lower()
+        
+        if any(keyword in text_lower for keyword in ['usage', 'stats', 'statistics']):
+            return get_usage_statistics()
+        elif any(keyword in text_lower for keyword in ['performance', 'metrics', 'benchmark']):
+            return get_performance_metrics()
+        elif any(keyword in text_lower for keyword in ['improvement', 'insights', 'optimize']):
+            return get_improvement_insights()
+        elif any(keyword in text_lower for keyword in ['user', 'engagement', 'behavior']):
+            return get_user_analytics()
+        elif any(keyword in text_lower for keyword in ['ab test', 'experiment', 'test']):
+            return get_ab_test_results()
+        else:
+            return get_analytics_overview()
+            
+    except Exception as e:
+        print(f"Error in performance analytics handler: {e}")
+        return "📊 AI Performance Analytics is loading... Please try again in a moment."
+
+def get_analytics_overview():
+    """Get comprehensive analytics overview"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get today's stats
+        today = datetime.now().date().isoformat()
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_requests,
+                SUM(success) as successful_requests,
+                AVG(response_time) as avg_response_time,
+                COUNT(DISTINCT user_id) as unique_users
+            FROM ai_usage_stats
+            WHERE date = ?
+        ''', (today,))
+        today_stats = cursor.fetchone()
+        
+        # Get weekly trends
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_requests,
+                AVG(response_time) as avg_response_time,
+                (SUM(success) * 100.0 / COUNT(*)) as success_rate
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+        ''')
+        weekly_stats = cursor.fetchone()
+        
+        # Get top features
+        cursor.execute('''
+            SELECT feature_used, COUNT(*) as usage_count
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+            GROUP BY feature_used
+            ORDER BY usage_count DESC
+            LIMIT 5
+        ''')
+        top_features = cursor.fetchall()
+        
+        # Get performance insights
+        cursor.execute('''
+            SELECT title, impact_level, confidence_score
+            FROM improvement_insights
+            WHERE created_at >= date('now', '-7 days')
+            ORDER BY priority DESC
+            LIMIT 3
+        ''')
+        recent_insights = cursor.fetchall()
+        
+        conn.close()
+        
+        total_req, success_req, avg_time, unique_users = today_stats
+        week_req, week_time, success_rate = weekly_stats
+        
+        response = f"""📊 **AI Performance Analytics Dashboard**
+
+📈 **Today's Performance**:
+• **{total_req or 0}** Total Requests
+• **{success_req or 0}** Successful Responses
+• **{unique_users or 0}** Active Users
+• **{avg_time:.2f}s** Avg Response Time
+
+📊 **7-Day Trends**:
+• **{week_req or 0}** Total Requests
+• **{success_rate:.1f}%** Success Rate
+• **{week_time:.2f}s** Avg Response Time
+• Tracking performance continuously"""
+        
+        if top_features:
+            response += f"\n\n🔥 **Most Used Features (7 days)**:"
+            for feature, count in top_features:
+                response += f"\n• **{feature}**: {count} uses"
+        
+        if recent_insights:
+            response += f"\n\n💡 **Recent Performance Insights**:"
+            for title, impact, confidence in recent_insights:
+                response += f"\n• **{title}** ({impact} impact, {confidence:.0f}% confidence)"
+        
+        response += """
+
+🎯 **Analytics Categories**:
+• **Usage Statistics** - Request volumes and patterns
+• **Performance Metrics** - Response times and success rates  
+• **User Analytics** - Engagement and behavior insights
+• **Improvement Insights** - AI-powered optimization suggestions
+• **A/B Test Results** - Feature performance comparisons
+
+🔍 **Detailed Views**:
+• "Show usage stats" - Volume and trend analysis
+• "Performance metrics" - Speed and reliability data
+• "User behavior" - Engagement and satisfaction
+• "Improvement insights" - Optimization opportunities
+• "A/B test results" - Feature comparison data
+
+📈 **Smart Monitoring**:
+Our AI continuously analyzes performance to identify optimization opportunities and ensure the best user experience!"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting analytics overview: {e}")
+        return "📊 Analytics dashboard is loading... Please try again in a moment."
+
+def get_usage_statistics():
+    """Get detailed usage statistics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Daily usage for last 7 days
+        cursor.execute('''
+            SELECT date, 
+                   COUNT(*) as requests,
+                   COUNT(DISTINCT user_id) as users,
+                   SUM(success) as successful
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+            GROUP BY date
+            ORDER BY date DESC
+        ''')
+        daily_stats = cursor.fetchall()
+        
+        # Feature usage breakdown
+        cursor.execute('''
+            SELECT feature_used, 
+                   COUNT(*) as total_uses,
+                   AVG(response_time) as avg_time,
+                   (SUM(success) * 100.0 / COUNT(*)) as success_rate
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-30 days')
+            GROUP BY feature_used
+            ORDER BY total_uses DESC
+        ''')
+        feature_stats = cursor.fetchall()
+        
+        # Peak usage hours
+        cursor.execute('''
+            SELECT hour, COUNT(*) as request_count
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+            GROUP BY hour
+            ORDER BY request_count DESC
+            LIMIT 5
+        ''')
+        peak_hours = cursor.fetchall()
+        
+        conn.close()
+        
+        response = """📊 **Usage Statistics**
+
+📅 **Daily Activity (Last 7 Days)**:"""
+        
+        if daily_stats:
+            for date, requests, users, successful in daily_stats:
+                success_pct = (successful / requests * 100) if requests > 0 else 0
+                response += f"\n• **{date}**: {requests} requests, {users} users, {success_pct:.1f}% success"
+        else:
+            response += "\n• No usage data yet - start using features to see statistics!"
+        
+        if feature_stats:
+            response += f"\n\n🎯 **Feature Usage (Last 30 Days)**:"
+            for feature, uses, avg_time, success_rate in feature_stats:
+                response += f"\n• **{feature}**: {uses} uses, {avg_time:.2f}s avg, {success_rate:.1f}% success"
+        
+        if peak_hours:
+            response += f"\n\n⏰ **Peak Usage Hours**:"
+            for hour, count in peak_hours:
+                time_str = f"{hour:02d}:00"
+                response += f"\n• **{time_str}**: {count} requests"
+        
+        response += """
+
+📈 **Usage Insights**:
+• Track daily request volumes
+• Monitor feature adoption rates
+• Identify peak usage patterns
+• Analyze user engagement trends
+
+🔍 **Drill Down Options**:
+• "Show feature performance"
+• "Analyze user patterns"
+• "Peak hour analysis"
+• "Success rate trends"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting usage statistics: {e}")
+        return "📊 Usage statistics are loading... Please try again in a moment."
+
+def get_performance_metrics():
+    """Get performance metrics and benchmarks"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Model performance comparison
+        cursor.execute('''
+            SELECT model_used,
+                   COUNT(*) as total_requests,
+                   AVG(response_time) as avg_response_time,
+                   (SUM(success) * 100.0 / COUNT(*)) as success_rate,
+                   AVG(tokens_used) as avg_tokens
+            FROM ai_usage_stats
+            WHERE model_used IS NOT NULL AND date >= date('now', '-30 days')
+            GROUP BY model_used
+            ORDER BY total_requests DESC
+        ''')
+        model_performance = cursor.fetchall()
+        
+        # Performance trends
+        cursor.execute('''
+            SELECT date,
+                   AVG(response_time) as avg_time,
+                   (SUM(success) * 100.0 / COUNT(*)) as success_rate
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+            GROUP BY date
+            ORDER BY date DESC
+        ''')
+        performance_trends = cursor.fetchall()
+        
+        # Error analysis
+        cursor.execute('''
+            SELECT error_message, COUNT(*) as error_count
+            FROM ai_usage_stats
+            WHERE success = 0 AND error_message IS NOT NULL
+            AND date >= date('now', '-7 days')
+            GROUP BY error_message
+            ORDER BY error_count DESC
+            LIMIT 5
+        ''')
+        error_analysis = cursor.fetchall()
+        
+        conn.close()
+        
+        response = """⚡ **Performance Metrics**
+
+🤖 **Model Performance (Last 30 Days)**:"""
+        
+        if model_performance:
+            for model, requests, avg_time, success_rate, avg_tokens in model_performance:
+                response += f"\n• **{model}**: {requests} requests, {avg_time:.2f}s avg, {success_rate:.1f}% success, {avg_tokens:.0f} tokens"
+        else:
+            response += "\n• No model performance data yet - AI models will be tracked as they're used!"
+        
+        if performance_trends:
+            response += f"\n\n📈 **Performance Trends (Last 7 Days)**:"
+            for date, avg_time, success_rate in performance_trends:
+                response += f"\n• **{date}**: {avg_time:.2f}s response time, {success_rate:.1f}% success"
+        
+        if error_analysis:
+            response += f"\n\n⚠️ **Error Analysis (Last 7 Days)**:"
+            for error, count in error_analysis:
+                short_error = (error[:60] + "...") if len(error) > 60 else error
+                response += f"\n• **{short_error}**: {count} occurrences"
+        
+        response += """
+
+📊 **Performance Benchmarks**:
+• **Response Time**: Target < 2.0s for optimal UX
+• **Success Rate**: Target > 95% for reliability
+• **Token Efficiency**: Monitor cost optimization
+• **Error Rate**: Target < 5% for stability
+
+🎯 **Optimization Opportunities**:
+• Monitor slow response patterns
+• Identify high-error features
+• Track token usage efficiency
+• Benchmark against industry standards
+
+🔧 **Performance Actions**:
+• "Optimize slow responses"
+• "Analyze error patterns"
+• "Compare model efficiency"
+• "Track improvement trends"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting performance metrics: {e}")
+        return "⚡ Performance metrics are loading... Please try again in a moment."
+
+def get_improvement_insights():
+    """Get AI-powered improvement insights"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get all improvement insights
+        cursor.execute('''
+            SELECT insight_type, title, description, impact_level, 
+                   confidence_score, action_suggested, implemented
+            FROM improvement_insights
+            ORDER BY priority DESC, confidence_score DESC
+            LIMIT 10
+        ''')
+        insights = cursor.fetchall()
+        
+        conn.close()
+        
+        response = """💡 **AI-Powered Improvement Insights**
+
+🧠 **Optimization Opportunities**:"""
+        
+        if insights:
+            for insight_type, title, desc, impact, confidence, action, implemented in insights:
+                status = "✅ Implemented" if implemented else "🔄 Pending"
+                response += f"\n\n**{title}** ({impact.upper()} Impact - {confidence:.0f}% Confidence) {status}"
+                response += f"\n*{desc}*"
+                if action and not implemented:
+                    response += f"\n🎯 **Action**: {action}"
+        else:
+            response += """
+• 🔍 **Analyzing Performance** - Gathering data for insights
+• 📊 **Building Baselines** - Establishing performance metrics  
+• 🧠 **AI Learning** - Understanding usage patterns
+• ⚡ **Optimization Ready** - Insights will appear as data accumulates"""
+        
+        response += """
+
+🎯 **Insight Categories**:
+• **Prompt Optimization** - Improve AI interaction quality
+• **Performance Enhancement** - Speed and reliability improvements
+• **User Experience** - Interface and workflow optimizations
+• **Feature Usage** - Adoption and engagement improvements
+• **Error Reduction** - Reliability and stability enhancements
+
+🔍 **How Insights Work**:
+• **Continuous Analysis** - AI monitors all interactions
+• **Pattern Detection** - Identifies optimization opportunities
+• **Statistical Validation** - Ensures recommendations are data-driven
+• **Actionable Suggestions** - Provides specific improvement steps
+• **Impact Assessment** - Prioritizes by potential value
+
+🚀 **Implementation Tracking**:
+• Mark insights as implemented
+• Monitor improvement impact
+• Track performance changes
+• Validate optimization success
+
+💪 **Smart Optimization**:
+Our AI continuously learns from your usage patterns to suggest personalized improvements that enhance your experience!"""
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error getting improvement insights: {e}")
+        return "💡 Improvement insights are loading... Please try again in a moment."
+
 # ===== VISUAL AI GENERATION FUNCTIONS =====
 
 def generate_ai_avatar(prompt, style="realistic", consistency_seed=None):
