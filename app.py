@@ -10648,6 +10648,405 @@ def rate_model_api(model_id):
         print(f"Error rating model: {e}")
         return jsonify({'error': 'Failed to rate model'}), 500
 
+# ===== PROMPT ENGINEERING LAB API ENDPOINTS =====
+
+@app.route('/api/prompts/templates', methods=['GET'])
+def get_prompt_templates_api():
+    """Get prompt templates with filtering"""
+    try:
+        category = request.args.get('category')
+        search = request.args.get('search')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        query = '''
+            SELECT id, template_name, category, description, prompt_text,
+                   variables, use_case, usage_count, rating_average,
+                   rating_count, created_at
+            FROM prompt_templates
+            WHERE is_public = 1
+        '''
+        params = []
+        
+        if category:
+            query += ' AND category = ?'
+            params.append(category)
+            
+        if search:
+            query += ' AND (template_name LIKE ? OR description LIKE ?)'
+            params.extend([f'%{search}%', f'%{search}%'])
+            
+        query += ' ORDER BY rating_average DESC, usage_count DESC'
+        
+        cursor.execute(query, params)
+        
+        templates = []
+        for row in cursor.fetchall():
+            templates.append({
+                'id': row[0],
+                'name': row[1],
+                'category': row[2],
+                'description': row[3],
+                'prompt_text': row[4],
+                'variables': json.loads(row[5]) if row[5] else [],
+                'use_case': row[6],
+                'usage_count': row[7],
+                'rating': row[8],
+                'rating_count': row[9],
+                'created_at': row[10]
+            })
+        
+        conn.close()
+        return jsonify({'templates': templates})
+        
+    except Exception as e:
+        print(f"Error getting prompt templates: {e}")
+        return jsonify({'error': 'Failed to get templates'}), 500
+
+@app.route('/api/prompts/templates', methods=['POST'])
+def create_prompt_template_api():
+    """Create a new prompt template"""
+    try:
+        data = request.get_json()
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO prompt_templates (
+                template_name, category, description, prompt_text,
+                variables, use_case, creator_id, created_at,
+                updated_at, is_public, tags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('name'),
+            data.get('category'),
+            data.get('description', ''),
+            data.get('prompt_text'),
+            json.dumps(data.get('variables', [])),
+            data.get('use_case', ''),
+            'user_001',  # Replace with actual user ID
+            datetime.now().isoformat(),
+            datetime.now().isoformat(),
+            data.get('is_public', 0),
+            json.dumps(data.get('tags', []))
+        ))
+        
+        template_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'template_id': template_id,
+            'message': 'Template created successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error creating prompt template: {e}")
+        return jsonify({'error': 'Failed to create template'}), 500
+
+@app.route('/api/prompts/experiments', methods=['POST'])
+def create_prompt_experiment_api():
+    """Create a new prompt A/B test experiment"""
+    try:
+        data = request.get_json()
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO prompt_experiments (
+                experiment_name, description, prompt_a, prompt_b,
+                variables, model_used, creator_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('name'),
+            data.get('description', ''),
+            data.get('prompt_a'),
+            data.get('prompt_b'),
+            json.dumps(data.get('variables', {})),
+            data.get('model_used', 'gpt-3.5-turbo'),
+            'user_001',  # Replace with actual user ID
+            datetime.now().isoformat()
+        ))
+        
+        experiment_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'experiment_id': experiment_id,
+            'message': 'Experiment created successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error creating prompt experiment: {e}")
+        return jsonify({'error': 'Failed to create experiment'}), 500
+
+@app.route('/api/prompts/experiments/<int:experiment_id>/test', methods=['POST'])
+def test_prompt_experiment_api(experiment_id):
+    """Run a test for a prompt experiment"""
+    try:
+        data = request.get_json()
+        test_input = data.get('test_input')
+        variant = data.get('variant')  # 'a' or 'b'
+        
+        # Get experiment details
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT prompt_a, prompt_b, model_used
+            FROM prompt_experiments
+            WHERE id = ?
+        ''', (experiment_id,))
+        
+        experiment = cursor.fetchone()
+        if not experiment:
+            return jsonify({'error': 'Experiment not found'}), 404
+        
+        prompt_a, prompt_b, model_used = experiment
+        selected_prompt = prompt_a if variant == 'a' else prompt_b
+        
+        # Simulate AI response (replace with actual AI call)
+        start_time = datetime.now()
+        ai_response = f"[Simulated response for variant {variant.upper()}] {test_input[:50]}..."
+        end_time = datetime.now()
+        
+        response_time = (end_time - start_time).total_seconds()
+        
+        # Save test result
+        cursor.execute('''
+            INSERT INTO prompt_test_results (
+                experiment_id, prompt_variant, test_input, ai_response,
+                response_time, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            experiment_id, variant, test_input, ai_response,
+            response_time, datetime.now().isoformat()
+        ))
+        
+        # Update experiment stats
+        cursor.execute('''
+            UPDATE prompt_experiments
+            SET total_tests = total_tests + 1
+            WHERE id = ?
+        ''', (experiment_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'response': ai_response,
+            'response_time': response_time,
+            'variant': variant
+        })
+        
+    except Exception as e:
+        print(f"Error testing prompt experiment: {e}")
+        return jsonify({'error': 'Failed to run test'}), 500
+
+# ===== AI PERFORMANCE ANALYTICS API ENDPOINTS =====
+
+@app.route('/api/analytics/usage', methods=['GET'])
+def get_usage_analytics_api():
+    """Get usage analytics data"""
+    try:
+        days = int(request.args.get('days', 7))
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Daily usage stats
+        cursor.execute('''
+            SELECT date, 
+                   COUNT(*) as requests,
+                   COUNT(DISTINCT user_id) as users,
+                   SUM(success) as successful,
+                   AVG(response_time) as avg_time
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-{} days')
+            GROUP BY date
+            ORDER BY date DESC
+        '''.format(days))
+        
+        daily_stats = []
+        for row in cursor.fetchall():
+            daily_stats.append({
+                'date': row[0],
+                'requests': row[1],
+                'users': row[2],
+                'successful': row[3],
+                'avg_response_time': row[4]
+            })
+        
+        # Feature usage breakdown
+        cursor.execute('''
+            SELECT feature_used, COUNT(*) as usage_count
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-{} days')
+            GROUP BY feature_used
+            ORDER BY usage_count DESC
+        '''.format(days))
+        
+        feature_stats = []
+        for row in cursor.fetchall():
+            feature_stats.append({
+                'feature': row[0],
+                'usage_count': row[1]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'daily_stats': daily_stats,
+            'feature_stats': feature_stats,
+            'period_days': days
+        })
+        
+    except Exception as e:
+        print(f"Error getting usage analytics: {e}")
+        return jsonify({'error': 'Failed to get usage analytics'}), 500
+
+@app.route('/api/analytics/performance', methods=['GET'])
+def get_performance_analytics_api():
+    """Get performance metrics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Overall performance metrics
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_requests,
+                SUM(success) as successful_requests,
+                AVG(response_time) as avg_response_time,
+                COUNT(DISTINCT user_id) as unique_users
+            FROM ai_usage_stats
+            WHERE date >= date('now', '-7 days')
+        ''')
+        
+        overall = cursor.fetchone()
+        
+        # Model performance comparison
+        cursor.execute('''
+            SELECT model_used,
+                   COUNT(*) as requests,
+                   AVG(response_time) as avg_time,
+                   (SUM(success) * 100.0 / COUNT(*)) as success_rate
+            FROM ai_usage_stats
+            WHERE model_used IS NOT NULL AND date >= date('now', '-7 days')
+            GROUP BY model_used
+            ORDER BY requests DESC
+        ''')
+        
+        model_performance = []
+        for row in cursor.fetchall():
+            model_performance.append({
+                'model': row[0],
+                'requests': row[1],
+                'avg_response_time': row[2],
+                'success_rate': row[3]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'overall': {
+                'total_requests': overall[0],
+                'successful_requests': overall[1],
+                'avg_response_time': overall[2],
+                'unique_users': overall[3],
+                'success_rate': (overall[1] / overall[0] * 100) if overall[0] > 0 else 0
+            },
+            'model_performance': model_performance
+        })
+        
+    except Exception as e:
+        print(f"Error getting performance analytics: {e}")
+        return jsonify({'error': 'Failed to get performance analytics'}), 500
+
+@app.route('/api/analytics/insights', methods=['GET'])
+def get_improvement_insights_api():
+    """Get AI-powered improvement insights"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT insight_type, title, description, impact_level,
+                   confidence_score, action_suggested, implemented,
+                   created_at, priority
+            FROM improvement_insights
+            ORDER BY priority DESC, confidence_score DESC
+            LIMIT 20
+        ''')
+        
+        insights = []
+        for row in cursor.fetchall():
+            insights.append({
+                'type': row[0],
+                'title': row[1],
+                'description': row[2],
+                'impact_level': row[3],
+                'confidence_score': row[4],
+                'action_suggested': row[5],
+                'implemented': bool(row[6]),
+                'created_at': row[7],
+                'priority': row[8]
+            })
+        
+        conn.close()
+        return jsonify({'insights': insights})
+        
+    except Exception as e:
+        print(f"Error getting improvement insights: {e}")
+        return jsonify({'error': 'Failed to get insights'}), 500
+
+@app.route('/api/analytics/log', methods=['POST'])
+def log_usage_analytics_api():
+    """Log usage analytics data"""
+    try:
+        data = request.get_json()
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        now = datetime.now()
+        cursor.execute('''
+            INSERT INTO ai_usage_stats (
+                user_id, session_id, feature_used, model_used,
+                request_type, response_time, tokens_used,
+                success, error_message, timestamp, date, hour
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('user_id', 'anonymous'),
+            data.get('session_id'),
+            data.get('feature_used'),
+            data.get('model_used'),
+            data.get('request_type'),
+            data.get('response_time', 0.0),
+            data.get('tokens_used', 0),
+            data.get('success', 1),
+            data.get('error_message'),
+            now.isoformat(),
+            now.date().isoformat(),
+            now.hour
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Analytics logged'})
+        
+    except Exception as e:
+        print(f"Error logging analytics: {e}")
+        return jsonify({'error': 'Failed to log analytics'}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
     
