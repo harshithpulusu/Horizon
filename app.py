@@ -1026,6 +1026,166 @@ def init_db():
             )
         ''')
         
+        # Prompt Engineering Lab Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prompt_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                template_name TEXT NOT NULL,
+                category TEXT,
+                description TEXT,
+                prompt_text TEXT NOT NULL,
+                variables TEXT, -- JSON array of variable names
+                use_case TEXT,
+                creator_id TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                usage_count INTEGER DEFAULT 0,
+                rating_average REAL DEFAULT 0.0,
+                rating_count INTEGER DEFAULT 0,
+                is_public INTEGER DEFAULT 0,
+                tags TEXT -- JSON array of tags
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prompt_experiments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                experiment_name TEXT NOT NULL,
+                description TEXT,
+                prompt_a TEXT NOT NULL,
+                prompt_b TEXT NOT NULL,
+                variables TEXT, -- JSON object with test variables
+                model_used TEXT,
+                creator_id TEXT,
+                created_at TEXT,
+                status TEXT DEFAULT 'running', -- running, completed, paused
+                total_tests INTEGER DEFAULT 0,
+                winner TEXT, -- 'a', 'b', or 'tie'
+                confidence_score REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prompt_test_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                experiment_id INTEGER,
+                prompt_variant TEXT, -- 'a' or 'b'
+                test_input TEXT,
+                ai_response TEXT,
+                response_time REAL,
+                user_rating INTEGER, -- 1-5 scale
+                auto_score REAL, -- automated quality score
+                metrics TEXT, -- JSON object with additional metrics
+                timestamp TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES prompt_experiments (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prompt_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prompt_id INTEGER,
+                date TEXT,
+                usage_count INTEGER DEFAULT 0,
+                avg_response_time REAL DEFAULT 0.0,
+                avg_rating REAL DEFAULT 0.0,
+                success_rate REAL DEFAULT 0.0,
+                error_count INTEGER DEFAULT 0,
+                improvement_suggestions TEXT,
+                FOREIGN KEY (prompt_id) REFERENCES prompt_templates (id)
+            )
+        ''')
+        
+        # AI Performance Analytics Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_usage_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                session_id TEXT,
+                feature_used TEXT,
+                model_used TEXT,
+                request_type TEXT,
+                response_time REAL,
+                tokens_used INTEGER,
+                success INTEGER, -- 1 for success, 0 for failure
+                error_message TEXT,
+                timestamp TEXT,
+                date TEXT, -- YYYY-MM-DD for daily aggregation
+                hour INTEGER -- 0-23 for hourly stats
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS performance_metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                metric_type TEXT, -- daily, weekly, monthly
+                feature_name TEXT,
+                model_name TEXT,
+                total_requests INTEGER DEFAULT 0,
+                successful_requests INTEGER DEFAULT 0,
+                failed_requests INTEGER DEFAULT 0,
+                avg_response_time REAL DEFAULT 0.0,
+                total_tokens INTEGER DEFAULT 0,
+                user_satisfaction REAL DEFAULT 0.0,
+                peak_hour INTEGER,
+                improvement_score REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                date TEXT,
+                total_interactions INTEGER DEFAULT 0,
+                favorite_features TEXT, -- JSON array
+                most_used_personality TEXT,
+                avg_session_length REAL DEFAULT 0.0,
+                satisfaction_score REAL DEFAULT 0.0,
+                engagement_level TEXT, -- low, medium, high
+                preferred_models TEXT, -- JSON array
+                usage_patterns TEXT -- JSON object with usage insights
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS improvement_insights (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                insight_type TEXT, -- prompt_optimization, performance_enhancement, user_experience
+                category TEXT,
+                title TEXT,
+                description TEXT,
+                data_source TEXT, -- which table/metric this insight comes from
+                confidence_score REAL,
+                impact_level TEXT, -- low, medium, high, critical
+                action_suggested TEXT,
+                implemented INTEGER DEFAULT 0,
+                created_at TEXT,
+                priority INTEGER DEFAULT 0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ab_test_campaigns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_name TEXT NOT NULL,
+                description TEXT,
+                feature_tested TEXT,
+                variant_a TEXT, -- configuration for variant A
+                variant_b TEXT, -- configuration for variant B
+                start_date TEXT,
+                end_date TEXT,
+                status TEXT DEFAULT 'active', -- active, paused, completed
+                total_participants INTEGER DEFAULT 0,
+                conversion_rate_a REAL DEFAULT 0.0,
+                conversion_rate_b REAL DEFAULT 0.0,
+                statistical_significance REAL DEFAULT 0.0,
+                winner TEXT, -- 'a', 'b', or 'inconclusive'
+                created_by TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
