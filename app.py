@@ -9053,6 +9053,41 @@ INTENT_PATTERNS = {
         r'\bmodel.*reviews\b', r'\bexplore.*models\b',
         r'\bcommunity.*models\b', r'\bupload.*model\b'
     ],
+    'prompt_engineering': [
+        r'\b(prompt.*engineering|prompt.*lab)\b',
+        r'\b(optimize|improve|enhance).*prompt\b',
+        r'\b(create|build|design).*prompt\b',
+        r'\bprompt.*template\b',
+        r'\bprompt.*optimization\b',
+        r'\ba.*b.*test.*prompt\b',
+        r'\btest.*prompt\b',
+        r'\bexperiment.*prompt\b',
+        r'\bcompare.*prompts\b',
+        r'\bprompt.*analytics\b',
+        r'\bprompt.*performance\b',
+        r'\btemplate.*library\b',
+        r'\bprompt.*library\b',
+        r'\bprompt.*builder\b',
+        r'\bprompt.*creator\b'
+    ],
+    'performance_analytics': [
+        r'\b(analytics|performance.*analytics)\b',
+        r'\b(usage.*stats|usage.*statistics)\b',
+        r'\b(performance.*metrics|performance.*stats)\b',
+        r'\b(ai.*analytics|ai.*performance)\b',
+        r'\banalytics.*dashboard\b',
+        r'\bperformance.*dashboard\b',
+        r'\busage.*data\b',
+        r'\bperformance.*data\b',
+        r'\bimprovement.*insights\b',
+        r'\boptimization.*insights\b',
+        r'\buser.*analytics\b',
+        r'\bengagement.*analytics\b',
+        r'\bresponse.*time.*analytics\b',
+        r'\bsuccess.*rate.*analytics\b',
+        r'\banalytics.*overview\b',
+        r'\bperformance.*overview\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -9116,7 +9151,7 @@ def calculate_realistic_confidence(user_input, response, ai_source, intent):
 
 def is_quick_command(intent):
     """Check if this is a quick command that shouldn't use ChatGPT"""
-    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design', 'ar_integration', 'dream_journal', 'time_capsule', 'virtual_world_builder', 'model_training', 'model_marketplace']
+    quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design', 'ar_integration', 'dream_journal', 'time_capsule', 'virtual_world_builder', 'model_training', 'model_marketplace', 'prompt_engineering', 'performance_analytics']
     return intent in quick_commands
 
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
@@ -9204,6 +9239,10 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_custom_model_training(user_input)
         elif intent == 'model_marketplace':
             response = handle_model_marketplace(user_input)
+        elif intent == 'prompt_engineering':
+            response = handle_prompt_engineering(user_input)
+        elif intent == 'performance_analytics':
+            response = handle_ai_performance_analytics(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
