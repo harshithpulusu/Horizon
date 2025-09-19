@@ -1186,6 +1186,142 @@ def init_db():
             )
         ''')
         
+        # Research Paper Generator Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS research_papers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                topic TEXT NOT NULL,
+                field TEXT, -- science, technology, medicine, social_science, etc.
+                abstract TEXT,
+                content TEXT,
+                citations TEXT, -- JSON array of citations
+                bibliography TEXT, -- formatted bibliography
+                keywords TEXT, -- comma-separated keywords
+                author_name TEXT,
+                status TEXT DEFAULT 'draft', -- draft, in_progress, completed
+                created_at TEXT,
+                updated_at TEXT,
+                word_count INTEGER DEFAULT 0,
+                quality_score REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS research_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                paper_id INTEGER,
+                source_type TEXT, -- journal, book, website, dataset, etc.
+                title TEXT NOT NULL,
+                authors TEXT,
+                journal_name TEXT,
+                publication_year INTEGER,
+                doi TEXT,
+                url TEXT,
+                abstract TEXT,
+                relevance_score REAL DEFAULT 0.0,
+                citation_format TEXT, -- APA, MLA, Chicago, etc.
+                added_at TEXT,
+                FOREIGN KEY (paper_id) REFERENCES research_papers (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS research_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                field TEXT,
+                structure TEXT, -- JSON object with paper structure
+                guidelines TEXT,
+                example_content TEXT,
+                created_by TEXT,
+                created_at TEXT,
+                usage_count INTEGER DEFAULT 0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS research_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                paper_id INTEGER,
+                generation_time REAL,
+                word_count INTEGER,
+                citation_count INTEGER,
+                quality_metrics TEXT, -- JSON object with quality scores
+                user_rating INTEGER, -- 1-5 scale
+                completion_rate REAL,
+                date_generated TEXT,
+                FOREIGN KEY (paper_id) REFERENCES research_papers (id)
+            )
+        ''')
+        
+        # Scientific Simulation Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS simulations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT, -- physics, chemistry, biology, math
+                simulation_type TEXT, -- molecular, physics_engine, ecosystem, etc.
+                description TEXT,
+                parameters TEXT, -- JSON object with simulation parameters
+                initial_conditions TEXT, -- JSON object with starting conditions
+                results TEXT, -- JSON object with simulation results
+                visualization_data TEXT, -- JSON object for charts/graphs
+                created_by TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                run_count INTEGER DEFAULT 0,
+                avg_runtime REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS simulation_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT,
+                description TEXT,
+                default_parameters TEXT, -- JSON object
+                educational_content TEXT,
+                learning_objectives TEXT,
+                difficulty_level TEXT, -- beginner, intermediate, advanced
+                created_by TEXT,
+                created_at TEXT,
+                usage_count INTEGER DEFAULT 0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS simulation_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                simulation_id INTEGER,
+                run_parameters TEXT, -- JSON object with specific run parameters
+                output_data TEXT, -- JSON object with results
+                runtime REAL,
+                success BOOLEAN DEFAULT 1,
+                error_message TEXT,
+                visualizations TEXT, -- JSON array of generated charts/graphs
+                insights TEXT, -- AI-generated insights about results
+                run_timestamp TEXT,
+                FOREIGN KEY (simulation_id) REFERENCES simulations (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS simulation_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                simulation_id INTEGER,
+                date TEXT,
+                total_runs INTEGER DEFAULT 0,
+                avg_runtime REAL DEFAULT 0.0,
+                success_rate REAL DEFAULT 0.0,
+                most_common_parameters TEXT, -- JSON object
+                user_engagement_score REAL DEFAULT 0.0,
+                educational_effectiveness REAL DEFAULT 0.0,
+                FOREIGN KEY (simulation_id) REFERENCES simulations (id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
