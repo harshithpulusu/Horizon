@@ -10032,6 +10032,35 @@ INTENT_PATTERNS = {
         r'\banalytics.*overview\b',
         r'\bperformance.*overview\b'
     ],
+    'research_paper_generator': [
+        r'\b(research.*paper|paper.*generator|academic.*paper)\b',
+        r'\b(write.*paper|create.*paper|generate.*paper)\b',
+        r'\b(research.*writing|academic.*writing)\b',
+        r'\b(citation.*help|bibliography|references)\b',
+        r'\b(research.*template|paper.*template)\b',
+        r'\b(literature.*review|survey.*paper)\b',
+        r'\b(thesis.*help|dissertation)\b',
+        r'\b(scientific.*paper|journal.*article)\b',
+        r'\b(apa.*format|mla.*format|chicago.*style)\b',
+        r'\b(research.*help|academic.*help)\b',
+        r'\b(my.*papers|paper.*library)\b',
+        r'\b(scholarly.*writing|peer.*review)\b'
+    ],
+    'scientific_simulation': [
+        r'\b(simulation|simulate|scientific.*simulation)\b',
+        r'\b(physics.*simulation|chemistry.*simulation|biology.*simulation)\b',
+        r'\b(molecular.*simulation|molecular.*dynamics)\b',
+        r'\b(ecosystem.*simulation|population.*simulation)\b',
+        r'\b(pendulum.*simulation|projectile.*motion)\b',
+        r'\b(chemical.*reaction|molecular.*structure)\b',
+        r'\b(cell.*simulation|genetic.*simulation)\b',
+        r'\b(quantum.*simulation|particle.*simulation)\b',
+        r'\b(lab.*simulation|virtual.*lab)\b',
+        r'\b(scientific.*model|mathematical.*model)\b',
+        r'\b(simulation.*template|simulation.*help)\b',
+        r'\b(my.*simulations|simulation.*results)\b',
+        r'\b(interactive.*simulation|educational.*simulation)\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
