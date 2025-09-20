@@ -36,11 +36,14 @@ except ImportError:
 try:
     from google.cloud import aiplatform
     from google.cloud.aiplatform.gapic.schema import predict
+    import vertexai
+    from vertexai.preview.vision_models import ImageGenerationModel
     IMAGEN_AVAILABLE = True
-    print("🎨 Google Imagen AI loaded successfully")
-except ImportError:
+    print("🎨 Google Imagen 4.0 Ultra AI loaded successfully")
+except ImportError as e:
     IMAGEN_AVAILABLE = False
-    print("⚠️ Google Imagen AI not available")
+    print(f"⚠️ Google Imagen 4.0 Ultra AI not available: {e}")
+    print("💡 Install with: pip install google-cloud-aiplatform vertexai")
 
 # Machine Learning Training imports
 try:
@@ -186,8 +189,10 @@ try:
         # For now, we'll use the Gemini API key for authentication
         # In production, you'd use proper service account credentials
         if GEMINI_CONFIGURED:
+            # Initialize Vertex AI
+            vertexai.init(project=project_id, location=region)
             aiplatform.init(project=project_id, location=region)
-            print("✅ Google Imagen (Vertex AI) initialized successfully")
+            print("✅ Google Imagen 4.0 Ultra (Vertex AI) initialized successfully")
             IMAGEN_CONFIGURED = True
         else:
             print("⚠️ Imagen requires Gemini API configuration")
@@ -2385,50 +2390,88 @@ def handle_image_generation(text):
         return "🎨 I had trouble generating that image. Please make sure your request is clear and try again!"
 
 def handle_imagen_generation(text):
-    """Handle AI image generation requests using Google Imagen API"""
+    """Handle AI image generation requests using Google Imagen 4.0 Ultra API"""
     try:
         # Extract the image description from the text
         prompt = extract_image_prompt(text)
         
         if not prompt or len(prompt) < 3:
-            return "🎨 I can generate images for you using Google Imagen! Please describe what you'd like me to create. For example: 'generate an image of a sunset over mountains' or 'create a picture of a cute cat wearing a hat'."
+            if IMAGEN_AVAILABLE:
+                return "🎨 I can generate images for you using Google Imagen 4.0 Ultra! Please describe what you'd like me to create. For example: 'generate an image of a sunset over mountains' or 'create a picture of a cute cat wearing a hat'."
+            else:
+                return "🎨 Image generation requires Google Imagen 4.0 Ultra setup. Please describe what you'd like me to create and I'll use an alternative method. For example: 'generate an image of a sunset over mountains' or 'create a picture of a cute cat wearing a hat'."
         
-        print(f"🎨🌟 Generating image with Google Imagen: {prompt}")
+        print(f"🎨🌟 Generating image with Google Imagen 4.0 Ultra: {prompt}")
         
         try:
             # Enhanced prompt for better image generation
             enhanced_prompt = f"Create a high-quality, detailed, photorealistic image of: {prompt}. Professional quality, well-composed, ultra-detailed."
             
-            # Use Imagen through Vertex AI
-            # Note: This is a simplified approach. In production, you'd use proper endpoint prediction
-            endpoint = aiplatform.Endpoint.list(filter='display_name="imagen-endpoint"')
-            
-            if not endpoint:
-                # Fallback message - Imagen setup required
-                print("⚠️ Imagen endpoint not found. Using prompt enhancement for DALL-E...")
+            # Check if Imagen 4.0 Ultra is available
+            if not IMAGEN_AVAILABLE:
+                print("⚠️ Vertex AI vision models not available. Falling back to DALL-E...")
                 if AI_MODEL_AVAILABLE and client:
                     return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
                 else:
-                    return f"🎨🌟 Google Imagen processed your prompt: '{prompt}'. However, Imagen endpoint setup is required for image generation. Falling back to DALL-E is not available either."
+                    return f"🎨🌟 Google Imagen 4.0 Ultra processed your prompt: '{prompt}'. However, Vertex AI is not configured. Install with: pip install google-cloud-aiplatform vertexai. Fallback to DALL-E is not available either."
             
-            # If endpoint exists, predict with Imagen
-            # instances = [{"prompt": enhanced_prompt}]
-            # response = endpoint[0].predict(instances=instances)
+            # Check if Imagen is properly configured
+            if not IMAGEN_CONFIGURED:
+                print("⚠️ Imagen 4.0 Ultra not configured. Falling back to DALL-E...")
+                if AI_MODEL_AVAILABLE and client:
+                    return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
+                else:
+                    return f"🎨🌟 Google Imagen 4.0 Ultra processed your prompt: '{prompt}'. However, Vertex AI project configuration is required. Fallback to DALL-E is not available either."
             
-            # For now, return enhanced prompt to DALL-E
-            if AI_MODEL_AVAILABLE and client:
-                return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
+            # Initialize the Imagen 4.0 Ultra model
+            model = ImageGenerationModel.from_pretrained("imagen-4.0-ultra-generate-001")
+            
+            # Generate image using Imagen 4.0 Ultra
+            response = model.generate_images(
+                prompt=enhanced_prompt,
+                number_of_images=1,
+                aspect_ratio="1:1",
+                safety_filter_level="allow_most",
+                person_generation="allow_adult"
+            )
+            
+            if response.images:
+                # Save the generated image
+                image = response.images[0]
+                import uuid
+                image_id = str(uuid.uuid4())
+                filename = f"imagen_4_ultra_{image_id}.png"
+                image_path = os.path.join(IMAGES_DIR, filename)
+                
+                # Save the image
+                image.save(location=image_path, include_generation_parameters=False)
+                
+                # Create URL for viewing
+                image_url = f"/static/generated_images/{filename}"
+                full_image_url = f"http://192.168.1.206:8080{image_url}"
+                
+                print(f"✅ Imagen 4.0 Ultra image generated: {filename}")
+                return f"""🎨🌟 Image Generated with Imagen 4.0 Ultra
+
+{full_image_url}
+
+Enhanced prompt: {enhanced_prompt}"""
             else:
-                return f"🎨🌟 Google Imagen enhanced your prompt to: '{enhanced_prompt}'. However, image generation endpoint needs setup."
+                # Fallback to DALL-E if no images generated
+                print("⚠️ Imagen 4.0 Ultra generated no images. Falling back to DALL-E...")
+                if AI_MODEL_AVAILABLE and client:
+                    return handle_dalle_image_generation_with_enhancement(text, enhanced_prompt)
+                else:
+                    return f"🎨🌟 Google Imagen 4.0 Ultra processed your prompt: '{prompt}'. However, no images were generated. Fallback to DALL-E is not available either."
             
         except Exception as api_error:
-            print(f"Imagen API error: {api_error}")
+            print(f"Imagen 4.0 Ultra API error: {api_error}")
             # Fall back to DALL-E if available
             if AI_MODEL_AVAILABLE and client:
                 print("🔄 Falling back to DALL-E for image generation...")
                 return handle_dalle_image_generation(text)
             else:
-                return f"🎨 Imagen encountered an issue: {api_error}. No fallback image generation available."
+                return f"🎨 Imagen 4.0 Ultra encountered an issue: {api_error}. No fallback image generation available."
         
     except Exception as e:
         print(f"Error in handle_imagen_generation: {e}")
@@ -10216,6 +10259,10 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_prompt_engineering(user_input)
         elif intent == 'performance_analytics':
             response = handle_ai_performance_analytics(user_input)
+        elif intent == 'research_paper_generator':
+            response = handle_research_paper_generator(user_input)
+        elif intent == 'scientific_simulation':
+            response = handle_scientific_simulation(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
@@ -12019,6 +12066,329 @@ def log_usage_analytics_api():
     except Exception as e:
         print(f"Error logging analytics: {e}")
         return jsonify({'error': 'Failed to log analytics'}), 500
+
+# ===== RESEARCH PAPER GENERATOR API ENDPOINTS =====
+
+@app.route('/api/research/papers', methods=['GET'])
+def api_get_research_papers():
+    """Get user's research papers"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, title, topic, field, status, created_at, updated_at, 
+                   word_count, quality_score
+            FROM research_papers
+            ORDER BY updated_at DESC
+        ''')
+        papers = cursor.fetchall()
+        
+        conn.close()
+        
+        papers_list = []
+        for paper in papers:
+            papers_list.append({
+                'id': paper[0],
+                'title': paper[1],
+                'topic': paper[2],
+                'field': paper[3],
+                'status': paper[4],
+                'created_at': paper[5],
+                'updated_at': paper[6],
+                'word_count': paper[7],
+                'quality_score': paper[8]
+            })
+        
+        return jsonify({'success': True, 'papers': papers_list})
+        
+    except Exception as e:
+        print(f"Error getting research papers: {e}")
+        return jsonify({'error': 'Failed to get research papers'}), 500
+
+@app.route('/api/research/papers', methods=['POST'])
+def api_create_research_paper():
+    """Create a new research paper"""
+    try:
+        data = request.json
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        now = datetime.now()
+        cursor.execute('''
+            INSERT INTO research_papers 
+            (title, topic, field, abstract, content, keywords, author_name, 
+             status, created_at, updated_at, word_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('title'),
+            data.get('topic'),
+            data.get('field'),
+            data.get('abstract', ''),
+            data.get('content', ''),
+            data.get('keywords', ''),
+            data.get('author_name', 'User'),
+            'draft',
+            now.isoformat(),
+            now.isoformat(),
+            len(data.get('content', '').split())
+        ))
+        
+        paper_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'paper_id': paper_id})
+        
+    except Exception as e:
+        print(f"Error creating research paper: {e}")
+        return jsonify({'error': 'Failed to create research paper'}), 500
+
+@app.route('/api/research/templates', methods=['GET'])
+def api_get_research_templates():
+    """Get research paper templates"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, field, structure, guidelines, usage_count
+            FROM research_templates
+            ORDER BY usage_count DESC, name
+        ''')
+        templates = cursor.fetchall()
+        
+        conn.close()
+        
+        templates_list = []
+        for template in templates:
+            templates_list.append({
+                'id': template[0],
+                'name': template[1],
+                'field': template[2],
+                'structure': template[3],
+                'guidelines': template[4],
+                'usage_count': template[5]
+            })
+        
+        return jsonify({'success': True, 'templates': templates_list})
+        
+    except Exception as e:
+        print(f"Error getting research templates: {e}")
+        return jsonify({'error': 'Failed to get research templates'}), 500
+
+@app.route('/api/research/sources', methods=['POST'])
+def api_add_research_source():
+    """Add a research source to a paper"""
+    try:
+        data = request.json
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO research_sources 
+            (paper_id, source_type, title, authors, journal_name, 
+             publication_year, doi, url, abstract, relevance_score, 
+             citation_format, added_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('paper_id'),
+            data.get('source_type'),
+            data.get('title'),
+            data.get('authors'),
+            data.get('journal_name'),
+            data.get('publication_year'),
+            data.get('doi'),
+            data.get('url'),
+            data.get('abstract'),
+            data.get('relevance_score', 0.0),
+            data.get('citation_format', 'APA'),
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Source added successfully'})
+        
+    except Exception as e:
+        print(f"Error adding research source: {e}")
+        return jsonify({'error': 'Failed to add research source'}), 500
+
+# ===== SCIENTIFIC SIMULATION API ENDPOINTS =====
+
+@app.route('/api/simulations', methods=['GET'])
+def api_get_simulations():
+    """Get user's simulations"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, category, description, parameters, 
+                   created_at, updated_at, run_count, avg_runtime
+            FROM simulations
+            ORDER BY updated_at DESC
+        ''')
+        simulations = cursor.fetchall()
+        
+        conn.close()
+        
+        simulations_list = []
+        for sim in simulations:
+            simulations_list.append({
+                'id': sim[0],
+                'name': sim[1],
+                'category': sim[2],
+                'description': sim[3],
+                'parameters': sim[4],
+                'created_at': sim[5],
+                'updated_at': sim[6],
+                'run_count': sim[7],
+                'avg_runtime': sim[8]
+            })
+        
+        return jsonify({'success': True, 'simulations': simulations_list})
+        
+    except Exception as e:
+        print(f"Error getting simulations: {e}")
+        return jsonify({'error': 'Failed to get simulations'}), 500
+
+@app.route('/api/simulations', methods=['POST'])
+def api_create_simulation():
+    """Create a new simulation"""
+    try:
+        data = request.json
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        now = datetime.now()
+        cursor.execute('''
+            INSERT INTO simulations 
+            (name, category, simulation_type, description, parameters, 
+             initial_conditions, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('name'),
+            data.get('category'),
+            data.get('simulation_type'),
+            data.get('description'),
+            data.get('parameters'),
+            data.get('initial_conditions'),
+            data.get('created_by', 'User'),
+            now.isoformat(),
+            now.isoformat()
+        ))
+        
+        simulation_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'simulation_id': simulation_id})
+        
+    except Exception as e:
+        print(f"Error creating simulation: {e}")
+        return jsonify({'error': 'Failed to create simulation'}), 500
+
+@app.route('/api/simulations/<int:simulation_id>/run', methods=['POST'])
+def api_run_simulation(simulation_id):
+    """Run a simulation with given parameters"""
+    try:
+        data = request.json
+        start_time = time.time()
+        
+        # Simulate the simulation run (in real implementation, this would run actual simulation)
+        import random
+        runtime = random.uniform(1.0, 5.0)  # Simulate variable runtime
+        
+        # Generate mock results based on simulation type
+        results = {
+            'success': True,
+            'output_data': {
+                'final_state': 'completed',
+                'metrics': {
+                    'accuracy': random.uniform(0.85, 0.99),
+                    'iterations': random.randint(100, 1000),
+                    'convergence': random.uniform(0.001, 0.01)
+                }
+            },
+            'runtime': runtime
+        }
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Save simulation results
+        cursor.execute('''
+            INSERT INTO simulation_results 
+            (simulation_id, run_parameters, output_data, runtime, 
+             success, run_timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            simulation_id,
+            json.dumps(data.get('parameters', {})),
+            json.dumps(results['output_data']),
+            runtime,
+            1,
+            datetime.now().isoformat()
+        ))
+        
+        # Update simulation statistics
+        cursor.execute('''
+            UPDATE simulations 
+            SET run_count = run_count + 1,
+                avg_runtime = (avg_runtime * run_count + ?) / (run_count + 1),
+                updated_at = ?
+            WHERE id = ?
+        ''', (runtime, datetime.now().isoformat(), simulation_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'results': results})
+        
+    except Exception as e:
+        print(f"Error running simulation: {e}")
+        return jsonify({'error': 'Failed to run simulation'}), 500
+
+@app.route('/api/simulations/templates', methods=['GET'])
+def api_get_simulation_templates():
+    """Get simulation templates"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, category, description, default_parameters, 
+                   educational_content, difficulty_level, usage_count
+            FROM simulation_templates
+            ORDER BY category, difficulty_level, usage_count DESC
+        ''')
+        templates = cursor.fetchall()
+        
+        conn.close()
+        
+        templates_list = []
+        for template in templates:
+            templates_list.append({
+                'id': template[0],
+                'name': template[1],
+                'category': template[2],
+                'description': template[3],
+                'default_parameters': template[4],
+                'educational_content': template[5],
+                'difficulty_level': template[6],
+                'usage_count': template[7]
+            })
+        
+        return jsonify({'success': True, 'templates': templates_list})
+        
+    except Exception as e:
+        print(f"Error getting simulation templates: {e}")
+        return jsonify({'error': 'Failed to get simulation templates'}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")

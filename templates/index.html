@@ -1358,6 +1358,109 @@
             margin-top: 20px;
         }
         
+        /* Research Paper Generator Styles */
+        .research-management, .simulation-management {
+            padding: 15px 0;
+        }
+        
+        .papers-grid, .simulations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .paper-card, .simulation-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .paper-card h3, .simulation-card h3 {
+            margin: 0 0 10px 0;
+            color: #4a90e2;
+            font-size: 1.1em;
+        }
+        
+        .paper-card p, .simulation-card p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: #ecf0f1;
+        }
+        
+        .paper-actions, .simulation-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .paper-actions button, .simulation-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.85em;
+        }
+        
+        /* Template Grid Styles */
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .template-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .template-card h3 {
+            margin: 0 0 10px 0;
+            color: #4a90e2;
+        }
+        
+        .template-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Form Enhancements for New Features */
+        #createPaperForm, #createSimulationForm {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        #createPaperForm .form-group, #createSimulationForm .form-group {
+            margin-bottom: 20px;
+        }
+        
+        #createPaperForm textarea, #createSimulationForm textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* Responsive Design for New Elements */
+        @media (max-width: 768px) {
+            .papers-grid, .simulations-grid, .templates-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .paper-actions, .simulation-actions, .template-actions {
+                flex-direction: column;
+            }
+            
+            .research-management, .simulation-management {
+                padding: 10px 0;
+            }
+        }
+        
         @media (max-width: 768px) {
             .modal-content {
                 min-width: 90vw;
@@ -1546,6 +1649,48 @@
                         <button class="btn-model" id="analyticsOverviewBtn">📈 Overview</button>
                         <button class="btn-model" id="usageStatsBtn">📊 Usage Stats</button>
                         <button class="btn-model" id="performanceBtn">⚡ Performance</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>📄 Research Papers</h3>
+                <div class="research-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Papers:</span>
+                            <span id="researchPapersCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Citations:</span>
+                            <span id="totalCitationsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="createPaperBtn">📝 New Paper</button>
+                        <button class="btn-model" id="myPapersBtn">📚 My Papers</button>
+                        <button class="btn-model" id="researchTemplatesBtn">📋 Templates</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>🧪 Simulations</h3>
+                <div class="simulation-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Simulations:</span>
+                            <span id="simulationsCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Experiments:</span>
+                            <span id="experimentsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="createSimulationBtn">⚛️ New Simulation</button>
+                        <button class="btn-model" id="mySimulationsBtn">🔬 My Simulations</button>
+                        <button class="btn-model" id="simulationTemplatesBtn">🧬 Templates</button>
                     </div>
                 </div>
             </div>
@@ -1830,6 +1975,149 @@
         </div>
     </div>
     
+    <!-- Research Paper Generator Modals -->
+    <div id="createPaperModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📝 Create Research Paper</h2>
+                <button class="modal-close" onclick="closeModal('createPaperModal')">&times;</button>
+            </div>
+            <form id="createPaperForm">
+                <div class="form-group">
+                    <label for="paperTitle">Paper Title</label>
+                    <input type="text" id="paperTitle" name="paperTitle" placeholder="Enter your research paper title" required>
+                </div>
+                <div class="form-group">
+                    <label for="paperTopic">Research Topic</label>
+                    <input type="text" id="paperTopic" name="paperTopic" placeholder="Main research topic or question" required>
+                </div>
+                <div class="form-group">
+                    <label for="paperField">Academic Field</label>
+                    <select id="paperField" name="paperField" required>
+                        <option value="">Select Field</option>
+                        <option value="computer_science">Computer Science</option>
+                        <option value="physics">Physics</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="biology">Biology</option>
+                        <option value="medicine">Medicine</option>
+                        <option value="psychology">Psychology</option>
+                        <option value="economics">Economics</option>
+                        <option value="literature">Literature</option>
+                        <option value="history">History</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paperAbstract">Abstract (Optional)</label>
+                    <textarea id="paperAbstract" name="paperAbstract" placeholder="Brief summary of your research..." rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="paperKeywords">Keywords</label>
+                    <input type="text" id="paperKeywords" name="paperKeywords" placeholder="keyword1, keyword2, keyword3">
+                </div>
+                <div class="model-actions-card">
+                    <button type="submit" class="btn-card primary">Create Paper</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('createPaperModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="myPapersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📚 My Research Papers</h2>
+                <button class="modal-close" onclick="closeModal('myPapersModal')">&times;</button>
+            </div>
+            <div id="myPapersGrid" class="papers-grid">
+                <!-- Papers will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="researchTemplatesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📋 Research Templates</h2>
+                <button class="modal-close" onclick="closeModal('researchTemplatesModal')">&times;</button>
+            </div>
+            <div id="researchTemplatesGrid" class="templates-grid">
+                <!-- Templates will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scientific Simulation Modals -->
+    <div id="createSimulationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⚛️ Create Simulation</h2>
+                <button class="modal-close" onclick="closeModal('createSimulationModal')">&times;</button>
+            </div>
+            <form id="createSimulationForm">
+                <div class="form-group">
+                    <label for="simulationName">Simulation Name</label>
+                    <input type="text" id="simulationName" name="simulationName" placeholder="Enter simulation name" required>
+                </div>
+                <div class="form-group">
+                    <label for="simulationCategory">Category</label>
+                    <select id="simulationCategory" name="simulationCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="physics">Physics</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="biology">Biology</option>
+                        <option value="mathematics">Mathematics</option>
+                        <option value="engineering">Engineering</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="simulationType">Simulation Type</label>
+                    <select id="simulationType" name="simulationType" required>
+                        <option value="">Select Type</option>
+                        <option value="molecular_dynamics">Molecular Dynamics</option>
+                        <option value="physics_engine">Physics Engine</option>
+                        <option value="ecosystem_model">Ecosystem Model</option>
+                        <option value="population_dynamics">Population Dynamics</option>
+                        <option value="quantum_simulation">Quantum Simulation</option>
+                        <option value="reaction_kinetics">Reaction Kinetics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="simulationDescription">Description</label>
+                    <textarea id="simulationDescription" name="simulationDescription" placeholder="Describe what this simulation will model..." rows="4"></textarea>
+                </div>
+                <div class="model-actions-card">
+                    <button type="submit" class="btn-card primary">Create Simulation</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('createSimulationModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="mySimulationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🔬 My Simulations</h2>
+                <button class="modal-close" onclick="closeModal('mySimulationsModal')">&times;</button>
+            </div>
+            <div id="mySimulationsGrid" class="simulations-grid">
+                <!-- Simulations will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="simulationTemplatesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🧬 Simulation Templates</h2>
+                <button class="modal-close" onclick="closeModal('simulationTemplatesModal')">&times;</button>
+            </div>
+            <div id="simulationTemplatesGrid" class="templates-grid">
+                <!-- Simulation templates will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
     <script src="/static/enhanced_ai.js"></script>
     <script src="/static/professional-ui.js"></script>
     <script src="/static/interactive-background.js"></script>
@@ -2103,6 +2391,32 @@
                 loadPerformanceMetrics();
             });
             
+            // Research Paper Generator buttons
+            document.getElementById('createPaperBtn').addEventListener('click', () => {
+                openModal('createPaperModal');
+            });
+            document.getElementById('myPapersBtn').addEventListener('click', () => {
+                openModal('myPapersModal');
+                loadMyPapers();
+            });
+            document.getElementById('researchTemplatesBtn').addEventListener('click', () => {
+                openModal('researchTemplatesModal');
+                loadResearchTemplates();
+            });
+            
+            // Scientific Simulation buttons
+            document.getElementById('createSimulationBtn').addEventListener('click', () => {
+                openModal('createSimulationModal');
+            });
+            document.getElementById('mySimulationsBtn').addEventListener('click', () => {
+                openModal('mySimulationsModal');
+                loadMySimulations();
+            });
+            document.getElementById('simulationTemplatesBtn').addEventListener('click', () => {
+                openModal('simulationTemplatesModal');
+                loadSimulationTemplates();
+            });
+            
             // Train model form
             document.getElementById('trainModelForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -2156,15 +2470,19 @@
             // Initialize prompt lab and analytics stats
             updatePromptLabStats();
             updateAnalyticsStats();
+            updateResearchStats();
+            updateSimulationStats();
             
             // Periodically update training progress
             setInterval(() => {
                 if (document.getElementById('myModelsModal').classList.contains('show')) {
                     loadMyModels();
                 }
-                // Update prompt lab and analytics stats periodically
+                // Update all sidebar stats periodically
                 updatePromptLabStats();
                 updateAnalyticsStats();
+                updateResearchStats();
+                updateSimulationStats();
             }, 5000); // Update every 5 seconds
         });
         
@@ -2329,6 +2647,162 @@
         
         function loadUsageData() {
             loadUsageStats();
+        }
+        
+        // Research Paper Generator Functions
+        async function loadMyPapers() {
+            try {
+                const response = await fetch('/api/research/papers');
+                const data = await response.json();
+                if (data.success) {
+                    const grid = document.getElementById('myPapersGrid');
+                    grid.innerHTML = data.papers.map(paper => `
+                        <div class="paper-card">
+                            <h3>${paper.title}</h3>
+                            <p><strong>Field:</strong> ${paper.field}</p>
+                            <p><strong>Status:</strong> ${paper.status}</p>
+                            <p><strong>Words:</strong> ${paper.word_count}</p>
+                            <p><strong>Quality:</strong> ${paper.quality_score}/5.0</p>
+                            <div class="paper-actions">
+                                <button class="btn-card primary" onclick="openPaper('${paper.id}')">Open</button>
+                                <button class="btn-card secondary" onclick="exportPaper('${paper.id}')">Export</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading papers:', error);
+            }
+        }
+        
+        async function loadResearchTemplates() {
+            try {
+                const response = await fetch('/api/research/templates');
+                const data = await response.json();
+                if (data.success) {
+                    const grid = document.getElementById('researchTemplatesGrid');
+                    grid.innerHTML = data.templates.map(template => `
+                        <div class="template-card">
+                            <h3>${template.name}</h3>
+                            <p><strong>Field:</strong> ${template.field}</p>
+                            <p>${template.guidelines}</p>
+                            <p><strong>Used:</strong> ${template.usage_count} times</p>
+                            <div class="template-actions">
+                                <button class="btn-card primary" onclick="useResearchTemplate('${template.id}')">Use Template</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading research templates:', error);
+            }
+        }
+        
+        async function updateResearchStats() {
+            try {
+                const response = await fetch('/api/research/stats');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('researchPapersCount').textContent = data.papers_count;
+                    document.getElementById('totalCitationsCount').textContent = data.citations_count;
+                }
+            } catch (error) {
+                console.error('Error updating research stats:', error);
+            }
+        }
+        
+        // Scientific Simulation Functions
+        async function loadMySimulations() {
+            try {
+                const response = await fetch('/api/simulations');
+                const data = await response.json();
+                if (data.success) {
+                    const grid = document.getElementById('mySimulationsGrid');
+                    grid.innerHTML = data.simulations.map(sim => `
+                        <div class="simulation-card">
+                            <h3>${sim.name}</h3>
+                            <p><strong>Category:</strong> ${sim.category}</p>
+                            <p>${sim.description}</p>
+                            <p><strong>Runs:</strong> ${sim.run_count}</p>
+                            <p><strong>Avg Runtime:</strong> ${sim.avg_runtime}s</p>
+                            <div class="simulation-actions">
+                                <button class="btn-card primary" onclick="runSimulation('${sim.id}')">Run</button>
+                                <button class="btn-card secondary" onclick="viewResults('${sim.id}')">Results</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading simulations:', error);
+            }
+        }
+        
+        async function loadSimulationTemplates() {
+            try {
+                const response = await fetch('/api/simulations/templates');
+                const data = await response.json();
+                if (data.success) {
+                    const grid = document.getElementById('simulationTemplatesGrid');
+                    grid.innerHTML = data.templates.map(template => `
+                        <div class="template-card">
+                            <h3>${template.name}</h3>
+                            <p><strong>Category:</strong> ${template.category}</p>
+                            <p><strong>Level:</strong> ${template.difficulty_level}</p>
+                            <p>${template.description}</p>
+                            <p><strong>Used:</strong> ${template.usage_count} times</p>
+                            <div class="template-actions">
+                                <button class="btn-card primary" onclick="useSimulationTemplate('${template.id}')">Use Template</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading simulation templates:', error);
+            }
+        }
+        
+        async function updateSimulationStats() {
+            try {
+                const response = await fetch('/api/simulations/stats');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('simulationsCount').textContent = data.simulations_count;
+                    document.getElementById('experimentsCount').textContent = data.experiments_count;
+                }
+            } catch (error) {
+                console.error('Error updating simulation stats:', error);
+            }
+        }
+        
+        // Utility functions for new features
+        function openPaper(paperId) {
+            console.log('Opening paper:', paperId);
+            // Implementation for opening paper editor
+        }
+        
+        function exportPaper(paperId) {
+            console.log('Exporting paper:', paperId);
+            // Implementation for exporting paper
+        }
+        
+        function useResearchTemplate(templateId) {
+            console.log('Using research template:', templateId);
+            // Implementation for using research template
+        }
+        
+        function runSimulation(simulationId) {
+            console.log('Running simulation:', simulationId);
+            // Implementation for running simulation
+        }
+        
+        function viewResults(simulationId) {
+            console.log('Viewing results for simulation:', simulationId);
+            // Implementation for viewing simulation results
+        }
+        
+        function useSimulationTemplate(templateId) {
+            console.log('Using simulation template:', templateId);
+            // Implementation for using simulation template
         }
     </script>
 </body>
