@@ -11606,6 +11606,48 @@ INTENT_PATTERNS = {
         r'\b(my.*simulations|simulation.*results)\b',
         r'\b(interactive.*simulation|educational.*simulation)\b'
     ],
+    'educational_curriculum_builder': [
+        r'\b(curriculum.*builder|curriculum.*building)\b',
+        r'\b(create.*curriculum|build.*curriculum|design.*curriculum)\b',
+        r'\b(personalized.*learning|adaptive.*learning)\b',
+        r'\b(learning.*path|learning.*pathway)\b',
+        r'\b(educational.*plan|study.*plan|course.*plan)\b',
+        r'\b(curriculum.*for.*grade|curriculum.*for.*subject)\b',
+        r'\b(curriculum.*design|curriculum.*development)\b',
+        r'\b(module.*creation|lesson.*planning)\b',
+        r'\b(assessment.*tools|grading.*system)\b',
+        r'\b(educational.*analytics|learning.*analytics)\b',
+        r'\b(my.*curriculum|curriculum.*progress)\b',
+        r'\b(browse.*curriculum|curriculum.*library)\b',
+        r'\b(student.*progress|learning.*outcomes)\b',
+        r'\b(educational.*goals|learning.*objectives)\b',
+        r'\b(differentiated.*instruction|inclusive.*learning)\b',
+        r'\b(curriculum.*standards|academic.*standards)\b',
+        r'\b(scaffold.*learning|progressive.*difficulty)\b',
+        r'\b(multi.*modal.*learning|blended.*learning)\b'
+    ],
+    'language_learning_tutor': [
+        r'\b(language.*tutor|language.*learning|language.*practice)\b',
+        r'\b(conversation.*practice|speaking.*practice)\b',
+        r'\b(learn.*spanish|learn.*french|learn.*german|learn.*italian)\b',
+        r'\b(learn.*chinese|learn.*japanese|learn.*korean|learn.*portuguese)\b',
+        r'\b(learn.*russian|learn.*arabic|learn.*english)\b',
+        r'\b(practice.*spanish|practice.*french|practice.*german)\b',
+        r'\b(spanish.*conversation|french.*conversation|german.*conversation)\b',
+        r'\b(vocabulary.*practice|vocab.*builder|vocabulary.*building)\b',
+        r'\b(grammar.*help|pronunciation.*help|accent.*training)\b',
+        r'\b(fluency.*development|speaking.*fluency)\b',
+        r'\b(language.*immersion|immersive.*language)\b',
+        r'\b(cefr.*level|a1.*level|a2.*level|b1.*level|b2.*level|c1.*level|c2.*level)\b',
+        r'\b(language.*progress|language.*analytics|fluency.*assessment)\b',
+        r'\b(cultural.*context|cultural.*learning)\b',
+        r'\b(my.*language.*progress|language.*session)\b',
+        r'\b(language.*skills|speaking.*skills|listening.*skills)\b',
+        r'\b(real.*time.*correction|instant.*feedback)\b',
+        r'\b(native.*speaker.*practice|conversation.*partner)\b',
+        r'\b(language.*goals|language.*milestones)\b',
+        r'\b(polyglot.*training|multilingual.*learning)\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -11765,6 +11807,10 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_research_paper_generator(user_input)
         elif intent == 'scientific_simulation':
             response = handle_scientific_simulation(user_input)
+        elif intent == 'educational_curriculum_builder':
+            response = handle_educational_curriculum_builder(user_input)
+        elif intent == 'language_learning_tutor':
+            response = handle_language_learning_tutor(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
@@ -13891,6 +13937,317 @@ def api_get_simulation_templates():
     except Exception as e:
         print(f"Error getting simulation templates: {e}")
         return jsonify({'error': 'Failed to get simulation templates'}), 500
+
+# ===== EDUCATIONAL API ENDPOINTS =====
+
+@app.route('/api/curriculums', methods=['GET'])
+def api_get_curriculums():
+    """Get curriculum plans"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, subject, grade_level, duration_weeks, description,
+                   difficulty_level, enrollment_count, completion_rate, rating, created_at
+            FROM curriculum_plans
+            WHERE is_public = 1 OR created_by = 'system'
+            ORDER BY rating DESC, enrollment_count DESC
+            LIMIT 20
+        ''')
+        curriculums = cursor.fetchall()
+        
+        conn.close()
+        
+        curriculum_list = []
+        for curriculum in curriculums:
+            curriculum_list.append({
+                'id': curriculum[0],
+                'name': curriculum[1],
+                'subject': curriculum[2],
+                'grade_level': curriculum[3],
+                'duration_weeks': curriculum[4],
+                'description': curriculum[5],
+                'difficulty_level': curriculum[6],
+                'enrollment_count': curriculum[7],
+                'completion_rate': curriculum[8],
+                'rating': curriculum[9],
+                'created_at': curriculum[10]
+            })
+        
+        return jsonify({'success': True, 'curriculums': curriculum_list})
+        
+    except Exception as e:
+        print(f"Error getting curriculums: {e}")
+        return jsonify({'error': 'Failed to get curriculums'}), 500
+
+@app.route('/api/curriculums', methods=['POST'])
+def api_create_curriculum():
+    """Create a new curriculum plan"""
+    try:
+        data = request.get_json()
+        
+        subject = data.get('subject', 'General Studies')
+        grade_level = data.get('grade_level', 'Grade 6-8')
+        description = data.get('description', '')
+        
+        curriculum_id = create_curriculum_plan(subject, grade_level, description)
+        
+        if curriculum_id:
+            return jsonify({
+                'success': True,
+                'curriculum_id': curriculum_id,
+                'message': f'Curriculum created successfully for {subject} - {grade_level}'
+            })
+        else:
+            return jsonify({'error': 'Failed to create curriculum'}), 500
+            
+    except Exception as e:
+        print(f"Error creating curriculum: {e}")
+        return jsonify({'error': 'Failed to create curriculum'}), 500
+
+@app.route('/api/curriculums/<int:curriculum_id>/modules', methods=['GET'])
+def api_get_curriculum_modules(curriculum_id):
+    """Get modules for a specific curriculum"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, module_number, title, description, estimated_duration_hours,
+                   difficulty_rating, learning_outcomes, activities
+            FROM curriculum_modules
+            WHERE curriculum_id = ?
+            ORDER BY module_number
+        ''', (curriculum_id,))
+        modules = cursor.fetchall()
+        
+        conn.close()
+        
+        module_list = []
+        for module in modules:
+            module_list.append({
+                'id': module[0],
+                'module_number': module[1],
+                'title': module[2],
+                'description': module[3],
+                'estimated_duration_hours': module[4],
+                'difficulty_rating': module[5],
+                'learning_outcomes': json.loads(module[6]) if module[6] else [],
+                'activities': json.loads(module[7]) if module[7] else []
+            })
+        
+        return jsonify({'success': True, 'modules': module_list})
+        
+    except Exception as e:
+        print(f"Error getting curriculum modules: {e}")
+        return jsonify({'error': 'Failed to get curriculum modules'}), 500
+
+@app.route('/api/learning-paths', methods=['POST'])
+def api_create_learning_path():
+    """Create a personalized learning path"""
+    try:
+        data = request.get_json()
+        
+        curriculum_id = data.get('curriculum_id')
+        student_id = data.get('student_id', 'default_user')
+        personalization_data = data.get('personalization_data', {})
+        
+        if not curriculum_id:
+            return jsonify({'error': 'Curriculum ID is required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        from datetime import datetime
+        current_time = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO learning_paths 
+            (curriculum_id, student_id, started_at, last_accessed, 
+             personalization_data, estimated_completion)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            curriculum_id,
+            student_id,
+            current_time,
+            current_time,
+            json.dumps(personalization_data),
+            "16 weeks"  # Default estimate
+        ))
+        
+        learning_path_id = cursor.lastrowid
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'learning_path_id': learning_path_id,
+            'message': 'Personalized learning path created successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error creating learning path: {e}")
+        return jsonify({'error': 'Failed to create learning path'}), 500
+
+@app.route('/api/language-sessions', methods=['GET'])
+def api_get_language_sessions():
+    """Get language learning sessions"""
+    try:
+        student_id = request.args.get('student_id', 'default_user')
+        language = request.args.get('language')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        query = '''
+            SELECT id, language, session_type, topic, difficulty_level,
+                   duration_minutes, session_score, fluency_score, created_at
+            FROM language_sessions
+            WHERE student_id = ?
+        '''
+        params = [student_id]
+        
+        if language:
+            query += ' AND language = ?'
+            params.append(language)
+            
+        query += ' ORDER BY created_at DESC LIMIT 20'
+        
+        cursor.execute(query, params)
+        sessions = cursor.fetchall()
+        
+        conn.close()
+        
+        session_list = []
+        for session in sessions:
+            session_list.append({
+                'id': session[0],
+                'language': session[1],
+                'session_type': session[2],
+                'topic': session[3],
+                'difficulty_level': session[4],
+                'duration_minutes': session[5],
+                'session_score': session[6],
+                'fluency_score': session[7],
+                'created_at': session[8]
+            })
+        
+        return jsonify({'success': True, 'sessions': session_list})
+        
+    except Exception as e:
+        print(f"Error getting language sessions: {e}")
+        return jsonify({'error': 'Failed to get language sessions'}), 500
+
+@app.route('/api/language-sessions', methods=['POST'])
+def api_create_language_session():
+    """Create a new language learning session"""
+    try:
+        data = request.get_json()
+        
+        student_id = data.get('student_id', 'default_user')
+        language = data.get('language', 'Spanish')
+        session_type = data.get('session_type', 'conversation')
+        difficulty_level = data.get('difficulty_level', 'A2')
+        topic = data.get('topic', 'General conversation')
+        
+        session_id = create_language_session(language, session_type, difficulty_level)
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'message': f'{language} {session_type} session created successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error creating language session: {e}")
+        return jsonify({'error': 'Failed to create language session'}), 500
+
+@app.route('/api/language-progress/<student_id>', methods=['GET'])
+def api_get_language_progress(student_id):
+    """Get language learning progress for a student"""
+    try:
+        language = request.args.get('language')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        query = '''
+            SELECT language, overall_level, vocabulary_size, total_study_hours,
+                   session_count, fluency_rating, last_session_date, streak_days
+            FROM language_progress
+            WHERE student_id = ?
+        '''
+        params = [student_id]
+        
+        if language:
+            query += ' AND language = ?'
+            params.append(language)
+            
+        cursor.execute(query, params)
+        progress_data = cursor.fetchall()
+        
+        conn.close()
+        
+        progress_list = []
+        for progress in progress_data:
+            progress_list.append({
+                'language': progress[0],
+                'overall_level': progress[1],
+                'vocabulary_size': progress[2],
+                'total_study_hours': progress[3],
+                'session_count': progress[4],
+                'fluency_rating': progress[5],
+                'last_session_date': progress[6],
+                'streak_days': progress[7]
+            })
+        
+        return jsonify({'success': True, 'progress': progress_list})
+        
+    except Exception as e:
+        print(f"Error getting language progress: {e}")
+        return jsonify({'error': 'Failed to get language progress'}), 500
+
+@app.route('/api/vocabulary', methods=['GET'])
+def api_get_vocabulary():
+    """Get vocabulary words for a student and language"""
+    try:
+        student_id = request.args.get('student_id', 'default_user')
+        language = request.args.get('language', 'Spanish')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT word, translation, part_of_speech, mastery_level,
+                   learned_date, last_reviewed, context_sentence
+            FROM language_vocabulary
+            WHERE student_id = ? AND language = ?
+            ORDER BY mastery_level ASC, last_reviewed ASC
+            LIMIT 50
+        ''', (student_id, language))
+        vocabulary = cursor.fetchall()
+        
+        conn.close()
+        
+        vocab_list = []
+        for vocab in vocabulary:
+            vocab_list.append({
+                'word': vocab[0],
+                'translation': vocab[1],
+                'part_of_speech': vocab[2],
+                'mastery_level': vocab[3],
+                'learned_date': vocab[4],
+                'last_reviewed': vocab[5],
+                'context_sentence': vocab[6]
+            })
+        
+        return jsonify({'success': True, 'vocabulary': vocab_list})
+        
+    except Exception as e:
+        print(f"Error getting vocabulary: {e}")
+        return jsonify({'error': 'Failed to get vocabulary'}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
