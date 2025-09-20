@@ -1327,6 +1327,187 @@ def init_db():
             )
         ''')
         
+        # Educational Curriculum Builder Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS curriculum_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                subject TEXT,
+                grade_level TEXT,
+                duration_weeks INTEGER,
+                description TEXT,
+                learning_objectives TEXT, -- JSON array
+                prerequisites TEXT, -- JSON array
+                difficulty_level TEXT, -- beginner, intermediate, advanced
+                created_by TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                is_public BOOLEAN DEFAULT 0,
+                enrollment_count INTEGER DEFAULT 0,
+                completion_rate REAL DEFAULT 0.0,
+                rating REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS learning_paths (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                curriculum_id INTEGER,
+                student_id TEXT,
+                current_module INTEGER DEFAULT 1,
+                progress_percentage REAL DEFAULT 0.0,
+                started_at TEXT,
+                last_accessed TEXT,
+                estimated_completion TEXT,
+                personalization_data TEXT, -- JSON object with learning style, pace, preferences
+                strengths TEXT, -- JSON array
+                areas_for_improvement TEXT, -- JSON array
+                adaptive_adjustments TEXT, -- JSON object
+                FOREIGN KEY (curriculum_id) REFERENCES curriculum_plans (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS curriculum_modules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                curriculum_id INTEGER,
+                module_number INTEGER,
+                title TEXT NOT NULL,
+                description TEXT,
+                content TEXT, -- Main educational content
+                learning_outcomes TEXT, -- JSON array
+                activities TEXT, -- JSON array of activities/exercises
+                resources TEXT, -- JSON array of additional resources
+                assessment_criteria TEXT, -- JSON object
+                estimated_duration_hours REAL,
+                difficulty_rating INTEGER DEFAULT 1, -- 1-5 scale
+                prerequisites TEXT, -- JSON array of required prior modules
+                multimedia_content TEXT, -- JSON object with videos, images, etc.
+                interactive_elements TEXT, -- JSON object with quizzes, simulations
+                FOREIGN KEY (curriculum_id) REFERENCES curriculum_plans (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS curriculum_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                learning_path_id INTEGER,
+                module_id INTEGER,
+                status TEXT DEFAULT 'not_started', -- not_started, in_progress, completed, mastered
+                score REAL DEFAULT 0.0,
+                time_spent_hours REAL DEFAULT 0.0,
+                attempts INTEGER DEFAULT 0,
+                last_attempt_date TEXT,
+                completion_date TEXT,
+                feedback TEXT,
+                areas_mastered TEXT, -- JSON array
+                areas_needing_work TEXT, -- JSON array
+                notes TEXT,
+                engagement_score REAL DEFAULT 0.0,
+                FOREIGN KEY (learning_path_id) REFERENCES learning_paths (id),
+                FOREIGN KEY (module_id) REFERENCES curriculum_modules (id)
+            )
+        ''')
+        
+        # Language Learning Tutor Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS language_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT,
+                language TEXT,
+                session_type TEXT, -- conversation, grammar, vocabulary, pronunciation
+                topic TEXT,
+                difficulty_level TEXT, -- A1, A2, B1, B2, C1, C2 (CEFR levels)
+                duration_minutes INTEGER,
+                conversation_log TEXT, -- JSON array of conversation exchanges
+                corrections_made TEXT, -- JSON array of corrections
+                new_vocabulary TEXT, -- JSON array of new words learned
+                grammar_points TEXT, -- JSON array of grammar concepts
+                pronunciation_feedback TEXT, -- JSON object
+                session_score REAL DEFAULT 0.0,
+                fluency_score REAL DEFAULT 0.0,
+                accuracy_score REAL DEFAULT 0.0,
+                confidence_level REAL DEFAULT 0.0,
+                created_at TEXT,
+                session_notes TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS language_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT,
+                language TEXT,
+                overall_level TEXT, -- A1, A2, B1, B2, C1, C2
+                speaking_level TEXT,
+                listening_level TEXT,
+                reading_level TEXT,
+                writing_level TEXT,
+                vocabulary_size INTEGER DEFAULT 0,
+                grammar_mastery_percentage REAL DEFAULT 0.0,
+                pronunciation_accuracy REAL DEFAULT 0.0,
+                fluency_rating REAL DEFAULT 0.0,
+                total_study_hours REAL DEFAULT 0.0,
+                session_count INTEGER DEFAULT 0,
+                streak_days INTEGER DEFAULT 0,
+                last_session_date TEXT,
+                learning_goals TEXT, -- JSON array
+                preferred_topics TEXT, -- JSON array
+                strengths TEXT, -- JSON array
+                challenges TEXT, -- JSON array
+                next_milestones TEXT, -- JSON array
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS language_vocabulary (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT,
+                language TEXT,
+                word TEXT,
+                translation TEXT,
+                part_of_speech TEXT,
+                difficulty_level TEXT,
+                context_sentence TEXT,
+                pronunciation TEXT, -- IPA or phonetic
+                learned_date TEXT,
+                mastery_level INTEGER DEFAULT 1, -- 1-5 scale
+                review_count INTEGER DEFAULT 0,
+                last_reviewed TEXT,
+                next_review_date TEXT,
+                mistakes_count INTEGER DEFAULT 0,
+                usage_examples TEXT, -- JSON array
+                related_words TEXT, -- JSON array
+                memory_aids TEXT, -- JSON array
+                source_session_id INTEGER,
+                FOREIGN KEY (source_session_id) REFERENCES language_sessions (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS language_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT,
+                language TEXT,
+                date TEXT,
+                sessions_completed INTEGER DEFAULT 0,
+                total_study_time_minutes INTEGER DEFAULT 0,
+                words_learned INTEGER DEFAULT 0,
+                words_reviewed INTEGER DEFAULT 0,
+                accuracy_rate REAL DEFAULT 0.0,
+                conversation_turns INTEGER DEFAULT 0,
+                grammar_exercises_completed INTEGER DEFAULT 0,
+                pronunciation_practice_time INTEGER DEFAULT 0,
+                level_progression TEXT, -- JSON object tracking level changes
+                engagement_metrics TEXT, -- JSON object
+                achievement_unlocked TEXT, -- JSON array
+                weekly_goals_met BOOLEAN DEFAULT 0,
+                monthly_progress_summary TEXT -- JSON object
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
