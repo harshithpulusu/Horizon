@@ -1508,6 +1508,184 @@ def init_db():
             )
         ''')
         
+        # AI Swarm Collaboration Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_swarm_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_name TEXT,
+                task_description TEXT,
+                complexity_level TEXT, -- simple, moderate, complex, expert
+                user_id TEXT,
+                created_at TEXT,
+                status TEXT DEFAULT 'active', -- active, completed, failed, paused
+                total_agents INTEGER DEFAULT 0,
+                coordination_strategy TEXT, -- hierarchical, democratic, specialized
+                expected_completion_time INTEGER, -- minutes
+                actual_completion_time INTEGER,
+                success_rating REAL DEFAULT 0.0,
+                consensus_reached BOOLEAN DEFAULT 0,
+                output_quality_score REAL DEFAULT 0.0,
+                session_summary TEXT,
+                lessons_learned TEXT -- JSON array
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS swarm_agents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                agent_name TEXT,
+                agent_type TEXT, -- analyst, creative, critic, researcher, synthesizer
+                specialization TEXT,
+                role_description TEXT,
+                personality_traits TEXT, -- JSON object
+                assigned_subtask TEXT,
+                contribution_score REAL DEFAULT 0.0,
+                collaboration_rating REAL DEFAULT 0.0,
+                output_generated TEXT,
+                reasoning_chain TEXT, -- JSON array of thought process
+                feedback_received TEXT, -- JSON array from other agents
+                feedback_given TEXT, -- JSON array to other agents
+                status TEXT DEFAULT 'active', -- active, completed, blocked, error
+                created_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES ai_swarm_sessions (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS agent_specializations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_type TEXT,
+                specialization_name TEXT,
+                description TEXT,
+                capabilities TEXT, -- JSON array
+                strengths TEXT, -- JSON array
+                limitations TEXT, -- JSON array
+                optimal_tasks TEXT, -- JSON array
+                collaboration_style TEXT,
+                communication_pattern TEXT,
+                decision_making_approach TEXT,
+                creativity_level REAL DEFAULT 0.5,
+                analytical_level REAL DEFAULT 0.5,
+                critical_thinking_level REAL DEFAULT 0.5,
+                is_active BOOLEAN DEFAULT 1
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS collaboration_tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                task_name TEXT,
+                task_type TEXT, -- analysis, research, creative, synthesis, critique
+                description TEXT,
+                priority_level INTEGER DEFAULT 1, -- 1=low, 5=critical
+                estimated_effort INTEGER, -- minutes
+                actual_effort INTEGER,
+                assigned_agents TEXT, -- JSON array of agent IDs
+                dependencies TEXT, -- JSON array of task IDs
+                status TEXT DEFAULT 'pending', -- pending, in_progress, completed, blocked
+                progress_percentage REAL DEFAULT 0.0,
+                quality_score REAL DEFAULT 0.0,
+                output_content TEXT,
+                review_feedback TEXT, -- JSON array
+                iteration_count INTEGER DEFAULT 0,
+                created_at TEXT,
+                completed_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES ai_swarm_sessions (id)
+            )
+        ''')
+        
+        # Human-AI Co-creation Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS co_creation_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_name TEXT,
+                project_type TEXT, -- writing, coding, design, research, brainstorming
+                user_id TEXT,
+                ai_participants TEXT, -- JSON array of AI agents involved
+                collaboration_mode TEXT, -- real_time, asynchronous, structured, free_form
+                session_goal TEXT,
+                target_output TEXT,
+                current_status TEXT DEFAULT 'active', -- active, paused, completed, archived
+                total_edits INTEGER DEFAULT 0,
+                human_contributions INTEGER DEFAULT 0,
+                ai_contributions INTEGER DEFAULT 0,
+                sync_conflicts INTEGER DEFAULT 0,
+                resolution_quality REAL DEFAULT 0.0,
+                creative_score REAL DEFAULT 0.0,
+                productivity_score REAL DEFAULT 0.0,
+                user_satisfaction REAL DEFAULT 0.0,
+                started_at TEXT,
+                last_activity_at TEXT,
+                completed_at TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS co_creation_projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                project_name TEXT,
+                content_type TEXT, -- document, code, design, presentation, story
+                current_version INTEGER DEFAULT 1,
+                content_data TEXT, -- JSON object with the actual content
+                structure_data TEXT, -- JSON object with document/project structure
+                metadata TEXT, -- JSON object with tags, categories, etc.
+                version_history TEXT, -- JSON array of version snapshots
+                collaborative_notes TEXT, -- JSON array of comments and discussions
+                quality_metrics TEXT, -- JSON object with various quality scores
+                completion_percentage REAL DEFAULT 0.0,
+                word_count INTEGER DEFAULT 0,
+                line_count INTEGER DEFAULT 0,
+                complexity_score REAL DEFAULT 0.0,
+                created_at TEXT,
+                updated_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES co_creation_sessions (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS real_time_edits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER,
+                edit_type TEXT, -- insert, delete, modify, format, restructure
+                editor_type TEXT, -- human, ai_agent
+                editor_id TEXT,
+                edit_position INTEGER, -- character/line position
+                edit_length INTEGER,
+                old_content TEXT,
+                new_content TEXT,
+                edit_reason TEXT,
+                confidence_score REAL DEFAULT 0.0,
+                timestamp TEXT,
+                is_accepted BOOLEAN DEFAULT 1,
+                conflict_resolution TEXT, -- JSON object if conflicts occurred
+                impact_score REAL DEFAULT 0.0, -- how much this edit affects the project
+                context_window TEXT, -- surrounding content for context
+                FOREIGN KEY (project_id) REFERENCES co_creation_projects (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS collaboration_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                metric_type TEXT, -- productivity, creativity, consensus, quality
+                metric_name TEXT,
+                metric_value REAL,
+                measurement_unit TEXT,
+                time_period TEXT, -- hour, day, session, project
+                data_points TEXT, -- JSON array of detailed measurements
+                trends TEXT, -- JSON object with trend analysis
+                insights TEXT, -- JSON array of AI-generated insights
+                recommendations TEXT, -- JSON array of improvement suggestions
+                benchmark_comparison REAL DEFAULT 0.0,
+                recorded_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES co_creation_sessions (id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
