@@ -12625,6 +12625,10 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_educational_curriculum_builder(user_input)
         elif intent == 'language_learning_tutor':
             response = handle_language_learning_tutor(user_input)
+        elif intent == 'ai_swarm_collaboration':
+            response = handle_ai_swarm_collaboration(user_input)
+        elif intent == 'human_ai_co_creation':
+            response = handle_human_ai_co_creation(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
@@ -15022,6 +15026,417 @@ def api_get_language_progress(student_id):
     except Exception as e:
         print(f"Error getting language progress: {e}")
         return jsonify({'error': 'Failed to get language progress'}), 500
+
+# ===== COLLABORATIVE INTELLIGENCE API ENDPOINTS =====
+
+@app.route('/api/swarm-sessions', methods=['POST'])
+def create_swarm_session_api():
+    """Create a new AI swarm collaboration session"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        task_type = data.get('task_type', '').strip()
+        task_description = data.get('task_description', '').strip()
+        coordination_type = data.get('coordination_type', 'democratic')
+        
+        if not task_type or not task_description:
+            return jsonify({'error': 'Task type and description required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Create new swarm session
+        session_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO ai_swarm_sessions 
+            (session_id, task_type, task_description, coordination_type, 
+             status, created_at, last_updated)
+            VALUES (?, ?, ?, ?, 'active', ?, ?)
+        ''', (session_id, task_type, task_description, coordination_type, timestamp, timestamp))
+        
+        # Assign specialized agents based on task type
+        agent_types = get_recommended_agents(task_type)
+        for agent_type in agent_types:
+            agent_id = str(uuid.uuid4())
+            cursor.execute('''
+                INSERT INTO swarm_agents 
+                (agent_id, session_id, agent_type, specialization, status, created_at)
+                VALUES (?, ?, ?, ?, 'active', ?)
+            ''', (agent_id, session_id, agent_type, agent_type, timestamp))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'agents_assigned': len(agent_types),
+            'agent_types': agent_types,
+            'coordination_type': coordination_type,
+            'status': 'active'
+        })
+        
+    except Exception as e:
+        print(f"Error creating swarm session: {e}")
+        return jsonify({'error': 'Failed to create swarm session'}), 500
+
+@app.route('/api/swarm-sessions/<session_id>', methods=['GET'])
+def get_swarm_session_api(session_id):
+    """Get details of a specific swarm session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get session details
+        cursor.execute('''
+            SELECT task_type, task_description, coordination_type, status, 
+                   created_at, last_updated, results
+            FROM ai_swarm_sessions WHERE session_id = ?
+        ''', (session_id,))
+        session = cursor.fetchone()
+        
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        # Get assigned agents
+        cursor.execute('''
+            SELECT agent_id, agent_type, specialization, status
+            FROM swarm_agents WHERE session_id = ?
+        ''', (session_id,))
+        agents = cursor.fetchall()
+        
+        # Get collaboration tasks
+        cursor.execute('''
+            SELECT task_id, task_name, assigned_agent_id, status, 
+                   difficulty_level, created_at, completed_at
+            FROM collaboration_tasks WHERE session_id = ?
+        ''', (session_id,))
+        tasks = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'session': {
+                'session_id': session_id,
+                'task_type': session[0],
+                'task_description': session[1],
+                'coordination_type': session[2],
+                'status': session[3],
+                'created_at': session[4],
+                'last_updated': session[5],
+                'results': session[6]
+            },
+            'agents': [
+                {
+                    'agent_id': agent[0],
+                    'agent_type': agent[1],
+                    'specialization': agent[2],
+                    'status': agent[3]
+                } for agent in agents
+            ],
+            'tasks': [
+                {
+                    'task_id': task[0],
+                    'task_name': task[1],
+                    'assigned_agent_id': task[2],
+                    'status': task[3],
+                    'difficulty_level': task[4],
+                    'created_at': task[5],
+                    'completed_at': task[6]
+                } for task in tasks
+            ]
+        })
+        
+    except Exception as e:
+        print(f"Error getting swarm session: {e}")
+        return jsonify({'error': 'Failed to get session details'}), 500
+
+@app.route('/api/co-creation-sessions', methods=['POST'])
+def create_co_creation_session_api():
+    """Create a new human-AI co-creation session"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        project_type = data.get('project_type', '').strip()
+        project_name = data.get('project_name', '').strip()
+        collaboration_mode = data.get('collaboration_mode', 'turn_based')
+        
+        if not project_type or not project_name:
+            return jsonify({'error': 'Project type and name required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Create new co-creation session
+        session_id = str(uuid.uuid4())
+        project_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO co_creation_sessions 
+            (session_id, project_id, session_type, collaboration_mode, 
+             status, created_at, last_activity)
+            VALUES (?, ?, ?, ?, 'active', ?, ?)
+        ''', (session_id, project_id, project_type, collaboration_mode, timestamp, timestamp))
+        
+        # Create project record
+        cursor.execute('''
+            INSERT INTO co_creation_projects 
+            (project_id, project_name, project_type, current_version, 
+             created_at, last_modified)
+            VALUES (?, ?, ?, 1, ?, ?)
+        ''', (project_id, project_name, project_type, timestamp, timestamp))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'project_id': project_id,
+            'project_name': project_name,
+            'project_type': project_type,
+            'collaboration_mode': collaboration_mode,
+            'status': 'active'
+        })
+        
+    except Exception as e:
+        print(f"Error creating co-creation session: {e}")
+        return jsonify({'error': 'Failed to create co-creation session'}), 500
+
+@app.route('/api/co-creation-sessions/<session_id>/edit', methods=['POST'])
+def make_real_time_edit_api(session_id):
+    """Make a real-time edit in a co-creation session"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        edit_type = data.get('edit_type', '').strip()
+        edit_content = data.get('edit_content', '').strip()
+        position = data.get('position', 0)
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not edit_type or not edit_content:
+            return jsonify({'error': 'Edit type and content required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Verify session exists
+        cursor.execute('SELECT project_id FROM co_creation_sessions WHERE session_id = ?', (session_id,))
+        session = cursor.fetchone()
+        
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        project_id = session[0]
+        
+        # Record the edit
+        edit_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO real_time_edits 
+            (edit_id, session_id, user_id, edit_type, edit_content, 
+             position, timestamp, is_applied)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        ''', (edit_id, session_id, user_id, edit_type, edit_content, position, timestamp))
+        
+        # Update session activity
+        cursor.execute('''
+            UPDATE co_creation_sessions 
+            SET last_activity = ?, edit_count = edit_count + 1
+            WHERE session_id = ?
+        ''', (timestamp, session_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'edit_id': edit_id,
+            'timestamp': timestamp,
+            'position': position,
+            'edit_applied': True
+        })
+        
+    except Exception as e:
+        print(f"Error making real-time edit: {e}")
+        return jsonify({'error': 'Failed to make edit'}), 500
+
+@app.route('/api/co-creation-sessions/<session_id>/sync', methods=['GET'])
+def sync_collaboration_api(session_id):
+    """Get real-time sync data for collaboration"""
+    try:
+        since_timestamp = request.args.get('since', '')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get recent edits since timestamp
+        if since_timestamp:
+            cursor.execute('''
+                SELECT edit_id, user_id, edit_type, edit_content, 
+                       position, timestamp, is_applied
+                FROM real_time_edits 
+                WHERE session_id = ? AND timestamp > ?
+                ORDER BY timestamp ASC
+            ''', (session_id, since_timestamp))
+        else:
+            cursor.execute('''
+                SELECT edit_id, user_id, edit_type, edit_content, 
+                       position, timestamp, is_applied
+                FROM real_time_edits 
+                WHERE session_id = ?
+                ORDER BY timestamp DESC
+                LIMIT 20
+            ''', (session_id,))
+        
+        edits = cursor.fetchall()
+        
+        # Get active collaborators
+        cursor.execute('''
+            SELECT DISTINCT user_id, MAX(timestamp) as last_activity
+            FROM real_time_edits 
+            WHERE session_id = ? AND timestamp > datetime('now', '-5 minutes')
+            GROUP BY user_id
+        ''', (session_id,))
+        collaborators = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'edits': [
+                {
+                    'edit_id': edit[0],
+                    'user_id': edit[1],
+                    'edit_type': edit[2],
+                    'edit_content': edit[3],
+                    'position': edit[4],
+                    'timestamp': edit[5],
+                    'is_applied': edit[6]
+                } for edit in edits
+            ],
+            'active_collaborators': [
+                {
+                    'user_id': collab[0],
+                    'last_activity': collab[1]
+                } for collab in collaborators
+            ],
+            'sync_timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error syncing collaboration: {e}")
+        return jsonify({'error': 'Failed to sync collaboration'}), 500
+
+@app.route('/api/collaboration-analytics', methods=['GET'])
+def get_collaboration_analytics_api():
+    """Get analytics for collaborative intelligence features"""
+    try:
+        time_period = request.args.get('period', '7d')  # 1d, 7d, 30d
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Determine time filter
+        if time_period == '1d':
+            time_filter = "datetime('now', '-1 day')"
+        elif time_period == '30d':
+            time_filter = "datetime('now', '-30 days')"
+        else:  # Default 7d
+            time_filter = "datetime('now', '-7 days')"
+        
+        # Swarm session statistics
+        cursor.execute(f'''
+            SELECT 
+                COUNT(*) as total_sessions,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_sessions,
+                AVG(CASE WHEN status = 'completed' THEN 
+                    (julianday(last_updated) - julianday(created_at)) * 24 * 60 
+                END) as avg_completion_time_minutes
+            FROM ai_swarm_sessions 
+            WHERE created_at > {time_filter}
+        ''')
+        swarm_stats = cursor.fetchone()
+        
+        # Co-creation session statistics
+        cursor.execute(f'''
+            SELECT 
+                COUNT(*) as total_sessions,
+                SUM(edit_count) as total_edits,
+                AVG(edit_count) as avg_edits_per_session
+            FROM co_creation_sessions 
+            WHERE created_at > {time_filter}
+        ''')
+        co_creation_stats = cursor.fetchone()
+        
+        # Agent performance
+        cursor.execute(f'''
+            SELECT 
+                agent_type,
+                COUNT(*) as assignments,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completions
+            FROM swarm_agents sa
+            JOIN ai_swarm_sessions ass ON sa.session_id = ass.session_id
+            WHERE ass.created_at > {time_filter}
+            GROUP BY agent_type
+        ''')
+        agent_performance = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'period': time_period,
+            'swarm_analytics': {
+                'total_sessions': swarm_stats[0] or 0,
+                'completed_sessions': swarm_stats[1] or 0,
+                'avg_completion_time_minutes': round(swarm_stats[2] or 0, 2),
+                'completion_rate': round((swarm_stats[1] or 0) / max(swarm_stats[0] or 1, 1) * 100, 1)
+            },
+            'co_creation_analytics': {
+                'total_sessions': co_creation_stats[0] or 0,
+                'total_edits': co_creation_stats[1] or 0,
+                'avg_edits_per_session': round(co_creation_stats[2] or 0, 1)
+            },
+            'agent_performance': [
+                {
+                    'agent_type': perf[0],
+                    'assignments': perf[1],
+                    'completions': perf[2],
+                    'success_rate': round(perf[2] / max(perf[1], 1) * 100, 1)
+                } for perf in agent_performance
+            ]
+        })
+        
+    except Exception as e:
+        print(f"Error getting collaboration analytics: {e}")
+        return jsonify({'error': 'Failed to get analytics'}), 500
+
+def get_recommended_agents(task_type):
+    """Get recommended agent types for a given task"""
+    agent_recommendations = {
+        'research': ['research_specialist', 'data_analyst', 'fact_checker'],
+        'writing': ['creative_writer', 'editor', 'style_advisor'],
+        'coding': ['senior_developer', 'code_reviewer', 'testing_specialist'],
+        'design': ['ui_designer', 'ux_researcher', 'visual_artist'],
+        'analysis': ['data_scientist', 'statistician', 'business_analyst'],
+        'creative': ['creative_director', 'brainstormer', 'innovator'],
+        'problem_solving': ['system_architect', 'problem_solver', 'strategist'],
+        'default': ['generalist', 'coordinator', 'quality_assurance']
+    }
+    
+    return agent_recommendations.get(task_type.lower(), agent_recommendations['default'])
 
 @app.route('/api/vocabulary', methods=['GET'])
 def api_get_vocabulary():
