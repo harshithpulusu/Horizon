@@ -1694,6 +1694,48 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="sidebar-section">
+                <h3>📚 Educational Curriculum</h3>
+                <div class="curriculum-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Curriculums:</span>
+                            <span id="curriculumsCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Progress:</span>
+                            <span id="curriculumProgress">0%</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="createCurriculumBtn">📋 New Curriculum</button>
+                        <button class="btn-model" id="myCurriculumsBtn">📖 My Curriculums</button>
+                        <button class="btn-model" id="browseCurriculumsBtn">🌐 Browse Library</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>🗣️ Language Learning</h3>
+                <div class="language-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Languages:</span>
+                            <span id="languagesCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Fluency:</span>
+                            <span id="averageFluency">A1</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="practiceConversationBtn">💬 Practice Conversation</button>
+                        <button class="btn-model" id="vocabularyBuilderBtn">📝 Vocabulary Builder</button>
+                        <button class="btn-model" id="languageProgressBtn">📊 My Progress</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -2114,6 +2156,156 @@
             </div>
             <div id="simulationTemplatesGrid" class="templates-grid">
                 <!-- Simulation templates will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Educational Curriculum Modals -->
+    <div id="createCurriculumModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📚 Create Educational Curriculum</h2>
+                <button class="modal-close" onclick="closeModal('createCurriculumModal')">&times;</button>
+            </div>
+            <form id="createCurriculumForm">
+                <div class="form-group">
+                    <label for="curriculumSubject">Subject</label>
+                    <select id="curriculumSubject" name="subject" required>
+                        <option value="">Select Subject</option>
+                        <option value="Math">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="English">English Language Arts</option>
+                        <option value="History">History</option>
+                        <option value="Programming">Programming</option>
+                        <option value="Art">Visual Arts</option>
+                        <option value="Music">Music</option>
+                        <option value="Physical Education">Physical Education</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="curriculumGrade">Grade Level</label>
+                    <select id="curriculumGrade" name="grade_level" required>
+                        <option value="">Select Grade Level</option>
+                        <option value="K-2">Kindergarten - 2nd Grade</option>
+                        <option value="3-5">3rd - 5th Grade</option>
+                        <option value="6-8">6th - 8th Grade</option>
+                        <option value="9-12">9th - 12th Grade</option>
+                        <option value="College">College Level</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="curriculumDescription">Learning Goals & Description</label>
+                    <textarea id="curriculumDescription" name="description" rows="4" placeholder="Describe the learning objectives and focus areas for this curriculum..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-card primary">Create Curriculum</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('createCurriculumModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="myCurriculumsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📖 My Educational Curriculums</h2>
+                <button class="modal-close" onclick="closeModal('myCurriculumsModal')">&times;</button>
+            </div>
+            <div id="myCurriculumsContent" class="curriculums-content">
+                <!-- User's curriculums will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="browseCurriculumsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🌐 Curriculum Library</h2>
+                <button class="modal-close" onclick="closeModal('browseCurriculumsModal')">&times;</button>
+            </div>
+            <div id="browseCurriculumsContent" class="curriculums-grid">
+                <!-- Available curriculums will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Language Learning Modals -->
+    <div id="practiceConversationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">💬 Language Conversation Practice</h2>
+                <button class="modal-close" onclick="closeModal('practiceConversationModal')">&times;</button>
+            </div>
+            <form id="practiceConversationForm">
+                <div class="form-group">
+                    <label for="practiceLanguage">Language</label>
+                    <select id="practiceLanguage" name="language" required>
+                        <option value="">Select Language</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Chinese">Chinese (Mandarin)</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Russian">Russian</option>
+                        <option value="Arabic">Arabic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="practiceLevel">Proficiency Level</label>
+                    <select id="practiceLevel" name="level" required>
+                        <option value="">Select Level</option>
+                        <option value="A1">A1 - Beginner</option>
+                        <option value="A2">A2 - Elementary</option>
+                        <option value="B1">B1 - Intermediate</option>
+                        <option value="B2">B2 - Upper Intermediate</option>
+                        <option value="C1">C1 - Advanced</option>
+                        <option value="C2">C2 - Proficient</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="conversationTopic">Conversation Topic</label>
+                    <select id="conversationTopic" name="topic">
+                        <option value="general">General Conversation</option>
+                        <option value="travel">Travel & Tourism</option>
+                        <option value="business">Business & Professional</option>
+                        <option value="shopping">Shopping & Dining</option>
+                        <option value="hobbies">Hobbies & Interests</option>
+                        <option value="family">Family & Relationships</option>
+                        <option value="education">Education & Learning</option>
+                        <option value="culture">Culture & Traditions</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-card primary">Start Conversation</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('practiceConversationModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="vocabularyBuilderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📝 Vocabulary Builder</h2>
+                <button class="modal-close" onclick="closeModal('vocabularyBuilderModal')">&times;</button>
+            </div>
+            <div id="vocabularyBuilderContent" class="vocabulary-content">
+                <!-- Vocabulary exercises will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="languageProgressModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 Language Learning Progress</h2>
+                <button class="modal-close" onclick="closeModal('languageProgressModal')">&times;</button>
+            </div>
+            <div id="languageProgressContent" class="progress-content">
+                <!-- Language progress analytics will be loaded here -->
             </div>
         </div>
     </div>

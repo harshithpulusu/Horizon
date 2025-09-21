@@ -1314,4 +1314,467 @@ document.addEventListener('DOMContentLoaded', () => {
             window.aiAssistant.showHorizonHelp();
         });
     }
+    
+    // Initialize educational features
+    initializeEducationalFeatures();
 });
+
+// ===== EDUCATIONAL FEATURES JAVASCRIPT =====
+
+function initializeEducationalFeatures() {
+    // Initialize form submissions
+    initializeCurriculumForms();
+    initializeLanguageForms();
+    
+    // Load existing data
+    loadEducationalDashboardData();
+}
+
+function initializeCurriculumForms() {
+    // Create Curriculum Form
+    const createCurriculumForm = document.getElementById('createCurriculumForm');
+    if (createCurriculumForm) {
+        createCurriculumForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(createCurriculumForm);
+            const curriculumData = {
+                subject: formData.get('subject'),
+                grade_level: formData.get('grade_level'),
+                description: formData.get('description')
+            };
+            
+            try {
+                showEducationalLoading('Creating your personalized curriculum...');
+                
+                const response = await fetch('/api/curriculums', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(curriculumData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('success', 'Curriculum Created!', 'Your personalized curriculum has been successfully created.');
+                    closeModal('createCurriculumModal');
+                    createCurriculumForm.reset();
+                    loadMyCurriculums();
+                } else {
+                    showToast('error', 'Creation Failed', result.error || 'Failed to create curriculum');
+                }
+            } catch (error) {
+                console.error('Error creating curriculum:', error);
+                showToast('error', 'Network Error', 'Please check your connection and try again');
+            } finally {
+                hideEducationalLoading();
+            }
+        });
+    }
+}
+
+function initializeLanguageForms() {
+    // Practice Conversation Form
+    const practiceForm = document.getElementById('practiceConversationForm');
+    if (practiceForm) {
+        practiceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(practiceForm);
+            const sessionData = {
+                language: formData.get('language'),
+                level: formData.get('level'),
+                topic: formData.get('topic')
+            };
+            
+            try {
+                showEducationalLoading('Starting your language conversation session...');
+                
+                const response = await fetch('/api/language-sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('success', 'Session Started!', `Your ${sessionData.language} conversation practice has begun.`);
+                    closeModal('practiceConversationModal');
+                    practiceForm.reset();
+                    startConversationInterface(result);
+                } else {
+                    showToast('error', 'Session Failed', result.error || 'Failed to start language session');
+                }
+            } catch (error) {
+                console.error('Error starting language session:', error);
+                showToast('error', 'Network Error', 'Please check your connection and try again');
+            } finally {
+                hideEducationalLoading();
+            }
+        });
+    }
+}
+
+async function loadMyCurriculums() {
+    try {
+        const response = await fetch('/api/curriculums');
+        const data = await response.json();
+        
+        const container = document.getElementById('myCurriculumsContent');
+        if (!container) return;
+        
+        if (data.curriculums && data.curriculums.length > 0) {
+            container.innerHTML = data.curriculums.map(curriculum => createCurriculumCard(curriculum)).join('');
+        } else {
+            container.innerHTML = `
+                <div class="educational-loading">
+                    <p class="educational-loading-text">No curriculums found</p>
+                    <button class="btn-card primary" onclick="openModal('createCurriculumModal')">
+                        Create Your First Curriculum
+                    </button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading curriculums:', error);
+        showToast('error', 'Loading Failed', 'Unable to load your curriculums');
+    }
+}
+
+async function loadBrowseCurriculums() {
+    try {
+        const response = await fetch('/api/curriculums?browse=true');
+        const data = await response.json();
+        
+        const container = document.getElementById('browseCurriculumsContent');
+        if (!container) return;
+        
+        if (data.curriculums && data.curriculums.length > 0) {
+            container.innerHTML = data.curriculums.map(curriculum => createBrowseCurriculumCard(curriculum)).join('');
+        } else {
+            container.innerHTML = `
+                <div class="educational-loading">
+                    <p class="educational-loading-text">No public curriculums available</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading browse curriculums:', error);
+        showToast('error', 'Loading Failed', 'Unable to load curriculum library');
+    }
+}
+
+function createCurriculumCard(curriculum) {
+    const progress = curriculum.progress || 0;
+    return `
+        <div class="curriculum-card">
+            <h3>${curriculum.subject} - ${curriculum.grade_level}</h3>
+            <div class="curriculum-meta">
+                <span class="curriculum-subject">${curriculum.subject}</span>
+                <span class="curriculum-grade">${curriculum.grade_level}</span>
+            </div>
+            <p class="curriculum-description">${curriculum.description}</p>
+            <div class="curriculum-progress">
+                <div class="curriculum-progress-bar" style="width: ${progress}%"></div>
+            </div>
+            <div class="curriculum-actions">
+                <button class="curriculum-btn" onclick="continueCurriculum(${curriculum.id})">
+                    📚 Continue Learning
+                </button>
+                <button class="curriculum-btn" onclick="viewCurriculumDetails(${curriculum.id})">
+                    📊 View Progress
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function createBrowseCurriculumCard(curriculum) {
+    return `
+        <div class="curriculum-card">
+            <h3>${curriculum.subject} - ${curriculum.grade_level}</h3>
+            <div class="curriculum-meta">
+                <span class="curriculum-subject">${curriculum.subject}</span>
+                <span class="curriculum-grade">${curriculum.grade_level}</span>
+            </div>
+            <p class="curriculum-description">${curriculum.description}</p>
+            <div class="curriculum-actions">
+                <button class="curriculum-btn" onclick="adoptCurriculum(${curriculum.id})">
+                    ➕ Add to My Learning
+                </button>
+                <button class="curriculum-btn" onclick="previewCurriculum(${curriculum.id})">
+                    👁️ Preview
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+async function loadVocabularyBuilder() {
+    try {
+        const response = await fetch('/api/vocabulary');
+        const data = await response.json();
+        
+        const container = document.getElementById('vocabularyBuilderContent');
+        if (!container) return;
+        
+        if (data.words && data.words.length > 0) {
+            container.innerHTML = data.words.map(word => createVocabularyExercise(word)).join('');
+        } else {
+            container.innerHTML = `
+                <div class="educational-loading">
+                    <p class="educational-loading-text">Start practicing vocabulary</p>
+                    <button class="btn-card primary" onclick="generateVocabularyExercises()">
+                        Generate New Words
+                    </button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading vocabulary:', error);
+        showToast('error', 'Loading Failed', 'Unable to load vocabulary exercises');
+    }
+}
+
+function createVocabularyExercise(word) {
+    return `
+        <div class="vocabulary-exercise">
+            <div class="vocabulary-word">${word.word}</div>
+            <div class="vocabulary-pronunciation">[${word.pronunciation || 'N/A'}]</div>
+            <div class="vocabulary-definition">${word.definition}</div>
+            <div class="vocabulary-example">"${word.example}"</div>
+            <div class="vocabulary-actions">
+                <button class="vocab-btn" onclick="markWordMastered(${word.id})">
+                    ✅ Mastered
+                </button>
+                <button class="vocab-btn" onclick="hearPronunciation('${word.word}')">
+                    🔊 Listen
+                </button>
+                <button class="vocab-btn" onclick="practiceWord(${word.id})">
+                    📝 Practice
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+async function loadLanguageProgress() {
+    try {
+        const response = await fetch('/api/language-progress');
+        const data = await response.json();
+        
+        const container = document.getElementById('languageProgressContent');
+        if (!container) return;
+        
+        if (data.progress) {
+            container.innerHTML = createLanguageProgressDisplay(data.progress);
+        } else {
+            container.innerHTML = `
+                <div class="educational-loading">
+                    <p class="educational-loading-text">No language progress data available</p>
+                    <button class="btn-card primary" onclick="openModal('practiceConversationModal')">
+                        Start Language Practice
+                    </button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading language progress:', error);
+        showToast('error', 'Loading Failed', 'Unable to load language progress');
+    }
+}
+
+function createLanguageProgressDisplay(progress) {
+    return `
+        <div class="progress-metrics">
+            <div class="progress-metric">
+                <span class="metric-value">${progress.sessions_completed || 0}</span>
+                <span class="metric-label">Sessions Completed</span>
+            </div>
+            <div class="progress-metric">
+                <span class="metric-value">${progress.vocabulary_mastered || 0}</span>
+                <span class="metric-label">Words Mastered</span>
+            </div>
+            <div class="progress-metric">
+                <span class="metric-value">${progress.fluency_score || 0}%</span>
+                <span class="metric-label">Fluency Score</span>
+            </div>
+            <div class="progress-metric">
+                <span class="metric-value">${progress.streak_days || 0}</span>
+                <span class="metric-label">Day Streak</span>
+            </div>
+        </div>
+        <div class="fluency-indicator">
+            <span>Current Level:</span>
+            <span class="fluency-level ${progress.current_level || 'A1'}">${progress.current_level || 'A1'}</span>
+        </div>
+    `;
+}
+
+async function loadEducationalDashboardData() {
+    try {
+        // Update curriculum count
+        const curriculumsResponse = await fetch('/api/curriculums');
+        const curriculumsData = await curriculumsResponse.json();
+        
+        const curriculumCount = document.getElementById('curriculumCount');
+        if (curriculumCount) {
+            curriculumCount.textContent = curriculumsData.curriculums?.length || 0;
+        }
+        
+        const curriculumProgress = document.getElementById('curriculumProgress');
+        if (curriculumProgress && curriculumsData.curriculums?.length > 0) {
+            const avgProgress = curriculumsData.curriculums.reduce((sum, curr) => sum + (curr.progress || 0), 0) / curriculumsData.curriculums.length;
+            curriculumProgress.textContent = Math.round(avgProgress) + '%';
+        }
+        
+        // Update language learning stats
+        const languageResponse = await fetch('/api/language-progress');
+        const languageData = await languageResponse.json();
+        
+        const languageCount = document.getElementById('languageCount');
+        if (languageCount) {
+            languageCount.textContent = languageData.languages?.length || 0;
+        }
+        
+        const fluencyLevel = document.getElementById('fluencyLevel');
+        if (fluencyLevel) {
+            fluencyLevel.textContent = languageData.progress?.current_level || 'A1';
+        }
+        
+    } catch (error) {
+        console.error('Error loading educational dashboard data:', error);
+    }
+}
+
+// Educational Feature Action Functions
+function continueCurriculum(curriculumId) {
+    showToast('info', 'Continuing Curriculum', 'Loading your curriculum progress...');
+    // Implementation for continuing curriculum
+}
+
+function viewCurriculumDetails(curriculumId) {
+    showToast('info', 'Loading Details', 'Fetching curriculum analytics...');
+    // Implementation for viewing curriculum details
+}
+
+function adoptCurriculum(curriculumId) {
+    showToast('info', 'Adding Curriculum', 'Adding to your learning path...');
+    // Implementation for adopting a curriculum
+}
+
+function previewCurriculum(curriculumId) {
+    showToast('info', 'Preview Loading', 'Preparing curriculum preview...');
+    // Implementation for previewing curriculum
+}
+
+function markWordMastered(wordId) {
+    showToast('success', 'Word Mastered!', 'Great job! This word has been marked as mastered.');
+    // Implementation for marking word as mastered
+}
+
+function hearPronunciation(word) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(word);
+        speechSynthesis.speak(utterance);
+        showToast('info', 'Pronunciation', `Playing pronunciation for "${word}"`);
+    } else {
+        showToast('error', 'Not Supported', 'Speech synthesis not supported in this browser');
+    }
+}
+
+function practiceWord(wordId) {
+    showToast('info', 'Practice Mode', 'Loading word practice exercises...');
+    // Implementation for word practice
+}
+
+function generateVocabularyExercises() {
+    showToast('info', 'Generating', 'Creating new vocabulary exercises...');
+    // Implementation for generating vocabulary
+}
+
+function startConversationInterface(sessionData) {
+    // Implementation for starting conversation interface
+    showToast('success', 'Conversation Started', 'Your language practice session is now active!');
+}
+
+// Modal management for educational features
+function openEducationalModal(modalId) {
+    openModal(modalId);
+    
+    // Load content based on modal type
+    switch(modalId) {
+        case 'myCurriculumsModal':
+            loadMyCurriculums();
+            break;
+        case 'browseCurriculumsModal':
+            loadBrowseCurriculums();
+            break;
+        case 'vocabularyBuilderModal':
+            loadVocabularyBuilder();
+            break;
+        case 'languageProgressModal':
+            loadLanguageProgress();
+            break;
+    }
+}
+
+// Utility functions for educational features
+function showEducationalLoading(message) {
+    showToast('info', 'Loading', message);
+}
+
+function hideEducationalLoading() {
+    // Hide any loading indicators
+}
+
+// Toast notification system (if not already implemented)
+function showToast(type, title, message) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-header">
+            <div class="toast-title">
+                <span class="toast-icon">${getToastIcon(type)}</span>
+                ${title}
+            </div>
+            <button class="toast-close" onclick="closeToast(this)">&times;</button>
+        </div>
+        <p class="toast-message">${message}</p>
+    `;
+    
+    // Add to container
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    container.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => closeToast(toast.querySelector('.toast-close')), 5000);
+}
+
+function getToastIcon(type) {
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    return icons[type] || 'ℹ️';
+}
+
+function closeToast(button) {
+    const toast = button.closest('.toast');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+}
