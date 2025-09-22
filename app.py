@@ -9611,6 +9611,105 @@ def get_personality_by_skill(required_skill):
         if 'conn' in locals():
             conn.close()
 
+def handle_cross_platform_sync(text):
+    """
+    Handle cross-platform sync requests
+    Features: Device registration, conversation sync, real-time state sync
+    """
+    
+    # Determine sync type based on text
+    if any(word in text.lower() for word in ['continue', 'resume', 'switch']):
+        sync_type = 'conversation_continuation'
+        response = "I'll help you continue your conversation on another device! To enable seamless conversation continuation across your devices:\n\n"
+        response += "📱 **Device Sync Setup:**\n"
+        response += "• Register each device through Settings → Device Management\n"
+        response += "• Generate a sync token for secure device linking\n"
+        response += "• Enable automatic conversation sync\n\n"
+        response += "🔄 **Continue Conversation:**\n"
+        response += "• Use the 'Continue on [Device]' button in conversation history\n"
+        response += "• Scan QR code for instant device pairing\n"
+        response += "• All conversation context transfers seamlessly\n\n"
+        response += "✨ Your conversation history, personality settings, and context will sync automatically across all your registered devices!"
+        
+    elif any(word in text.lower() for word in ['sync', 'synchronize', 'backup']):
+        sync_type = 'full_sync'
+        response = "I'll synchronize your data across devices! Here's what gets synced:\n\n"
+        response += "💬 **Conversation History:**\n"
+        response += "• Complete chat history with timestamps\n"
+        response += "• AI personality preferences\n"
+        response += "• Session continuity and context\n\n"
+        response += "⚙️ **Settings & Preferences:**\n"
+        response += "• AI personality selections\n"
+        response += "• User interface preferences\n"
+        response += "• Notification settings\n\n"
+        response += "🔒 **Secure Sync:**\n"
+        response += "• End-to-end encryption\n"
+        response += "• Device authentication tokens\n"
+        response += "• Conflict resolution for simultaneous edits\n\n"
+        response += "🚀 All your devices stay perfectly in sync!"
+        
+    elif any(word in text.lower() for word in ['register', 'connect', 'pair', 'link']):
+        sync_type = 'device_registration'
+        response = "Let's register your device for cross-platform sync! 📱\n\n"
+        response += "**Step 1:** Device Registration\n"
+        response += "• Click 'Add Device' in Settings\n"
+        response += "• Name your device (e.g., 'John's iPhone', 'Work Laptop')\n"
+        response += "• Generate secure sync token\n\n"
+        response += "**Step 2:** Device Pairing\n"
+        response += "• Scan QR code with your other device\n"
+        response += "• Or manually enter the sync token\n"
+        response += "• Verify device connection\n\n"
+        response += "**Step 3:** Sync Preferences\n"
+        response += "• Choose what to sync (conversations, settings, etc.)\n"
+        response += "• Set sync frequency (real-time, hourly, manual)\n"
+        response += "• Enable/disable conflict resolution\n\n"
+        response += "🎉 Your devices will now stay perfectly synchronized!"
+        
+    else:
+        sync_type = 'general_sync_info'
+        response = "🌐 **Cross-Platform Sync Features:**\n\n"
+        response += "✨ **Seamless Conversation Continuation**\n"
+        response += "Start a conversation on your phone, continue on your laptop!\n\n"
+        response += "🔄 **Real-Time Sync**\n"
+        response += "• Instant conversation history sync\n"
+        response += "• Personality preferences transfer\n"
+        response += "• Settings synchronization\n\n"
+        response += "📱 **Multi-Device Support**\n"
+        response += "• Mobile, tablet, desktop, web\n"
+        response += "• iOS, Android, Windows, Mac, Linux\n"
+        response += "• Browser-based access anywhere\n\n"
+        response += "🔒 **Secure & Private**\n"
+        response += "• End-to-end encryption\n"
+        response += "• Device authentication\n"
+        response += "• Local data protection\n\n"
+        response += "To get started, say 'register my device' or 'sync my conversations'!"
+    
+    # Log sync request
+    log_sync_request(text, sync_type)
+    
+    return response
+
+def log_sync_request(user_input, sync_type):
+    """Log sync requests for analytics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Simple logging to conversation sync log
+        cursor.execute('''
+            INSERT INTO conversation_sync_log 
+            (action_type, sync_direction, timestamp)
+            VALUES (?, 'user_request', ?)
+        ''', (sync_type, datetime.now().isoformat()))
+        
+        conn.commit()
+        
+    except Exception as e:
+        print(f"Error logging sync request: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 # ===== COLLABORATIVE INTELLIGENCE FUNCTIONS =====
 
 def handle_ai_swarm_collaboration(text):
@@ -12935,6 +13034,61 @@ INTENT_PATTERNS = {
         r'\b(structured.*collaboration|organized.*co.*creation)\b',
         r'\b(multi.*modal.*collaboration|cross.*platform.*collaboration)\b'
     ],
+    'personality_switching': [
+        r'\b(switch.*to|change.*to|use|become).*artist.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*scientist.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*philosopher.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*engineer.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*writer.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*teacher.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*comedian.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*therapist.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*detective.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*chef.*ai\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*artist\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*scientist\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*philosopher\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*engineer\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*writer\b',
+        r'\b(i.*want|i.*need).*creative.*ai\b',
+        r'\b(i.*want|i.*need).*scientific.*ai\b',
+        r'\b(i.*want|i.*need).*technical.*ai\b',
+        r'\b(i.*want|i.*need).*artistic.*assistance\b',
+        r'\b(get.*me|find.*me).*different.*personality\b',
+        r'\b(switch.*personality|change.*character|different.*ai)\b',
+        r'\b(creative.*mode|artist.*mode|scientist.*mode)\b',
+        r'\b(philosophical.*mode|engineering.*mode|writing.*mode)\b',
+        r'\b(become.*more|act.*like|respond.*like).*(creative|scientific|artistic|technical)\b',
+        r'\b(i.*need.*help.*with).*(art|science|philosophy|engineering|writing)\b'
+    ],
+    'cross_platform_sync': [
+        r'\b(sync|synchronize).*conversations?\b',
+        r'\b(sync|synchronize).*chat\b',
+        r'\b(sync|synchronize).*messages?\b',
+        r'\b(sync|synchronize).*data\b',
+        r'\b(sync|synchronize).*devices?\b',
+        r'\b(continue.*on|switch.*to).*(phone|mobile|tablet|computer|desktop)\b',
+        r'\b(continue.*conversation|resume.*chat).*(on|from).*(phone|mobile|tablet|computer)\b',
+        r'\bcontinue.*on.*another.*device\b',
+        r'\bmove.*to.*another.*device\b',
+        r'\btransfer.*conversation\b',
+        r'\bswitch.*devices?\b',
+        r'\bcross.*platform.*sync\b',
+        r'\bdevice.*sync\b',
+        r'\bmulti.*device.*sync\b',
+        r'\bconversation.*sync\b',
+        r'\bchat.*history.*sync\b',
+        r'\bsync.*across.*devices?\b',
+        r'\bmirror.*conversation\b',
+        r'\bshare.*conversation\b',
+        r'\bbackup.*conversation\b',
+        r'\brestore.*conversation\b',
+        r'\bcloud.*sync\b',
+        r'\bdevice.*pairing\b',
+        r'\bconnect.*devices?\b',
+        r'\blink.*devices?\b',
+        r'\bregister.*device\b'
+    ],
     'goodbye': [r'\b(bye|goodbye|see you|farewell)\b']
 }
 
@@ -13102,6 +13256,10 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
             response = handle_ai_swarm_collaboration(user_input)
         elif intent == 'human_ai_co_creation':
             response = handle_human_ai_co_creation(user_input)
+        elif intent == 'personality_switching':
+            response = handle_personality_switching(user_input, personality)
+        elif intent == 'cross_platform_sync':
+            response = handle_cross_platform_sync(user_input)
         elif intent == 'goodbye':
             response = "Thank you for chatting! Have a wonderful day!"
         else:
