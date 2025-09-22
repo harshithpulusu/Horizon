@@ -1736,6 +1736,48 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="sidebar-section">
+                <h3>🤖 AI Swarm Collaboration</h3>
+                <div class="swarm-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Active Swarms:</span>
+                            <span id="activeSwarmCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Completed:</span>
+                            <span id="completedSwarmCount">0</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="createSwarmBtn">🚀 Create Swarm</button>
+                        <button class="btn-model" id="mySwarmSessionsBtn">📊 My Sessions</button>
+                        <button class="btn-model" id="swarmAnalyticsBtn">📈 Analytics</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>👥 Human-AI Co-creation</h3>
+                <div class="cocreation-management">
+                    <div class="model-stats">
+                        <div class="stat-row">
+                            <span>Active Projects:</span>
+                            <span id="activeCoCreationCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Collaborations:</span>
+                            <span id="totalCollaborationsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn-model" id="createCoCreationBtn">✨ Start Co-creation</button>
+                        <button class="btn-model" id="myCoCreationBtn">📝 My Projects</button>
+                        <button class="btn-model" id="joinCollaborationBtn">🤝 Join Session</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -2609,6 +2651,34 @@
                 loadSimulationTemplates();
             });
             
+            // Collaborative Intelligence Event Listeners
+            document.getElementById('createSwarmBtn').addEventListener('click', () => {
+                openModal('createSwarmModal');
+            });
+            
+            document.getElementById('mySwarmSessionsBtn').addEventListener('click', () => {
+                // openModal('mySwarmSessionsModal');
+                loadSwarmSessions();
+            });
+            
+            document.getElementById('swarmAnalyticsBtn').addEventListener('click', () => {
+                showCollaborationAnalytics();
+            });
+            
+            document.getElementById('createCoCreationBtn').addEventListener('click', () => {
+                openModal('createCoCreationModal');
+            });
+            
+            document.getElementById('myCoCreationBtn').addEventListener('click', () => {
+                // openModal('myCoCreationModal');
+                loadCoCreationSessions();
+            });
+            
+            document.getElementById('joinCollaborationBtn').addEventListener('click', () => {
+                // openModal('joinCollaborationModal');
+                console.log('Join collaboration clicked');
+            });
+            
             // Train model form
             document.getElementById('trainModelForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -2664,6 +2734,8 @@
             updateAnalyticsStats();
             updateResearchStats();
             updateSimulationStats();
+            updateSwarmStats();
+            updateCoCreationStats();
             
             // Periodically update training progress
             setInterval(() => {
@@ -2675,6 +2747,8 @@
                 updateAnalyticsStats();
                 updateResearchStats();
                 updateSimulationStats();
+                updateSwarmStats();
+                updateCoCreationStats();
             }, 5000); // Update every 5 seconds
         });
         
@@ -2996,6 +3070,248 @@
             console.log('Using simulation template:', templateId);
             // Implementation for using simulation template
         }
+        
+        // ===== COLLABORATIVE INTELLIGENCE FUNCTIONS =====
+        
+        async function createSwarmSession() {
+            const taskType = document.getElementById('swarmTaskType').value;
+            const taskDescription = document.getElementById('swarmTaskDescription').value;
+            const coordinationType = document.getElementById('swarmCoordinationType').value;
+            
+            if (!taskType || !taskDescription) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/swarm-sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        task_type: taskType,
+                        task_description: taskDescription,
+                        coordination_type: coordinationType
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('createSwarmModal');
+                    showNotification(`Swarm session created! ${data.agents_assigned} specialized agents assigned.`, 'success');
+                    updateSwarmStats();
+                    loadSwarmSessions();
+                } else {
+                    showNotification(data.error || 'Failed to create swarm session', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating swarm session:', error);
+                showNotification('Failed to create swarm session', 'error');
+            }
+        }
+        
+        async function createCoCreationSession() {
+            const projectType = document.getElementById('coCreationProjectType').value;
+            const projectName = document.getElementById('coCreationProjectName').value;
+            const collaborationMode = document.getElementById('coCreationMode').value;
+            
+            if (!projectType || !projectName) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/co-creation-sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_type: projectType,
+                        project_name: projectName,
+                        collaboration_mode: collaborationMode
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('createCoCreationModal');
+                    showNotification(`Co-creation session started! Project "${data.project_name}" ready for collaboration.`, 'success');
+                    updateCoCreationStats();
+                    loadCoCreationSessions();
+                } else {
+                    showNotification(data.error || 'Failed to create co-creation session', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating co-creation session:', error);
+                showNotification('Failed to create co-creation session', 'error');
+            }
+        }
+        
+        async function updateSwarmStats() {
+            try {
+                const response = await fetch('/api/collaboration-analytics?period=7d');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('activeSwarmCount').textContent = data.swarm_analytics.total_sessions;
+                    document.getElementById('completedSwarmCount').textContent = data.swarm_analytics.completed_sessions;
+                }
+            } catch (error) {
+                console.error('Error updating swarm stats:', error);
+            }
+        }
+        
+        async function updateCoCreationStats() {
+            try {
+                const response = await fetch('/api/collaboration-analytics?period=7d');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('activeCoCreationCount').textContent = data.co_creation_analytics.total_sessions;
+                    document.getElementById('totalCollaborationsCount').textContent = data.co_creation_analytics.total_edits;
+                }
+            } catch (error) {
+                console.error('Error updating co-creation stats:', error);
+            }
+        }
+        
+        async function loadSwarmSessions() {
+            // Implementation for loading and displaying swarm sessions
+            console.log('Loading swarm sessions...');
+        }
+        
+        async function loadCoCreationSessions() {
+            // Implementation for loading and displaying co-creation sessions
+            console.log('Loading co-creation sessions...');
+        }
+        
+        async function showCollaborationAnalytics() {
+            try {
+                const response = await fetch('/api/collaboration-analytics?period=30d');
+                const data = await response.json();
+                if (data.success) {
+                    openModal('collaborationAnalyticsModal');
+                    // Display analytics in modal
+                    document.getElementById('analyticsContent').innerHTML = `
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <h4>AI Swarm Collaboration</h4>
+                                <p>Total Sessions: ${data.swarm_analytics.total_sessions}</p>
+                                <p>Completion Rate: ${data.swarm_analytics.completion_rate}%</p>
+                                <p>Avg Time: ${data.swarm_analytics.avg_completion_time_minutes} min</p>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Human-AI Co-creation</h4>
+                                <p>Total Sessions: ${data.co_creation_analytics.total_sessions}</p>
+                                <p>Total Edits: ${data.co_creation_analytics.total_edits}</p>
+                                <p>Avg Edits/Session: ${data.co_creation_analytics.avg_edits_per_session}</p>
+                            </div>
+                        </div>
+                        <div class="agent-performance">
+                            <h4>Agent Performance</h4>
+                            ${data.agent_performance.map(agent => `
+                                <div class="agent-stats">
+                                    <span>${agent.agent_type}:</span>
+                                    <span>${agent.success_rate}% success rate</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading collaboration analytics:', error);
+            }
+        }
     </script>
+    
+    <!-- AI Swarm Collaboration Modal -->
+    <div id="createSwarmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🤖 Create AI Swarm Collaboration</h2>
+                <button class="modal-close" onclick="closeModal('createSwarmModal')">&times;</button>
+            </div>
+            <form id="createSwarmForm" onsubmit="event.preventDefault(); createSwarmSession();">
+                <div class="form-group">
+                    <label for="swarmTaskType">Task Type</label>
+                    <select id="swarmTaskType" name="swarmTaskType" required>
+                        <option value="">Select Task Type</option>
+                        <option value="research">Research & Analysis</option>
+                        <option value="writing">Content Writing</option>
+                        <option value="coding">Software Development</option>
+                        <option value="design">Creative Design</option>
+                        <option value="problem_solving">Problem Solving</option>
+                        <option value="analysis">Data Analysis</option>
+                        <option value="creative">Creative Projects</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="swarmTaskDescription">Task Description</label>
+                    <textarea id="swarmTaskDescription" name="swarmTaskDescription" placeholder="Describe the task you want the AI swarm to collaborate on..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="swarmCoordinationType">Coordination Strategy</label>
+                    <select id="swarmCoordinationType" name="swarmCoordinationType">
+                        <option value="democratic">Democratic (Consensus Building)</option>
+                        <option value="hierarchical">Hierarchical (Lead Agent)</option>
+                        <option value="specialist">Specialist (Domain Experts)</option>
+                    </select>
+                </div>
+                <div class="model-actions-card">
+                    <button type="submit" class="btn-card primary">Create Swarm</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('createSwarmModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Human-AI Co-creation Modal -->
+    <div id="createCoCreationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">👥 Start Human-AI Co-creation</h2>
+                <button class="modal-close" onclick="closeModal('createCoCreationModal')">&times;</button>
+            </div>
+            <form id="createCoCreationForm" onsubmit="event.preventDefault(); createCoCreationSession();">
+                <div class="form-group">
+                    <label for="coCreationProjectType">Project Type</label>
+                    <select id="coCreationProjectType" name="coCreationProjectType" required>
+                        <option value="">Select Project Type</option>
+                        <option value="writing">Collaborative Writing</option>
+                        <option value="coding">Pair Programming</option>
+                        <option value="design">Design Collaboration</option>
+                        <option value="brainstorming">Brainstorming Session</option>
+                        <option value="planning">Project Planning</option>
+                        <option value="research">Research Collaboration</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="coCreationProjectName">Project Name</label>
+                    <input type="text" id="coCreationProjectName" name="coCreationProjectName" placeholder="My Collaboration Project" required>
+                </div>
+                <div class="form-group">
+                    <label for="coCreationMode">Collaboration Mode</label>
+                    <select id="coCreationMode" name="coCreationMode">
+                        <option value="real_time">Real-time (Live Editing)</option>
+                        <option value="turn_based">Turn-based (Take Turns)</option>
+                        <option value="parallel">Parallel (Work Separately)</option>
+                    </select>
+                </div>
+                <div class="model-actions-card">
+                    <button type="submit" class="btn-card primary">Start Co-creation</button>
+                    <button type="button" class="btn-card secondary" onclick="closeModal('createCoCreationModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Collaboration Analytics Modal -->
+    <div id="collaborationAnalyticsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📈 Collaboration Analytics</h2>
+                <button class="modal-close" onclick="closeModal('collaborationAnalyticsModal')">&times;</button>
+            </div>
+            <div id="analyticsContent" class="analytics-content">
+                <!-- Analytics content will be loaded here -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>
