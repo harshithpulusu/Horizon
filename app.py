@@ -1686,6 +1686,197 @@ def init_db():
             )
         ''')
         
+        # AI Personality Ecosystem Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ai_personalities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                personality_name TEXT UNIQUE,
+                display_name TEXT,
+                personality_type TEXT, -- artist, scientist, philosopher, engineer, writer, etc.
+                description TEXT,
+                avatar_emoji TEXT,
+                avatar_image_url TEXT,
+                primary_skills TEXT, -- JSON array of primary capabilities
+                secondary_skills TEXT, -- JSON array of secondary capabilities
+                personality_traits TEXT, -- JSON object: {creativity: 0.9, logic: 0.7, empathy: 0.8}
+                communication_style TEXT, -- formal, casual, creative, technical, philosophical
+                expertise_domains TEXT, -- JSON array of knowledge areas
+                response_patterns TEXT, -- JSON object defining response characteristics
+                greeting_messages TEXT, -- JSON array of possible greetings
+                catchphrases TEXT, -- JSON array of characteristic phrases
+                preferred_tools TEXT, -- JSON array of tools this personality likes to use
+                collaboration_style TEXT, -- how this personality works with others
+                learning_approach TEXT, -- how this personality learns and adapts
+                creativity_level REAL DEFAULT 0.5,
+                analytical_level REAL DEFAULT 0.5,
+                empathy_level REAL DEFAULT 0.5,
+                humor_level REAL DEFAULT 0.5,
+                formality_level REAL DEFAULT 0.5,
+                is_active BOOLEAN DEFAULT 1,
+                usage_count INTEGER DEFAULT 0,
+                user_rating REAL DEFAULT 0.0,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personality_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                personality_id INTEGER,
+                skill_name TEXT,
+                skill_category TEXT, -- creative, analytical, technical, social, problem_solving
+                proficiency_level REAL, -- 0.0 to 1.0
+                skill_description TEXT,
+                use_cases TEXT, -- JSON array of when to use this skill
+                skill_keywords TEXT, -- JSON array of trigger words for this skill
+                skill_examples TEXT, -- JSON array of example outputs
+                is_primary BOOLEAN DEFAULT 0,
+                created_at TEXT,
+                FOREIGN KEY (personality_id) REFERENCES ai_personalities (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personality_interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                personality_id INTEGER,
+                session_id TEXT,
+                interaction_type TEXT, -- conversation, task_assistance, creative_collaboration
+                user_input TEXT,
+                personality_response TEXT,
+                skill_used TEXT, -- which skill was primarily used
+                response_quality_score REAL DEFAULT 0.0,
+                user_satisfaction REAL DEFAULT 0.0,
+                context_relevance REAL DEFAULT 0.0,
+                personality_consistency REAL DEFAULT 0.0,
+                response_time_ms INTEGER,
+                tokens_used INTEGER,
+                interaction_metadata TEXT, -- JSON object with additional data
+                timestamp TEXT,
+                FOREIGN KEY (personality_id) REFERENCES ai_personalities (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS character_traits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                personality_id INTEGER,
+                trait_name TEXT,
+                trait_value REAL, -- 0.0 to 1.0
+                trait_description TEXT,
+                manifestation_examples TEXT, -- JSON array of how this trait shows up
+                influence_on_responses TEXT, -- how this trait affects responses
+                compatibility_with_traits TEXT, -- JSON object of synergies/conflicts
+                created_at TEXT,
+                FOREIGN KEY (personality_id) REFERENCES ai_personalities (id)
+            )
+        ''')
+        
+        # Cross-Platform Sync Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS device_registrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id TEXT UNIQUE,
+                user_id TEXT,
+                device_name TEXT,
+                device_type TEXT, -- mobile, desktop, tablet, web
+                platform TEXT, -- ios, android, windows, mac, linux, web
+                browser_info TEXT, -- JSON object with browser details for web
+                app_version TEXT,
+                sync_token TEXT UNIQUE,
+                last_active TEXT,
+                sync_preferences TEXT, -- JSON object with sync settings
+                is_primary_device BOOLEAN DEFAULT 0,
+                push_token TEXT, -- for notifications
+                security_hash TEXT,
+                registered_at TEXT,
+                last_sync_at TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sync_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sync_session_id TEXT UNIQUE,
+                user_id TEXT,
+                initiating_device_id TEXT,
+                target_device_id TEXT,
+                sync_type TEXT, -- full_sync, conversation_sync, preference_sync, real_time
+                sync_status TEXT, -- pending, in_progress, completed, failed, cancelled
+                data_size_bytes INTEGER,
+                items_synced INTEGER,
+                conflicts_detected INTEGER,
+                conflicts_resolved INTEGER,
+                sync_duration_ms INTEGER,
+                error_message TEXT,
+                started_at TEXT,
+                completed_at TEXT,
+                FOREIGN KEY (initiating_device_id) REFERENCES device_registrations (device_id),
+                FOREIGN KEY (target_device_id) REFERENCES device_registrations (device_id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversation_sync_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sync_session_id TEXT,
+                conversation_id INTEGER,
+                session_id TEXT,
+                action_type TEXT, -- create, update, delete
+                sync_direction TEXT, -- upload, download, bidirectional
+                source_device_id TEXT,
+                target_device_id TEXT,
+                data_hash TEXT, -- for integrity verification
+                conflict_detected BOOLEAN DEFAULT 0,
+                conflict_resolution_strategy TEXT,
+                original_data TEXT, -- JSON snapshot before sync
+                synced_data TEXT, -- JSON data after sync
+                timestamp TEXT,
+                FOREIGN KEY (sync_session_id) REFERENCES sync_sessions (sync_session_id),
+                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS platform_states (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                device_id TEXT,
+                state_type TEXT, -- current_personality, active_session, ui_preferences, conversation_context
+                state_key TEXT,
+                state_value TEXT, -- JSON object containing the state data
+                state_version INTEGER DEFAULT 1,
+                is_synced BOOLEAN DEFAULT 0,
+                priority_level INTEGER DEFAULT 1, -- 1=low, 5=critical for sync
+                last_modified TEXT,
+                synced_at TEXT,
+                FOREIGN KEY (device_id) REFERENCES device_registrations (device_id)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sync_conflicts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sync_session_id TEXT,
+                conflict_type TEXT, -- data_mismatch, timestamp_conflict, device_state_divergence
+                entity_type TEXT, -- conversation, personality, preference, session
+                entity_id TEXT,
+                source_device_id TEXT,
+                target_device_id TEXT,
+                source_data TEXT, -- JSON of source version
+                target_data TEXT, -- JSON of target version
+                resolution_strategy TEXT, -- latest_wins, merge, manual, user_choice
+                resolved_data TEXT, -- JSON of final resolved data
+                is_resolved BOOLEAN DEFAULT 0,
+                resolution_metadata TEXT, -- JSON with resolution details
+                detected_at TEXT,
+                resolved_at TEXT,
+                FOREIGN KEY (sync_session_id) REFERENCES sync_sessions (sync_session_id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence features")
