@@ -9329,6 +9329,288 @@ An AI-powered immersive experience that provides personalized conversation pract
 Ready to start your language learning journey? Just tell me which language you'd like to practice!
 """
 
+# ===== AI PERSONALITY ECOSYSTEM FUNCTIONS =====
+
+def handle_personality_switching(text, current_personality='friendly'):
+    """
+    Handle requests to switch to different AI personalities
+    Features: Character selection, skill-based routing, personality consistency
+    """
+    
+    # Extract requested personality from text
+    personality_keywords = {
+        'artist': ['artist', 'creative', 'artistic', 'paint', 'draw', 'design', 'visual'],
+        'scientist': ['scientist', 'research', 'scientific', 'experiment', 'analyze', 'data'],
+        'philosopher': ['philosopher', 'philosophy', 'think', 'wisdom', 'meaning', 'ethics'],
+        'engineer': ['engineer', 'technical', 'build', 'system', 'solution', 'optimize'],
+        'writer': ['writer', 'write', 'story', 'novel', 'poetry', 'literature', 'author'],
+        'teacher': ['teacher', 'teach', 'explain', 'learn', 'education', 'tutor'],
+        'comedian': ['comedian', 'funny', 'joke', 'humor', 'laugh', 'entertainment'],
+        'therapist': ['therapist', 'therapy', 'emotion', 'feeling', 'support', 'counsel'],
+        'detective': ['detective', 'mystery', 'investigate', 'clue', 'solve', 'puzzle'],
+        'chef': ['chef', 'cook', 'recipe', 'food', 'cuisine', 'kitchen', 'culinary']
+    }
+    
+    requested_personality = None
+    for personality, keywords in personality_keywords.items():
+        if any(keyword in text.lower() for keyword in keywords):
+            requested_personality = personality
+            break
+    
+    if not requested_personality:
+        requested_personality = 'friendly'  # Default fallback
+    
+    # Get or create personality profile
+    personality_profile = get_personality_profile(requested_personality)
+    
+    # Generate personality switch response
+    return generate_personality_switch_response(requested_personality, personality_profile, text)
+
+def get_personality_profile(personality_name):
+    """Get comprehensive personality profile from database or create default"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM ai_personalities WHERE personality_name = ?
+        ''', (personality_name,))
+        personality = cursor.fetchone()
+        
+        if personality:
+            # Return existing personality profile
+            return {
+                'id': personality[0],
+                'name': personality[1],
+                'display_name': personality[2],
+                'type': personality[3],
+                'description': personality[4],
+                'avatar_emoji': personality[5],
+                'primary_skills': json.loads(personality[7]) if personality[7] else [],
+                'traits': json.loads(personality[9]) if personality[9] else {},
+                'communication_style': personality[10],
+                'expertise_domains': json.loads(personality[11]) if personality[11] else [],
+                'greeting_messages': json.loads(personality[14]) if personality[14] else [],
+                'catchphrases': json.loads(personality[15]) if personality[15] else []
+            }
+        else:
+            # Create default personality profile
+            default_profile = create_default_personality(personality_name)
+            save_personality_profile(default_profile)
+            return default_profile
+            
+    except Exception as e:
+        print(f"Error getting personality profile: {e}")
+        return create_default_personality(personality_name)
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def create_default_personality(personality_name):
+    """Create default personality profiles for different AI characters"""
+    
+    personality_defaults = {
+        'artist': {
+            'display_name': 'Creative Artist AI',
+            'description': 'A visionary AI with deep artistic sensibility, specializing in creative expression and visual design',
+            'avatar_emoji': '🎨',
+            'primary_skills': ['visual_design', 'creative_writing', 'color_theory', 'artistic_critique'],
+            'traits': {'creativity': 0.95, 'logic': 0.6, 'empathy': 0.8, 'humor': 0.7, 'formality': 0.3},
+            'communication_style': 'creative',
+            'expertise_domains': ['art', 'design', 'creativity', 'aesthetics', 'visual_arts'],
+            'greeting_messages': ['Hello! Ready to create something beautiful together?', 'Greetings, fellow creator! What artistic vision shall we bring to life?'],
+            'catchphrases': ['Let\'s paint with imagination!', 'Beauty is in the details', 'Every idea is a canvas']
+        },
+        'scientist': {
+            'display_name': 'Research Scientist AI',
+            'description': 'A methodical AI researcher with expertise in scientific analysis and evidence-based reasoning',
+            'avatar_emoji': '🔬',
+            'primary_skills': ['data_analysis', 'research_methodology', 'hypothesis_testing', 'scientific_writing'],
+            'traits': {'creativity': 0.7, 'logic': 0.95, 'empathy': 0.6, 'humor': 0.5, 'formality': 0.8},
+            'communication_style': 'technical',
+            'expertise_domains': ['science', 'research', 'data_analysis', 'methodology', 'evidence'],
+            'greeting_messages': ['Hello! What scientific question shall we investigate today?', 'Ready to explore the fascinating world of science together?'],
+            'catchphrases': ['Let\'s follow the evidence', 'Hypothesis first, then test', 'Data tells the story']
+        },
+        'philosopher': {
+            'display_name': 'Wise Philosopher AI',
+            'description': 'A contemplative AI thinker specializing in deep questions about existence, ethics, and meaning',
+            'avatar_emoji': '🤔',
+            'primary_skills': ['critical_thinking', 'ethical_reasoning', 'logical_argumentation', 'wisdom_synthesis'],
+            'traits': {'creativity': 0.8, 'logic': 0.9, 'empathy': 0.9, 'humor': 0.6, 'formality': 0.7},
+            'communication_style': 'philosophical',
+            'expertise_domains': ['philosophy', 'ethics', 'logic', 'wisdom', 'meaning'],
+            'greeting_messages': ['Greetings, seeker of wisdom. What profound question occupies your mind?', 'Hello! Shall we explore the depths of thought together?'],
+            'catchphrases': ['The unexamined life is not worth living', 'Wisdom begins with wonder', 'Truth emerges through dialogue']
+        },
+        'engineer': {
+            'display_name': 'Systems Engineer AI',
+            'description': 'A practical AI engineer focused on building efficient solutions and optimizing complex systems',
+            'avatar_emoji': '⚙️',
+            'primary_skills': ['system_design', 'problem_solving', 'optimization', 'technical_implementation'],
+            'traits': {'creativity': 0.7, 'logic': 0.95, 'empathy': 0.6, 'humor': 0.5, 'formality': 0.8},
+            'communication_style': 'technical',
+            'expertise_domains': ['engineering', 'systems', 'optimization', 'efficiency', 'implementation'],
+            'greeting_messages': ['Hello! What system shall we design or optimize today?', 'Ready to engineer some elegant solutions?'],
+            'catchphrases': ['Efficiency through design', 'Build it right the first time', 'Systems thinking wins']
+        },
+        'writer': {
+            'display_name': 'Literary Writer AI',
+            'description': 'An eloquent AI wordsmith specializing in storytelling, literature, and masterful prose',
+            'avatar_emoji': '✍️',
+            'primary_skills': ['creative_writing', 'storytelling', 'literary_analysis', 'prose_crafting'],
+            'traits': {'creativity': 0.95, 'logic': 0.7, 'empathy': 0.9, 'humor': 0.8, 'formality': 0.6},
+            'communication_style': 'literary',
+            'expertise_domains': ['writing', 'literature', 'storytelling', 'narrative', 'prose'],
+            'greeting_messages': ['Hello, fellow wordsmith! What story shall we weave today?', 'Greetings! Ready to craft something magnificent with words?'],
+            'catchphrases': ['Every word matters', 'Stories connect souls', 'The pen is mighty indeed']
+        }
+    }
+    
+    # Return default or friendly personality
+    return personality_defaults.get(personality_name, {
+        'display_name': 'Friendly Assistant AI',
+        'description': 'A helpful and versatile AI assistant ready to help with any task',
+        'avatar_emoji': '🤖',
+        'primary_skills': ['general_assistance', 'conversation', 'problem_solving', 'information_retrieval'],
+        'traits': {'creativity': 0.7, 'logic': 0.7, 'empathy': 0.8, 'humor': 0.7, 'formality': 0.5},
+        'communication_style': 'friendly',
+        'expertise_domains': ['general_knowledge', 'assistance', 'conversation', 'help'],
+        'greeting_messages': ['Hello! How can I help you today?', 'Hi there! What would you like to work on?'],
+        'catchphrases': ['Happy to help!', 'Let\'s figure this out together', 'No problem at all!']
+    })
+
+def save_personality_profile(profile):
+    """Save personality profile to database"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO ai_personalities 
+            (personality_name, display_name, personality_type, description, avatar_emoji,
+             primary_skills, personality_traits, communication_style, expertise_domains,
+             greeting_messages, catchphrases, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            profile.get('name', 'unknown'),
+            profile.get('display_name', ''),
+            profile.get('type', ''),
+            profile.get('description', ''),
+            profile.get('avatar_emoji', '🤖'),
+            json.dumps(profile.get('primary_skills', [])),
+            json.dumps(profile.get('traits', {})),
+            profile.get('communication_style', 'friendly'),
+            json.dumps(profile.get('expertise_domains', [])),
+            json.dumps(profile.get('greeting_messages', [])),
+            json.dumps(profile.get('catchphrases', [])),
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+        
+    except Exception as e:
+        print(f"Error saving personality profile: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def generate_personality_switch_response(personality_name, profile, original_text):
+    """Generate response for personality switching with character consistency"""
+    
+    # Select greeting based on personality
+    greetings = profile.get('greeting_messages', ['Hello! How can I help you?'])
+    greeting = random.choice(greetings)
+    
+    # Add personality-specific response to original request
+    personality_responses = {
+        'artist': f"{greeting}\n\nAs your Creative Artist AI, I'm excited to explore this through an artistic lens! Let me approach your request with creative vision and aesthetic sensibility.",
+        'scientist': f"{greeting}\n\nAs your Research Scientist AI, I'll analyze this systematically using evidence-based methods and scientific rigor.",
+        'philosopher': f"{greeting}\n\nAs your Wise Philosopher AI, let me contemplate the deeper implications and examine this question from multiple philosophical perspectives.",
+        'engineer': f"{greeting}\n\nAs your Systems Engineer AI, I'll approach this with practical problem-solving and focus on building efficient, optimized solutions.",
+        'writer': f"{greeting}\n\nAs your Literary Writer AI, I'll craft a response that weaves together eloquent prose and compelling narrative structure."
+    }
+    
+    base_response = personality_responses.get(personality_name, f"{greeting}\n\nI've switched to {profile.get('display_name', 'this personality')} to better assist you!")
+    
+    # Add a catchphrase occasionally
+    if random.random() < 0.3 and profile.get('catchphrases'):
+        catchphrase = random.choice(profile['catchphrases'])
+        base_response += f"\n\n*{catchphrase}*"
+    
+    # Log personality interaction
+    log_personality_interaction(personality_name, original_text, base_response)
+    
+    return base_response
+
+def log_personality_interaction(personality_name, user_input, ai_response):
+    """Log personality interactions for analytics and improvement"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get personality ID
+        cursor.execute('SELECT id FROM ai_personalities WHERE personality_name = ?', (personality_name,))
+        personality_result = cursor.fetchone()
+        personality_id = personality_result[0] if personality_result else None
+        
+        if personality_id:
+            cursor.execute('''
+                INSERT INTO personality_interactions 
+                (user_id, personality_id, session_id, interaction_type, user_input, 
+                 personality_response, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                'default_user',
+                personality_id,
+                'current_session',
+                'personality_switch',
+                user_input,
+                ai_response,
+                datetime.now().isoformat()
+            ))
+            
+            # Update personality usage count
+            cursor.execute('''
+                UPDATE ai_personalities 
+                SET usage_count = usage_count + 1 
+                WHERE id = ?
+            ''', (personality_id,))
+            
+            conn.commit()
+        
+    except Exception as e:
+        print(f"Error logging personality interaction: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def get_personality_by_skill(required_skill):
+    """Get the best personality for a specific skill requirement"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT ap.personality_name, ap.display_name, ps.proficiency_level
+            FROM ai_personalities ap
+            JOIN personality_skills ps ON ap.id = ps.personality_id
+            WHERE ps.skill_name = ? AND ap.is_active = 1
+            ORDER BY ps.proficiency_level DESC
+            LIMIT 1
+        ''', (required_skill,))
+        
+        result = cursor.fetchone()
+        return result[0] if result else 'friendly'
+        
+    except Exception as e:
+        print(f"Error getting personality by skill: {e}")
+        return 'friendly'
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 # ===== COLLABORATIVE INTELLIGENCE FUNCTIONS =====
 
 def handle_ai_swarm_collaboration(text):
@@ -15601,6 +15883,366 @@ def get_recommended_agents(task_type):
     }
     
     return agent_recommendations.get(task_type.lower(), agent_recommendations['default'])
+
+# ===== AI PERSONALITY ECOSYSTEM API ENDPOINTS =====
+
+@app.route('/api/personalities', methods=['GET'])
+def get_personalities_api():
+    """Get list of available AI personalities"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT personality_name, display_name, personality_type, description, 
+                   avatar_emoji, primary_skills, personality_traits, communication_style,
+                   expertise_domains, usage_count, user_rating
+            FROM ai_personalities 
+            WHERE is_active = 1
+            ORDER BY usage_count DESC
+        ''')
+        personalities = cursor.fetchall()
+        
+        conn.close()
+        
+        personality_list = []
+        for p in personalities:
+            personality_list.append({
+                'name': p[0],
+                'display_name': p[1],
+                'type': p[2],
+                'description': p[3],
+                'avatar_emoji': p[4],
+                'primary_skills': json.loads(p[5]) if p[5] else [],
+                'traits': json.loads(p[6]) if p[6] else {},
+                'communication_style': p[7],
+                'expertise_domains': json.loads(p[8]) if p[8] else [],
+                'usage_count': p[9],
+                'user_rating': p[10]
+            })
+        
+        return jsonify({'success': True, 'personalities': personality_list})
+        
+    except Exception as e:
+        print(f"Error getting personalities: {e}")
+        return jsonify({'error': 'Failed to get personalities'}), 500
+
+@app.route('/api/personalities/<personality_name>/switch', methods=['POST'])
+def switch_personality_api(personality_name):
+    """Switch to a specific AI personality"""
+    try:
+        data = request.get_json() or {}
+        message = data.get('message', f'Switch to {personality_name}')
+        
+        # Handle personality switching
+        response = handle_personality_switching(message, 'friendly')
+        
+        return jsonify({
+            'success': True,
+            'personality': personality_name,
+            'response': response,
+            'switched_at': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error switching personality: {e}")
+        return jsonify({'error': 'Failed to switch personality'}), 500
+
+@app.route('/api/personalities/<personality_name>/skills', methods=['GET'])
+def get_personality_skills_api(personality_name):
+    """Get skills for a specific personality"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT ps.skill_name, ps.skill_category, ps.proficiency_level,
+                   ps.skill_description, ps.is_primary
+            FROM personality_skills ps
+            JOIN ai_personalities ap ON ps.personality_id = ap.id
+            WHERE ap.personality_name = ?
+            ORDER BY ps.proficiency_level DESC
+        ''', (personality_name,))
+        skills = cursor.fetchall()
+        
+        conn.close()
+        
+        skills_list = []
+        for skill in skills:
+            skills_list.append({
+                'skill_name': skill[0],
+                'category': skill[1],
+                'proficiency': skill[2],
+                'description': skill[3],
+                'is_primary': skill[4]
+            })
+        
+        return jsonify({'success': True, 'skills': skills_list})
+        
+    except Exception as e:
+        print(f"Error getting personality skills: {e}")
+        return jsonify({'error': 'Failed to get personality skills'}), 500
+
+# ===== CROSS-PLATFORM SYNC API ENDPOINTS =====
+
+@app.route('/api/devices/register', methods=['POST'])
+def register_device_api():
+    """Register a new device for cross-platform sync"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        device_name = data.get('device_name', '').strip()
+        device_type = data.get('device_type', 'web').strip()
+        platform = data.get('platform', 'web').strip()
+        user_id = data.get('user_id', 'default_user').strip()
+        
+        if not device_name:
+            return jsonify({'error': 'Device name required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Generate unique device ID and sync token
+        device_id = str(uuid.uuid4())
+        sync_token = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO device_registrations 
+            (device_id, user_id, device_name, device_type, platform, 
+             sync_token, last_active, registered_at, last_sync_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (device_id, user_id, device_name, device_type, platform, 
+              sync_token, timestamp, timestamp, timestamp))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'device_id': device_id,
+            'sync_token': sync_token,
+            'registered_at': timestamp
+        })
+        
+    except Exception as e:
+        print(f"Error registering device: {e}")
+        return jsonify({'error': 'Failed to register device'}), 500
+
+@app.route('/api/devices', methods=['GET'])
+def get_user_devices_api():
+    """Get all registered devices for a user"""
+    try:
+        user_id = request.args.get('user_id', 'default_user')
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT device_id, device_name, device_type, platform, 
+                   last_active, is_primary_device, registered_at
+            FROM device_registrations 
+            WHERE user_id = ?
+            ORDER BY last_active DESC
+        ''', (user_id,))
+        devices = cursor.fetchall()
+        
+        conn.close()
+        
+        device_list = []
+        for device in devices:
+            device_list.append({
+                'device_id': device[0],
+                'device_name': device[1],
+                'device_type': device[2],
+                'platform': device[3],
+                'last_active': device[4],
+                'is_primary': device[5],
+                'registered_at': device[6]
+            })
+        
+        return jsonify({'success': True, 'devices': device_list})
+        
+    except Exception as e:
+        print(f"Error getting user devices: {e}")
+        return jsonify({'error': 'Failed to get devices'}), 500
+
+@app.route('/api/sync/conversations', methods=['POST'])
+def sync_conversations_api():
+    """Sync conversations between devices"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        source_device_id = data.get('source_device_id', '').strip()
+        target_device_id = data.get('target_device_id', '').strip()
+        sync_type = data.get('sync_type', 'full_sync').strip()
+        
+        if not source_device_id or not target_device_id:
+            return jsonify({'error': 'Source and target device IDs required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Create sync session
+        sync_session_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute('''
+            INSERT INTO sync_sessions 
+            (sync_session_id, user_id, initiating_device_id, target_device_id,
+             sync_type, sync_status, started_at)
+            VALUES (?, ?, ?, ?, ?, 'in_progress', ?)
+        ''', (sync_session_id, 'default_user', source_device_id, target_device_id, sync_type, timestamp))
+        
+        # Get conversations to sync based on sync type
+        if sync_type == 'full_sync':
+            cursor.execute('''
+                SELECT id, session_id, timestamp, user_input, ai_response, personality, intent
+                FROM conversations 
+                ORDER BY timestamp DESC
+                LIMIT 100
+            ''')
+        else:
+            # Recent conversations only
+            cursor.execute('''
+                SELECT id, session_id, timestamp, user_input, ai_response, personality, intent
+                FROM conversations 
+                WHERE timestamp > datetime('now', '-24 hours')
+                ORDER BY timestamp DESC
+            ''')
+        
+        conversations = cursor.fetchall()
+        
+        # Update sync session
+        cursor.execute('''
+            UPDATE sync_sessions 
+            SET sync_status = 'completed', items_synced = ?, completed_at = ?
+            WHERE sync_session_id = ?
+        ''', (len(conversations), datetime.now().isoformat(), sync_session_id))
+        
+        conn.commit()
+        conn.close()
+        
+        # Format conversations for sync
+        synced_conversations = []
+        for conv in conversations:
+            synced_conversations.append({
+                'id': conv[0],
+                'session_id': conv[1],
+                'timestamp': conv[2],
+                'user_input': conv[3],
+                'ai_response': conv[4],
+                'personality': conv[5],
+                'intent': conv[6]
+            })
+        
+        return jsonify({
+            'success': True,
+            'sync_session_id': sync_session_id,
+            'conversations_synced': len(conversations),
+            'conversations': synced_conversations
+        })
+        
+    except Exception as e:
+        print(f"Error syncing conversations: {e}")
+        return jsonify({'error': 'Failed to sync conversations'}), 500
+
+@app.route('/api/sync/status/<sync_session_id>', methods=['GET'])
+def get_sync_status_api(sync_session_id):
+    """Get status of a sync session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT sync_type, sync_status, items_synced, conflicts_detected,
+                   started_at, completed_at, error_message
+            FROM sync_sessions 
+            WHERE sync_session_id = ?
+        ''', (sync_session_id,))
+        session = cursor.fetchone()
+        
+        if not session:
+            return jsonify({'error': 'Sync session not found'}), 404
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'sync_session_id': sync_session_id,
+            'sync_type': session[0],
+            'status': session[1],
+            'items_synced': session[2],
+            'conflicts_detected': session[3],
+            'started_at': session[4],
+            'completed_at': session[5],
+            'error_message': session[6]
+        })
+        
+    except Exception as e:
+        print(f"Error getting sync status: {e}")
+        return jsonify({'error': 'Failed to get sync status'}), 500
+
+@app.route('/api/sync/continue-conversation', methods=['POST'])
+def continue_conversation_api():
+    """Continue a conversation from another device"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        session_id = data.get('session_id', '').strip()
+        device_id = data.get('device_id', '').strip()
+        
+        if not session_id:
+            return jsonify({'error': 'Session ID required'}), 400
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get recent conversations from this session
+        cursor.execute('''
+            SELECT timestamp, user_input, ai_response, personality
+            FROM conversations 
+            WHERE session_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 5
+        ''', (session_id,))
+        conversations = cursor.fetchall()
+        
+        # Update device last active
+        cursor.execute('''
+            UPDATE device_registrations 
+            SET last_active = ? 
+            WHERE device_id = ?
+        ''', (datetime.now().isoformat(), device_id))
+        
+        conn.commit()
+        conn.close()
+        
+        conversation_history = []
+        for conv in conversations:
+            conversation_history.append({
+                'timestamp': conv[0],
+                'user_input': conv[1],
+                'ai_response': conv[2],
+                'personality': conv[3]
+            })
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'conversation_history': conversation_history,
+            'continued_at': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error continuing conversation: {e}")
+        return jsonify({'error': 'Failed to continue conversation'}), 500
 
 @app.route('/api/vocabulary', methods=['GET'])
 def api_get_vocabulary():
