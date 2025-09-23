@@ -1476,6 +1476,199 @@
                 flex-direction: column;
             }
         }
+        
+        /* AI Personality Ecosystem Styles */
+        .current-personality {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .personality-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .personality-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .personality-type {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .personality-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .personality-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .personality-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .personality-card.active {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border-color: #4a90e2;
+        }
+        
+        .personality-card .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .personality-card .name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .personality-card .specialty {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        /* Cross-Platform Sync Styles */
+        .sync-status {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .sync-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .sync-title {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sync-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+        
+        .sync-dot.syncing {
+            background: #f39c12;
+        }
+        
+        .sync-dot.error {
+            background: #e74c3c;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .device-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .device-stat {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a90e2;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        .sync-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .sync-actions .btn-card {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        /* Responsive adjustments for new components */
+        @media (max-width: 768px) {
+            .personality-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .device-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .sync-actions {
+                flex-direction: column;
+            }
+            
+            .current-personality, .sync-status {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3265,6 +3458,256 @@
                 console.error('Error loading collaboration analytics:', error);
             }
         }
+        
+        // AI Personality Ecosystem Functions
+        let currentPersonality = {
+            id: 'horizon',
+            name: 'Horizon',
+            type: 'General Assistant',
+            avatar: '🌟'
+        };
+        
+        const availablePersonalities = [
+            { id: 'artist', name: 'Artist AI', type: 'Creative Specialist', avatar: '🎨', specialty: 'Visual Arts & Design' },
+            { id: 'scientist', name: 'Scientist AI', type: 'Research Specialist', avatar: '🔬', specialty: 'Scientific Analysis' },
+            { id: 'philosopher', name: 'Philosopher AI', type: 'Wisdom Specialist', avatar: '🧠', specialty: 'Ethics & Logic' },
+            { id: 'engineer', name: 'Engineer AI', type: 'Technical Specialist', avatar: '⚙️', specialty: 'Problem Solving' },
+            { id: 'writer', name: 'Writer AI', type: 'Language Specialist', avatar: '✍️', specialty: 'Content Creation' },
+            { id: 'teacher', name: 'Teacher AI', type: 'Education Specialist', avatar: '📚', specialty: 'Learning & Instruction' },
+            { id: 'comedian', name: 'Comedian AI', type: 'Entertainment Specialist', avatar: '😄', specialty: 'Humor & Fun' },
+            { id: 'therapist', name: 'Therapist AI', type: 'Wellness Specialist', avatar: '💝', specialty: 'Mental Health Support' }
+        ];
+        
+        async function switchPersonality(personalityId) {
+            try {
+                const response = await fetch('/api/personalities/switch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ personality_id: personalityId })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    currentPersonality = data.personality;
+                    updatePersonalityDisplay();
+                    updatePersonalityCards();
+                    
+                    // Show switch notification
+                    showNotification(`Switched to ${data.personality.name}`, 'success');
+                }
+            } catch (error) {
+                console.error('Error switching personality:', error);
+                showNotification('Failed to switch personality', 'error');
+            }
+        }
+        
+        function updatePersonalityDisplay() {
+            const display = document.querySelector('.current-personality');
+            if (display) {
+                display.querySelector('.personality-avatar').textContent = currentPersonality.avatar;
+                display.querySelector('.personality-name').textContent = currentPersonality.name;
+                display.querySelector('.personality-type').textContent = currentPersonality.type;
+            }
+        }
+        
+        function updatePersonalityCards() {
+            const cards = document.querySelectorAll('.personality-card');
+            cards.forEach(card => {
+                const personalityId = card.dataset.personalityId;
+                if (personalityId === currentPersonality.id) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+        
+        async function loadPersonalities() {
+            try {
+                const response = await fetch('/api/personalities');
+                const data = await response.json();
+                if (data.success) {
+                    displayPersonalities(data.personalities);
+                }
+            } catch (error) {
+                console.error('Error loading personalities:', error);
+            }
+        }
+        
+        function displayPersonalities(personalities) {
+            const grid = document.querySelector('.personality-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            personalities.forEach(personality => {
+                const card = document.createElement('div');
+                card.className = 'personality-card';
+                card.dataset.personalityId = personality.id;
+                card.onclick = () => switchPersonality(personality.id);
+                
+                card.innerHTML = `
+                    <div class="avatar">${personality.avatar}</div>
+                    <div class="name">${personality.name}</div>
+                    <div class="specialty">${personality.specialty}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+            
+            updatePersonalityCards();
+        }
+        
+        // Cross-Platform Sync Functions
+        let syncStatus = {
+            isActive: true,
+            deviceCount: 1,
+            lastSync: new Date().toLocaleString(),
+            status: 'active'
+        };
+        
+        async function initializeSync() {
+            try {
+                const response = await fetch('/api/sync/status');
+                const data = await response.json();
+                if (data.success) {
+                    syncStatus = data.sync_status;
+                    updateSyncDisplay();
+                }
+            } catch (error) {
+                console.error('Error initializing sync:', error);
+            }
+        }
+        
+        function updateSyncDisplay() {
+            const syncSection = document.querySelector('.sync-status');
+            if (!syncSection) return;
+            
+            const statusText = syncSection.querySelector('.sync-indicator span');
+            const statusDot = syncSection.querySelector('.sync-dot');
+            const deviceCount = syncSection.querySelector('.device-stat .stat-value');
+            const lastSyncTime = syncSection.querySelector('.device-stat:nth-child(2) .stat-value');
+            
+            if (statusText) statusText.textContent = syncStatus.status;
+            if (statusDot) {
+                statusDot.className = `sync-dot ${syncStatus.status === 'active' ? '' : syncStatus.status}`;
+            }
+            if (deviceCount) deviceCount.textContent = syncStatus.deviceCount;
+            if (lastSyncTime) lastSyncTime.textContent = new Date(syncStatus.lastSync).toLocaleTimeString();
+        }
+        
+        async function syncNow() {
+            try {
+                setSyncStatus('syncing');
+                const response = await fetch('/api/sync/conversations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    syncStatus.lastSync = new Date().toLocaleString();
+                    setSyncStatus('active');
+                    showNotification('Conversations synced successfully', 'success');
+                } else {
+                    setSyncStatus('error');
+                    showNotification('Sync failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error syncing:', error);
+                setSyncStatus('error');
+                showNotification('Sync failed', 'error');
+            }
+        }
+        
+        function setSyncStatus(status) {
+            syncStatus.status = status;
+            updateSyncDisplay();
+        }
+        
+        async function manageDevices() {
+            try {
+                const response = await fetch('/api/devices');
+                const data = await response.json();
+                if (data.success) {
+                    showDeviceManager(data.devices);
+                }
+            } catch (error) {
+                console.error('Error loading devices:', error);
+            }
+        }
+        
+        function showDeviceManager(devices) {
+            // Create and show device management modal
+            const modalContent = `
+                <div class="device-manager">
+                    <h3>Registered Devices</h3>
+                    <div class="device-list">
+                        ${devices.map(device => `
+                            <div class="device-item">
+                                <div class="device-info">
+                                    <strong>${device.device_name}</strong>
+                                    <small>${device.platform} - Last sync: ${new Date(device.last_sync).toLocaleString()}</small>
+                                </div>
+                                <button onclick="removeDevice('${device.device_id}')" class="btn-card danger">Remove</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // This would open a modal with device management options
+            showNotification('Device management opened', 'info');
+        }
+        
+        async function removeDevice(deviceId) {
+            try {
+                const response = await fetch(`/api/devices/${deviceId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Device removed', 'success');
+                    syncStatus.deviceCount--;
+                    updateSyncDisplay();
+                }
+            } catch (error) {
+                console.error('Error removing device:', error);
+                showNotification('Failed to remove device', 'error');
+            }
+        }
+        
+        // Utility function for notifications
+        function showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 10000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Initialize personality ecosystem and sync on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPersonalities();
+            initializeSync();
+            updatePersonalityDisplay();
+        });
     </script>
     
     <!-- AI Swarm Collaboration Modal -->
