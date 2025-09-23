@@ -9347,6 +9347,8 @@ def handle_personality_switching(text, current_personality='friendly'):
         'teacher': ['teacher', 'teach', 'explain', 'learn', 'education', 'tutor'],
         'comedian': ['comedian', 'funny', 'joke', 'humor', 'laugh', 'entertainment'],
         'therapist': ['therapist', 'therapy', 'emotion', 'feeling', 'support', 'counsel'],
+        'legal': ['legal', 'lawyer', 'law', 'contract', 'document', 'review', 'analysis', 'compliance'],
+        'financial': ['financial', 'finance', 'investment', 'portfolio', 'market', 'money', 'advisor', 'wealth'],
         'detective': ['detective', 'mystery', 'investigate', 'clue', 'solve', 'puzzle'],
         'chef': ['chef', 'cook', 'recipe', 'food', 'cuisine', 'kitchen', 'culinary']
     }
@@ -9551,7 +9553,9 @@ def generate_personality_switch_response(personality_name, profile, original_tex
         'scientist': f"{greeting}\n\nAs your Research Scientist AI, I'll analyze this systematically using evidence-based methods and scientific rigor.",
         'philosopher': f"{greeting}\n\nAs your Wise Philosopher AI, let me contemplate the deeper implications and examine this question from multiple philosophical perspectives.",
         'engineer': f"{greeting}\n\nAs your Systems Engineer AI, I'll approach this with practical problem-solving and focus on building efficient, optimized solutions.",
-        'writer': f"{greeting}\n\nAs your Literary Writer AI, I'll craft a response that weaves together eloquent prose and compelling narrative structure."
+        'writer': f"{greeting}\n\nAs your Literary Writer AI, I'll craft a response that weaves together eloquent prose and compelling narrative structure.",
+        'legal': f"{greeting}\n\nAs your AI Legal Assistant, I will analyze this matter with legal precision and provide thorough, professional guidance based on applicable law and best practices.",
+        'financial': f"{greeting}\n\nAs your Financial Advisor AI, I'll examine this from a strategic financial perspective, considering risk assessment, market dynamics, and optimal investment approaches."
     }
     
     base_response = personality_responses.get(personality_name, f"{greeting}\n\nI've switched to {profile.get('display_name', 'this personality')} to better assist you!")
@@ -13065,6 +13069,10 @@ INTENT_PATTERNS = {
         r'\b(switch.*to|change.*to|use|become).*teacher.*ai\b',
         r'\b(switch.*to|change.*to|use|become).*comedian.*ai\b',
         r'\b(switch.*to|change.*to|use|become).*therapist.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*legal.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*lawyer.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*financial.*ai\b',
+        r'\b(switch.*to|change.*to|use|become).*finance.*ai\b',
         r'\b(switch.*to|change.*to|use|become).*detective.*ai\b',
         r'\b(switch.*to|change.*to|use|become).*chef.*ai\b',
         r'\b(talk.*to|speak.*with|chat.*with).*artist\b',
@@ -13072,16 +13080,26 @@ INTENT_PATTERNS = {
         r'\b(talk.*to|speak.*with|chat.*with).*philosopher\b',
         r'\b(talk.*to|speak.*with|chat.*with).*engineer\b',
         r'\b(talk.*to|speak.*with|chat.*with).*writer\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*lawyer\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*legal.*expert\b',
+        r'\b(talk.*to|speak.*with|chat.*with).*financial.*advisor\b',
         r'\b(i.*want|i.*need).*creative.*ai\b',
         r'\b(i.*want|i.*need).*scientific.*ai\b',
         r'\b(i.*want|i.*need).*technical.*ai\b',
+        r'\b(i.*want|i.*need).*legal.*ai\b',
+        r'\b(i.*want|i.*need).*financial.*ai\b',
         r'\b(i.*want|i.*need).*artistic.*assistance\b',
+        r'\b(i.*want|i.*need).*legal.*assistance\b',
+        r'\b(i.*want|i.*need).*financial.*advice\b',
         r'\b(get.*me|find.*me).*different.*personality\b',
         r'\b(switch.*personality|change.*character|different.*ai)\b',
         r'\b(creative.*mode|artist.*mode|scientist.*mode)\b',
+        r'\b(legal.*mode|financial.*mode|lawyer.*mode)\b',
         r'\b(philosophical.*mode|engineering.*mode|writing.*mode)\b',
-        r'\b(become.*more|act.*like|respond.*like).*(creative|scientific|artistic|technical)\b',
-        r'\b(i.*need.*help.*with).*(art|science|philosophy|engineering|writing)\b'
+        r'\b(become.*more|act.*like|respond.*like).*(creative|scientific|artistic|technical|legal|financial)\b',
+        r'\b(i.*need.*help.*with).*(art|science|philosophy|engineering|writing|legal|law|finance|investment)\b',
+        r'\b(contract.*analysis|legal.*research|document.*review)\b',
+        r'\b(portfolio.*analysis|investment.*strategy|market.*insights)\b'
     ],
     'cross_platform_sync': [
         r'\b(sync|synchronize).*conversations?\b',
