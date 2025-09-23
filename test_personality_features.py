@@ -44,14 +44,25 @@ def test_personality_switching():
     """Test personality switching functionality"""
     print("\n🔄 Testing Personality Switching...")
     
-    switch_data = {"personality_id": "artist"}
+    # Test switching to Legal Assistant AI
+    switch_data = {"personality_id": "legal"}
     status, data = make_request(f"{BASE_URL}/api/personalities/switch", "POST", switch_data)
-    print(f"POST /api/personalities/switch - Status: {status}")
+    print(f"POST /api/personalities/switch (Legal AI) - Status: {status}")
     
     if status == 200:
         print(f"✅ Successfully switched to: {data.get('personality', {}).get('name', 'Unknown')}")
     else:
-        print(f"❌ Failed to switch: {data}")
+        print(f"❌ Failed to switch to Legal AI: {data}")
+    
+    # Test switching to Financial Advisor AI
+    switch_data = {"personality_id": "financial"}
+    status, data = make_request(f"{BASE_URL}/api/personalities/switch", "POST", switch_data)
+    print(f"POST /api/personalities/switch (Financial AI) - Status: {status}")
+    
+    if status == 200:
+        print(f"✅ Successfully switched to: {data.get('personality', {}).get('name', 'Unknown')}")
+    else:
+        print(f"❌ Failed to switch to Financial AI: {data}")
 
 def test_sync_status():
     """Test cross-platform sync status"""
@@ -67,23 +78,38 @@ def test_sync_status():
         print(f"❌ Failed to get sync status: {data}")
 
 def test_chat_with_personality():
-    """Test chatting with a specific personality"""
-    print("\n💬 Testing Chat with Personality...")
+    """Test chatting with specific personalities"""
+    print("\n💬 Testing Chat with New Personalities...")
     
+    # Test Legal Assistant
     chat_data = {
-        "message": "Switch to Artist AI and help me create a logo design",
-        "session_id": "test_session"
+        "message": "Switch to Legal AI and help me review a contract",
+        "session_id": "test_session_legal"
     }
     status, data = make_request(f"{BASE_URL}/api/chat", "POST", chat_data)
-    print(f"POST /api/chat - Status: {status}")
+    print(f"POST /api/chat (Legal) - Status: {status}")
     
     if status == 200:
-        print(f"✅ Chat response received")
-        print(f"   Response type: {data.get('type', 'Unknown')}")
+        print(f"✅ Legal AI response received")
         if 'response' in data:
             print(f"   Response preview: {data['response'][:100]}...")
     else:
-        print(f"❌ Failed to chat: {data}")
+        print(f"❌ Failed to chat with Legal AI: {data}")
+    
+    # Test Financial Advisor
+    chat_data = {
+        "message": "Switch to Financial AI and analyze my portfolio",
+        "session_id": "test_session_finance"
+    }
+    status, data = make_request(f"{BASE_URL}/api/chat", "POST", chat_data)
+    print(f"POST /api/chat (Financial) - Status: {status}")
+    
+    if status == 200:
+        print(f"✅ Financial AI response received")
+        if 'response' in data:
+            print(f"   Response preview: {data['response'][:100]}...")
+    else:
+        print(f"❌ Failed to chat with Financial AI: {data}")
 
 def main():
     """Run all tests"""
