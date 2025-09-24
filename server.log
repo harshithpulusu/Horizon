@@ -1,20 +1,86 @@
- * Tip: There are .env files present. Install python-dotenv to use them.
-🧠 Initializing Smart AI Assistant...
-✅ Smart AI Assistant ready - Pattern-based conversational system loaded
-🚀 Starting Horizon AI Assistant...
-✅ Database initialized
+✨ Google Gemini AI loaded successfully
+⚠️ Google Imagen 4.0 Ultra AI not available: cannot import name 'aiplatform' from 'google.cloud' (unknown location)
+💡 Install with: pip install google-cloud-aiplatform vertexai
+⚠️ ML Training not available: No module named 'torch'
+🎥 Basic video generation features loaded successfully
+� Advanced video effects with OpenCV loaded
+⚠️ Audio features not available: No module named 'speech_recognition'
+💡 Install with: pip install speechrecognition pyaudio pydub mutagen
+🤖 Initializing ChatGPT API connection...
+✅ ChatGPT API connected successfully
+✅ Google Gemini API connected successfully
+🧠 Initializing Horizon AI Assistant...
+🚀 Starting Horizon AI Assistant with ChatGPT...
+✅ Database initialized with AI Intelligence features
+✅ ChatGPT API ready
 ✅ Intent recognition loaded
-🌐 Server starting on http://127.0.0.1:8080...
+🌐 Server starting on http://0.0.0.0:8080...
+📱 Local access: http://127.0.0.1:8080
+🌍 Network access: http://192.168.1.206:8080
+📝 Share the network URL with friends on the same WiFi!
  * Serving Flask app 'app'
- * Debug mode: on
+ * Debug mode: off
 [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.206:8080
 [33mPress CTRL+C to quit[0m
- * Restarting with stat
- * Tip: There are .env files present. Install python-dotenv to use them.
- * Debugger is active!
- * Debugger PIN: 107-431-105
-/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-lzqxwh5h'}
-  warnings.warn(
-/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-j11w6ouw'}
-  warnings.warn(
+127.0.0.1 - - [22/Sep/2025 22:12:18] "GET /api/personalities HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:33] "GET /api/personalities/legal HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:40] "GET /api/personalities/financial HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:47] "POST /api/personalities/switch HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:54] "POST /api/personalities/switch HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /?id=7c7fe38c-532e-417b-b676-d9e0334e0bee&vscodeBrowserReqId=1758604379708 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[36mGET /static/enhanced_ai.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[36mGET /static/professional-ui.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[36mGET /static/interactive-background.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[36mGET /static/professional-enhancements.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/timers-reminders HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/curriculums HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/sync/status HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/conversation/sessions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "[33mGET /api/language-progress HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/personalities HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/conversation/history?session_id=c107a1a0-cbae-4e8b-a941-bccf7af81fc0&limit=10 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:12:59] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /?id=7c7fe38c-532e-417b-b676-d9e0334e0bee&vscodeBrowserReqId=1758604383720 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[36mGET /static/enhanced_ai.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[36mGET /static/professional-ui.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[36mGET /static/professional-enhancements.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[36mGET /static/interactive-background.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/timers-reminders HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/curriculums HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/sync/status HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "[33mGET /api/language-progress HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/conversation/sessions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/personalities HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:03] "GET /api/conversation/history?session_id=c107a1a0-cbae-4e8b-a941-bccf7af81fc0&limit=10 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:08] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:13] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2025 22:13:18] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -

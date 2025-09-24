@@ -13879,6 +13879,68 @@ def rate_personality():
         print(f"Error rating personality: {e}")
         return jsonify({'error': 'Failed to rate personality'}), 500
 
+@app.route('/api/personalities/switch', methods=['POST'])
+def switch_personality():
+    """Switch to a different AI personality"""
+    try:
+        data = request.get_json()
+        personality_id = data.get('personality_id')
+        
+        if not personality_id:
+            return jsonify({'error': 'Personality ID required'}), 400
+        
+        # Get personality profile
+        personality_profile = get_personality_profile(personality_id)
+        
+        # Generate switch response
+        switch_response = generate_personality_switch_response(
+            personality_id, 
+            personality_profile, 
+            f"Switching to {personality_id} personality"
+        )
+        
+        return jsonify({
+            'success': True,
+            'personality': {
+                'id': personality_id,
+                'name': personality_profile.get('display_name', f'{personality_id.title()} AI'),
+                'type': personality_profile.get('description', 'AI Assistant'),
+                'avatar': personality_profile.get('avatar_emoji', '🤖'),
+                'communication_style': personality_profile.get('communication_style', 'friendly')
+            },
+            'response': switch_response
+        })
+        
+    except Exception as e:
+        print(f"Error switching personality: {e}")
+        return jsonify({'error': 'Failed to switch personality'}), 500
+
+@app.route('/api/personalities/<personality_id>', methods=['GET'])
+def get_personality_details(personality_id):
+    """Get detailed information about a specific personality"""
+    try:
+        personality_profile = get_personality_profile(personality_id)
+        
+        return jsonify({
+            'success': True,
+            'personality': {
+                'id': personality_id,
+                'name': personality_profile.get('display_name', f'{personality_id.title()} AI'),
+                'description': personality_profile.get('description', 'AI Assistant'),
+                'avatar': personality_profile.get('avatar_emoji', '🤖'),
+                'skills': personality_profile.get('primary_skills', []),
+                'traits': personality_profile.get('traits', {}),
+                'communication_style': personality_profile.get('communication_style', 'friendly'),
+                'expertise_domains': personality_profile.get('expertise_domains', []),
+                'greeting_messages': personality_profile.get('greeting_messages', []),
+                'catchphrases': personality_profile.get('catchphrases', [])
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error getting personality details: {e}")
+        return jsonify({'error': 'Failed to get personality details'}), 500
+
 @app.route('/api/memory', methods=['GET'])
 def get_user_memory_api():
     """Get user memory data"""
