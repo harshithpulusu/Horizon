@@ -9349,6 +9349,8 @@ def handle_personality_switching(text, current_personality='friendly'):
         'therapist': ['therapist', 'therapy', 'emotion', 'feeling', 'support', 'counsel'],
         'legal': ['legal', 'lawyer', 'law', 'contract', 'document', 'review', 'analysis', 'compliance'],
         'financial': ['financial', 'finance', 'investment', 'portfolio', 'market', 'money', 'advisor', 'wealth'],
+        'medical': ['medical', 'doctor', 'health', 'symptom', 'diagnosis', 'research', 'clinical', 'healthcare', 'medicine'],
+        'project_management': ['project', 'management', 'task', 'timeline', 'planning', 'organize', 'schedule', 'coordination', 'workflow'],
         'detective': ['detective', 'mystery', 'investigate', 'clue', 'solve', 'puzzle'],
         'chef': ['chef', 'cook', 'recipe', 'food', 'cuisine', 'kitchen', 'culinary']
     }
