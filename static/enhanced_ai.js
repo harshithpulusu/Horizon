@@ -59,14 +59,15 @@ class EnhancedAIVoiceAssistant {
         
         // Initialize speech recognition with better error handling
         this.initSpeechRecognition();
-        this.initWakeWordDetection();  // New: Initialize wake word detection
+        this.initWakeWordDetection();  // Initialize wake word detection
+        this.initVoiceCloning();       // Initialize voice cloning
         
         // Ensure personality selector is set to friendly by default
         if (this.personalitySelect) {
             this.personalitySelect.value = this.currentPersonality;
         }
         
-        this.updateStatus('Ready');
+        this.updateStatus('Ready - Say "Hey Horizon" to start');
     }
     
     initSpeechRecognition() {
