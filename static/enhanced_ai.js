@@ -138,10 +138,144 @@ class EnhancedAIVoiceAssistant {
             this.wakeWordRecognition.onerror = (event) => {
                 console.log('Wake word detection error:', event.error);
                 // Restart wake word detection on error (unless it's aborted)
-                if (event.error !== 'aborted' && this.isWakeWordMode) {
-                    setTimeout(() => this.startWakeWordDetection(), 1000);
+                if (event.error !== 'aborted' && this.isWakeWordListening) {
+                    setTimeout(() => this.startWakeWordListening(), 1000);
                 }
             };
+            
+            this.wakeWordRecognition.onend = () => {
+                // Restart wake word detection when it ends
+                if (this.isWakeWordListening && !this.isListening) {
+                    setTimeout(() => this.startWakeWordListening(), 100);
+                }
+            };
+            
+            console.log('Wake word detection initialized successfully');
+        } catch (error) {
+            console.error('Error initializing wake word detection:', error);
+        }
+    }
+    
+    startWakeWordListening() {
+        if (!this.wakeWordRecognition || this.isWakeWordListening || this.isListening) {
+            return;
+        }
+        
+        try {
+            this.isWakeWordListening = true;
+            this.wakeWordRecognition.start();
+            console.log('Wake word listening started...');
+            this.updateStatus('Listening for "Hey Horizon"...');
+        } catch (error) {
+            console.log('Wake word listening error:', error);
+            this.isWakeWordListening = false;
+        }
+    }
+    
+    stopWakeWordListening() {
+        if (!this.wakeWordRecognition || !this.isWakeWordListening) {
+            return;
+        }
+        
+        try {
+            this.isWakeWordListening = false;
+            this.wakeWordRecognition.stop();
+            console.log('Wake word listening stopped');
+        } catch (error) {
+            console.log('Error stopping wake word listening:', error);
+        }
+    }
+    
+    handleWakeWordResult(event) {
+        const results = Array.from(event.results);
+        const lastResult = results[results.length - 1];
+        
+        if (!lastResult || !lastResult[0]) return;
+        
+        const transcript = lastResult[0].transcript.toLowerCase().trim();
+        const confidence = lastResult[0].confidence || 0;
+        
+        console.log('Wake word transcript:', transcript, 'Confidence:', confidence);
+        
+        // Check if any wake word is detected
+        const wakeWordDetected = this.wakeWords.some(wakeWord => {
+            return transcript.includes(wakeWord) && confidence > this.wakeWordSensitivity;
+        });
+        
+        if (wakeWordDetected && !this.isListening) {
+            console.log('Wake word detected!');
+            this.onWakeWordDetected(transcript);
+        }
+    }
+    
+    onWakeWordDetected(transcript) {
+        // Stop wake word listening temporarily
+        this.stopWakeWordListening();
+        
+        // Visual feedback
+        this.showWakeWordDetectedFeedback();
+        
+        // Audio feedback (quick beep)
+        this.playWakeWordSound();
+        
+        // Start main speech recognition for the command
+        setTimeout(() => {
+            this.startListening();
+        }, 300);
+        
+        // Resume wake word listening after a timeout
+        this.wakeWordTimeout = setTimeout(() => {
+            if (!this.isListening) {
+                this.startWakeWordListening();
+            }
+        }, 5000);
+    }
+    
+    showWakeWordDetectedFeedback() {
+        // Update status
+        this.updateStatus('Wake word detected! Listening for command...');
+        
+        // Visual pulse effect
+        const statusElement = document.getElementById('statusIndicator');
+        if (statusElement) {
+            statusElement.style.animation = 'pulse 0.5s ease-in-out';
+            setTimeout(() => {
+                if (statusElement.style.animation) {
+                    statusElement.style.animation = '';
+                }
+            }, 500);
+        }
+        
+        // Show toast notification
+        if (window.professionalUI) {
+            window.professionalUI.showToast('Wake word detected! 👂', 'success', 2000);
+        }
+    }
+    
+    playWakeWordSound() {
+        // Create a simple beep sound using Web Audio API
+        if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+            try {
+                const audioContext = new (AudioContext || webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                console.log('Could not play wake word sound:', error);
+            }
+        }
+    }
             
             this.wakeWordRecognition.onend = () => {
                 // Restart wake word detection if it should be running
