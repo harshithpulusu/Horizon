@@ -13,18 +13,33 @@ class EnhancedAIVoiceAssistant {
         this.activeReminders = [];
         this.lastResponse = '';
         this.lastInput = '';
-        this.isWakeWordMode = false;  // New: wake word listening mode
-        this.wakeWords = ['hey horizon', 'horizon', 'hey assistant', 'assistant'];  // New: wake words
-        this.wakeWordSensitivity = 0.7;  // New: sensitivity threshold
-        this.sessionId = null;  // New: conversation session tracking
-        this.conversationLength = 0;  // New: track conversation length
-        this.contextUsed = false;  // New: track if context was used in responses
+        
+        // Wake word detection properties
+        this.isWakeWordMode = true;  // Always listening for wake words
+        this.wakeWords = ['hey horizon', 'horizon', 'hey assistant', 'assistant'];
+        this.wakeWordSensitivity = 0.7;
+        this.wakeWordTimeout = null;
+        this.isWakeWordListening = false;
+        
+        // Voice cloning properties
+        this.voiceSettings = {
+            enabled: false,
+            userVoiceId: null,
+            personalizedVoices: {},
+            voiceCloneEnabled: false,
+            recordedSamples: []
+        };
+        
+        this.sessionId = null;
+        this.conversationLength = 0;
+        this.contextUsed = false;
         
         this.init();
         this.initEventListeners();
         this.loadActiveTimersReminders();
         this.startPeriodicUpdates();
-        this.initializeSession();  // New: initialize conversation session
+        this.initializeSession();
+        this.startWakeWordListening();  // Auto-start wake word detection
     }
     
     init() {
