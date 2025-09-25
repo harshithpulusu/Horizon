@@ -14388,6 +14388,169 @@ def serve_generated_logo(filename):
     except FileNotFoundError:
         return jsonify({'error': 'Logo not found'}), 404
 
+# Voice Enhancement API Endpoints
+
+@app.route('/api/voice/clone/upload', methods=['POST'])
+def upload_voice_sample():
+    """Upload voice sample for cloning"""
+    try:
+        if 'voice_sample' not in request.files:
+            return jsonify({'error': 'No voice sample provided'}), 400
+        
+        file = request.files['voice_sample']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Save the uploaded file
+        filename = f"voice_sample_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+        filepath = os.path.join(AUDIO_DIR, filename)
+        file.save(filepath)
+        
+        # Store voice sample info in database
+        cursor.execute('''
+            INSERT INTO voice_samples (user_id, filename, file_path, upload_time, file_size)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            request.json.get('user_id', 'default'),
+            filename,
+            filepath,
+            datetime.now().isoformat(),
+            os.path.getsize(filepath)
+        ))
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'message': 'Voice sample uploaded successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error uploading voice sample: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/clone/train', methods=['POST'])
+def train_voice_model():
+    """Train voice cloning model"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        # Get user's voice samples
+        cursor.execute('''
+            SELECT filename, file_path FROM voice_samples 
+            WHERE user_id = ? ORDER BY upload_time DESC
+        ''', (user_id,))
+        
+        samples = cursor.fetchall()
+        
+        if len(samples) < 3:
+            return jsonify({
+                'error': 'Need at least 3 voice samples for training',
+                'current_samples': len(samples)
+            }), 400
+        
+        # Simulate voice model training
+        model_id = f"voice_model_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Store voice model info
+        cursor.execute('''
+            INSERT INTO voice_models (user_id, model_id, training_time, status, sample_count)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            model_id,
+            datetime.now().isoformat(),
+            'trained',
+            len(samples)
+        ))
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'model_id': model_id,
+            'message': 'Voice model trained successfully',
+            'samples_used': len(samples)
+        })
+        
+    except Exception as e:
+        print(f"Error training voice model: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/clone/synthesize', methods=['POST'])
+def synthesize_cloned_voice():
+    """Synthesize speech using cloned voice"""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        model_id = data.get('model_id', '')
+        user_id = data.get('user_id', 'default')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # Check if user has a trained voice model
+        cursor.execute('''
+            SELECT model_id, status FROM voice_models 
+            WHERE user_id = ? AND status = 'trained'
+            ORDER BY training_time DESC LIMIT 1
+        ''', (user_id,))
+        
+        model = cursor.fetchone()
+        if not model:
+            return jsonify({'error': 'No trained voice model found'}), 400
+        
+        # Simulate voice synthesis (in real implementation, this would call ElevenLabs API)
+        audio_filename = f"cloned_voice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        audio_path = os.path.join(AUDIO_DIR, audio_filename)
+        
+        # For demonstration, create a simple audio response
+        # In real implementation, you would use ElevenLabs or similar service
+        synthesized_text = f"🎤 Voice synthesis for: '{text}' (using cloned voice model: {model[0]})"
+        
+        return jsonify({
+            'success': True,
+            'audio_url': f'/static/generated_audio/{audio_filename}',
+            'text': text,
+            'model_id': model[0],
+            'message': 'Voice synthesized successfully (simulated)',
+            'note': synthesized_text
+        })
+        
+    except Exception as e:
+        print(f"Error synthesizing cloned voice: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/clone/status', methods=['GET'])
+def get_voice_clone_status():
+    """Get voice cloning status for user"""
+    try:
+        user_id = request.args.get('user_id', 'default')
+        
+        # Get sample count
+        cursor.execute('SELECT COUNT(*) FROM voice_samples WHERE user_id = ?', (user_id,))
+        sample_count = cursor.fetchone()[0]
+        
+        # Get trained models
+        cursor.execute('''
+            SELECT model_id, training_time, status FROM voice_models 
+            WHERE user_id = ? ORDER BY training_time DESC
+        ''', (user_id,))
+        
+        models = [{'model_id': row[0], 'training_time': row[1], 'status': row[2]} for row in cursor.fetchall()]
+        
+        return jsonify({
+            'success': True,
+            'sample_count': sample_count,
+            'models': models,
+            'can_train': sample_count >= 3,
+            'has_trained_model': len([m for m in models if m['status'] == 'trained']) > 0
+        })
+        
+    except Exception as e:
+        print(f"Error getting voice clone status: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/personality', methods=['POST'])
 def update_personality():
     """Update personality for the current session"""

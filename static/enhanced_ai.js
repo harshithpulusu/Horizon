@@ -276,23 +276,42 @@ class EnhancedAIVoiceAssistant {
             }
         }
     }
-            
-            this.wakeWordRecognition.onend = () => {
-                // Restart wake word detection if it should be running
-                if (this.isWakeWordMode && !this.isListening) {
-                    setTimeout(() => this.startWakeWordDetection(), 100);
-                }
-            };
-            
-            console.log('Wake word detection initialized');
-            this.addWakeWordToggle();  // Add UI toggle for wake word mode
-            
-        } catch (error) {
-            console.error('Error initializing wake word detection:', error);
-        }
+    
+    // Initialize voice cloning features
+    initVoiceCloning() {
+        this.loadVoiceSettings();
+        this.addVoiceCloneToggle();
+        this.initializeElevenLabsVoices();
     }
     
-    addWakeWordToggle() {
+    addVoiceCloneToggle() {
+        // Add voice cloning toggle to the UI
+        const controlsContainer = document.querySelector('.voice-controls') || document.querySelector('.controls');
+        if (!controlsContainer) return;
+        
+        const voiceCloneDiv = document.createElement('div');
+        voiceCloneDiv.className = 'voice-clone-controls';
+        voiceCloneDiv.innerHTML = `
+            <div class="voice-clone-section">
+                <h4>🎙️ Voice Cloning</h4>
+                <button id="toggleVoiceClone" class="voice-clone-btn">
+                    <span class="voice-clone-status">Disabled</span>
+                </button>
+                <button id="recordVoiceSample" class="record-sample-btn" disabled>
+                    📹 Record Voice Sample
+                </button>
+                <div class="voice-samples-info">
+                    <small>Samples recorded: <span id="sampleCount">0</span>/3</small>
+                </div>
+            </div>
+        `;
+        
+        controlsContainer.appendChild(voiceCloneDiv);
+        
+        // Add event listeners
+        document.getElementById('toggleVoiceClone')?.addEventListener('click', () => this.toggleVoiceCloning());
+        document.getElementById('recordVoiceSample')?.addEventListener('click', () => this.recordVoiceSample());
+    }
         // Add wake word toggle to the UI
         const controlsDiv = document.querySelector('.controls');
         if (controlsDiv && !document.getElementById('wakeWordToggle')) {
