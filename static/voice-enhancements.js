@@ -119,13 +119,405 @@ class VoiceEnhancements {
     init() {
         this.initWakeWordDetection();
         this.initVoiceCloning();
+        this.initBackgroundMode();
         this.addUI();
         this.loadSettings();
+        this.detectUserLanguage();
         
         // Auto-start wake word detection
         setTimeout(() => {
             this.startWakeWordListening();
         }, 1000);
+        
+        // Initialize background mode if enabled
+        if (this.backgroundMode.enabled) {
+            this.enableBackgroundMode();
+        }
+    }
+    
+    // ===== LANGUAGE SUPPORT =====
+    
+    detectUserLanguage() {
+        // Try to detect user's language from browser settings
+        const browserLang = navigator.language || navigator.userLanguage || 'en-US';
+        
+        // Check if we support the detected language
+        if (this.supportedLanguages[browserLang]) {
+            this.setLanguage(browserLang);
+        } else {
+            // Try to match language family (e.g., 'en' from 'en-AU')
+            const langFamily = browserLang.split('-')[0];
+            const matchingLang = Object.keys(this.supportedLanguages).find(lang => 
+                lang.startsWith(langFamily)
+            );
+            
+            if (matchingLang) {
+                this.setLanguage(matchingLang);
+            }
+        }
+        
+        console.log(`🌍 Language detected: ${this.currentLanguage} (${this.supportedLanguages[this.currentLanguage].name})`);
+    }
+    
+    setLanguage(languageCode) {
+        if (!this.supportedLanguages[languageCode]) {
+            console.warn(`Language ${languageCode} not supported`);
+            return;
+        }
+        
+        this.currentLanguage = languageCode;
+        this.wakeWords = this.supportedLanguages[languageCode].wakeWords;
+        
+        // Update wake word recognition language
+        if (this.wakeWordRecognition) {
+            this.wakeWordRecognition.lang = languageCode;
+        }
+        
+        // Update UI
+        this.updateLanguageUI();
+        
+        // Save language preference
+        this.saveSettings();
+        
+        console.log(`🌍 Language set to: ${this.supportedLanguages[languageCode].name}`);
+        
+        if (window.professionalUI) {
+            window.professionalUI.showToast(
+                `Language changed to ${this.supportedLanguages[languageCode].name} 🌍`, 
+                'info', 
+                3000
+            );
+        }
+    }
+    
+    updateLanguageUI() {
+        // Update language selector
+        const languageSelect = document.getElementById('languageSelect');
+        if (languageSelect) {
+            languageSelect.value = this.currentLanguage;
+        }
+        
+        // Update wake word examples
+        const wakeWordExamples = document.getElementById('wakeWordExamples');
+        if (wakeWordExamples) {
+            wakeWordExamples.textContent = `Say "${this.wakeWords[0]}" or "${this.wakeWords[1]}" to activate`;
+        }
+        
+        // Update status with localized wake words
+        this.updateWakeWordStatus(`Listening for "${this.wakeWords[0]}"...`);
+    }
+    
+    // ===== BACKGROUND LISTENING MODE =====
+    
+    initBackgroundMode() {
+        // Load background mode settings
+        this.loadBackgroundSettings();
+        
+        // Set up activity monitoring
+        this.setupActivityMonitoring();
+        
+        // Set up battery optimization
+        this.setupBatteryOptimization();
+        
+        console.log('🔄 Background listening mode initialized');
+    }
+    
+    setupActivityMonitoring() {
+        let lastActivity = Date.now();
+        let inactivityTimer = null;
+        
+        // Monitor user activity
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        
+        const updateActivity = () => {
+            lastActivity = Date.now();
+            
+            // Clear inactivity timer
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            // Resume listening if paused due to inactivity
+            if (this.backgroundMode.enabled && !this.isWakeWordListening) {
+                this.startWakeWordListening();
+            }
+            
+            // Set new inactivity timer
+            if (this.backgroundMode.pauseOnInactivity) {
+                inactivityTimer = setTimeout(() => {
+                    if (this.backgroundMode.enabled) {
+                        console.log('⏸️ Pausing wake word detection due to inactivity');
+                        this.pauseForInactivity();
+                    }
+                }, this.backgroundMode.inactivityTimeout * 60 * 1000);
+            }
+        };
+        
+        activityEvents.forEach(event => {
+            document.addEventListener(event, updateActivity, { passive: true });
+        });
+        
+        // Initial activity update
+        updateActivity();
+    }
+    
+    setupBatteryOptimization() {
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                const checkBattery = () => {
+                    if (battery.level < 0.2 && !battery.charging && this.backgroundMode.enabled) {
+                        console.log('🔋 Low battery detected, enabling power saving mode');
+                        this.enableLowPowerMode();
+                    } else if (battery.level > 0.3 && this.backgroundMode.lowPowerMode) {
+                        console.log('🔋 Battery level restored, disabling power saving mode');
+                        this.disableLowPowerMode();
+                    }
+                };
+                
+                battery.addEventListener('levelchange', checkBattery);
+                battery.addEventListener('chargingchange', checkBattery);
+                
+                // Initial check
+                checkBattery();
+            });
+        }
+    }
+    
+    enableBackgroundMode() {
+        this.backgroundMode.enabled = true;
+        this.backgroundMode.continuousHours = 0;
+        
+        // Start continuous monitoring
+        this.startContinuousMonitoring();
+        
+        // Update UI
+        const backgroundBtn = document.getElementById('toggleBackgroundMode');
+        if (backgroundBtn) {
+            backgroundBtn.classList.add('active');
+            backgroundBtn.innerHTML = '🔄 Background: ON';
+        }
+        
+        // Show background indicator
+        this.showBackgroundIndicator();
+        
+        console.log('🔄 Background listening mode enabled');
+        
+        if (window.professionalUI) {
+            window.professionalUI.showToast(
+                'Background listening enabled - Horizon will listen even when minimized 🔄', 
+                'success', 
+                4000
+            );
+        }
+        
+        this.saveBackgroundSettings();
+    }
+    
+    disableBackgroundMode() {
+        this.backgroundMode.enabled = false;
+        this.backgroundMode.minimized = false;
+        
+        // Stop continuous monitoring
+        this.stopContinuousMonitoring();
+        
+        // Update UI
+        const backgroundBtn = document.getElementById('toggleBackgroundMode');
+        if (backgroundBtn) {
+            backgroundBtn.classList.remove('active');
+            backgroundBtn.innerHTML = '🔄 Background: OFF';
+        }
+        
+        // Hide background indicator
+        this.hideBackgroundIndicator();
+        
+        console.log('🔄 Background listening mode disabled');
+        
+        if (window.professionalUI) {
+            window.professionalUI.showToast('Background listening disabled', 'info', 2000);
+        }
+        
+        this.saveBackgroundSettings();
+    }
+    
+    startContinuousMonitoring() {
+        // Monitor for maximum continuous hours
+        this.continuousTimer = setInterval(() => {
+            this.backgroundMode.continuousHours += 1/60; // Increment by 1 minute
+            
+            if (this.backgroundMode.continuousHours >= this.backgroundMode.maxContinuousHours) {
+                console.log('⏰ Maximum continuous listening time reached, taking a break');
+                this.pauseForBreak();
+            }
+        }, 60000); // Check every minute
+        
+        // Enhanced wake word detection for background mode
+        if (this.wakeWordRecognition) {
+            this.wakeWordRecognition.continuous = true;
+            this.wakeWordRecognition.interimResults = false; // Less processing in background
+        }
+    }
+    
+    stopContinuousMonitoring() {
+        if (this.continuousTimer) {
+            clearInterval(this.continuousTimer);
+            this.continuousTimer = null;
+        }
+    }
+    
+    pauseForInactivity() {
+        if (this.isWakeWordListening) {
+            this.stopWakeWordListening();
+        }
+        
+        this.updateWakeWordStatus('⏸️ Paused due to inactivity');
+        
+        // Visual indicator for paused state
+        const indicator = document.getElementById('backgroundIndicator');
+        if (indicator) {
+            indicator.style.background = '#ffd93d';
+            indicator.title = 'Background listening paused - move mouse to resume';
+        }
+    }
+    
+    pauseForBreak() {
+        this.disableBackgroundMode();
+        this.backgroundMode.continuousHours = 0;
+        
+        if (window.professionalUI) {
+            window.professionalUI.showModal({
+                title: '⏰ Listening Break',
+                content: `
+                    <p>Horizon has been listening continuously for ${this.backgroundMode.maxContinuousHours} hours.</p>
+                    <p>Taking a short break to optimize performance and save battery.</p>
+                    <p>You can resume background listening anytime!</p>
+                `,
+                buttons: [
+                    {
+                        text: '🔄 Resume Now',
+                        action: 'resume',
+                        primary: true
+                    },
+                    {
+                        text: '⏰ Resume in 30 min',
+                        action: 'resumeLater'
+                    }
+                ],
+                callbacks: {
+                    resume: () => this.enableBackgroundMode(),
+                    resumeLater: () => {
+                        setTimeout(() => {
+                            this.enableBackgroundMode();
+                        }, 30 * 60 * 1000);
+                    }
+                }
+            });
+        }
+    }
+    
+    enableLowPowerMode() {
+        this.backgroundMode.lowPowerMode = true;
+        
+        // Reduce sensitivity for battery saving
+        this.wakeWordSensitivity = Math.max(0.8, this.wakeWordSensitivity);
+        
+        // Less frequent interim results
+        if (this.wakeWordRecognition) {
+            this.wakeWordRecognition.interimResults = false;
+        }
+        
+        const indicator = document.getElementById('backgroundIndicator');
+        if (indicator) {
+            indicator.style.background = '#ff9500';
+            indicator.title = 'Low power mode active';
+        }
+        
+        this.updateWakeWordStatus('🔋 Low power mode - reduced sensitivity');
+    }
+    
+    disableLowPowerMode() {
+        this.backgroundMode.lowPowerMode = false;
+        
+        // Restore normal sensitivity
+        this.wakeWordSensitivity = 0.7;
+        
+        // Restore interim results
+        if (this.wakeWordRecognition) {
+            this.wakeWordRecognition.interimResults = true;
+        }
+        
+        const indicator = document.getElementById('backgroundIndicator');
+        if (indicator) {
+            indicator.style.background = '#4ecdc4';
+            indicator.title = 'Background listening active';
+        }
+        
+        this.updateWakeWordStatus(`Listening for "${this.wakeWords[0]}"...`);
+    }
+    
+    showBackgroundIndicator() {
+        // Remove existing indicator
+        this.hideBackgroundIndicator();
+        
+        // Create floating background indicator
+        const indicator = document.createElement('div');
+        indicator.id = 'backgroundIndicator';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            z-index: 9999;
+            animation: backgroundPulse 2s infinite;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        `;
+        indicator.title = 'Background listening active - Click to toggle';
+        indicator.onclick = () => this.toggleBackgroundMode();
+        
+        document.body.appendChild(indicator);
+        
+        // Add animation styles if not already added
+        if (!document.getElementById('backgroundIndicatorStyles')) {
+            const style = document.createElement('style');
+            style.id = 'backgroundIndicatorStyles';
+            style.textContent = `
+                @keyframes backgroundPulse {
+                    0% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.6; transform: scale(1.2); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    hideBackgroundIndicator() {
+        const indicator = document.getElementById('backgroundIndicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    loadBackgroundSettings() {
+        try {
+            const saved = localStorage.getItem('horizon_background_settings');
+            if (saved) {
+                this.backgroundMode = { ...this.backgroundMode, ...JSON.parse(saved) };
+            }
+        } catch (error) {
+            console.log('Could not load background settings:', error);
+        }
+    }
+    
+    saveBackgroundSettings() {
+        try {
+            localStorage.setItem('horizon_background_settings', JSON.stringify(this.backgroundMode));
+        } catch (error) {
+            console.log('Could not save background settings:', error);
+        }
     }
     
     // ===== WAKE WORD DETECTION =====
@@ -144,14 +536,14 @@ class VoiceEnhancements {
                 this.wakeWordRecognition = new SpeechRecognition();
                 this.wakeWordRecognition.continuous = true;
                 this.wakeWordRecognition.interimResults = true;
-                this.wakeWordRecognition.lang = 'en-US';
+                this.wakeWordRecognition.lang = this.currentLanguage;
                 this.wakeWordRecognition.maxAlternatives = 3;
                 
                 this.wakeWordRecognition.onresult = (event) => this.handleWakeWordResult(event);
                 this.wakeWordRecognition.onerror = (event) => this.handleWakeWordError(event);
                 this.wakeWordRecognition.onend = () => this.handleWakeWordEnd();
                 
-                console.log('✨ Wake word detection initialized successfully');
+                console.log(`✨ Wake word detection initialized for ${this.supportedLanguages[this.currentLanguage].name}`);
             } catch (error) {
                 console.error('Error initializing wake word detection:', error);
             }
@@ -436,9 +828,7 @@ class VoiceEnhancements {
                 </div>
                 <p>Please read the following text clearly:</p>
                 <blockquote class="sample-text">
-                    "Hello, I am training my personal AI assistant. 
-                     This voice sample will help create a more natural 
-                     and personalized experience."
+                    ${this.supportedLanguages[this.currentLanguage].sampleText}
                 </blockquote>
                 <div class="recording-controls">
                     <button id="stopRecording" class="stop-recording-btn">
