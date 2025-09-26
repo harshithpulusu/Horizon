@@ -10,6 +10,98 @@ class VoiceEnhancements {
         this.wakeWordSensitivity = 0.7;
         this.wakeWordTimeout = null;
         
+        // Enhanced Language Support
+        this.currentLanguage = 'en-US';
+        this.supportedLanguages = {
+            'en-US': {
+                name: 'English (US)',
+                wakeWords: ['hey horizon', 'horizon', 'hey assistant', 'assistant'],
+                sampleText: 'Hello, I am training my personal AI assistant. This voice sample will help create a more natural and personalized experience.'
+            },
+            'en-GB': {
+                name: 'English (UK)',
+                wakeWords: ['hey horizon', 'horizon', 'hey assistant', 'assistant'],
+                sampleText: 'Hello, I am training my personal AI assistant. This voice sample will help create a more natural and personalised experience.'
+            },
+            'es-ES': {
+                name: 'Spanish (Spain)',
+                wakeWords: ['oye horizon', 'horizon', 'oye asistente', 'asistente'],
+                sampleText: 'Hola, estoy entrenando a mi asistente de IA personal. Esta muestra de voz ayudará a crear una experiencia más natural y personalizada.'
+            },
+            'es-MX': {
+                name: 'Spanish (Mexico)',
+                wakeWords: ['oye horizon', 'horizon', 'oye asistente', 'asistente'],
+                sampleText: 'Hola, estoy entrenando a mi asistente de IA personal. Esta muestra de voz ayudará a crear una experiencia más natural y personalizada.'
+            },
+            'fr-FR': {
+                name: 'French (France)',
+                wakeWords: ['salut horizon', 'horizon', 'salut assistant', 'assistant'],
+                sampleText: 'Bonjour, je forme mon assistant IA personnel. Cet échantillon vocal aidera à créer une expérience plus naturelle et personnalisée.'
+            },
+            'de-DE': {
+                name: 'German (Germany)',
+                wakeWords: ['hallo horizon', 'horizon', 'hallo assistent', 'assistent'],
+                sampleText: 'Hallo, ich trainiere meinen persönlichen KI-Assistenten. Diese Sprachprobe wird helfen, eine natürlichere und personalisiertere Erfahrung zu schaffen.'
+            },
+            'it-IT': {
+                name: 'Italian (Italy)',
+                wakeWords: ['ciao horizon', 'horizon', 'ciao assistente', 'assistente'],
+                sampleText: 'Ciao, sto addestrando il mio assistente IA personale. Questo campione vocale aiuterà a creare un\'esperienza più naturale e personalizzata.'
+            },
+            'pt-BR': {
+                name: 'Portuguese (Brazil)',
+                wakeWords: ['oi horizon', 'horizon', 'oi assistente', 'assistente'],
+                sampleText: 'Olá, estou treinando meu assistente de IA pessoal. Esta amostra de voz ajudará a criar uma experiência mais natural e personalizada.'
+            },
+            'ja-JP': {
+                name: 'Japanese (Japan)',
+                wakeWords: ['horizon', 'アシスタント', 'ホライズン'],
+                sampleText: '私は個人のAIアシスタントをトレーニングしています。この音声サンプルは、より自然でパーソナライズされた体験を作成するのに役立ちます。'
+            },
+            'ko-KR': {
+                name: 'Korean (Korea)',
+                wakeWords: ['horizon', '어시스턴트', '호라이즌'],
+                sampleText: '안녕하세요, 저는 개인 AI 어시스턴트를 훈련하고 있습니다. 이 음성 샘플은 더 자연스럽고 개인화된 경험을 만드는 데 도움이 될 것입니다.'
+            },
+            'zh-CN': {
+                name: 'Chinese (Simplified)',
+                wakeWords: ['horizon', '助手', '地平线'],
+                sampleText: '你好，我正在训练我的个人AI助手。这个语音样本将有助于创建更自然和个性化的体验。'
+            },
+            'zh-TW': {
+                name: 'Chinese (Traditional)',
+                wakeWords: ['horizon', '助手', '地平線'],
+                sampleText: '你好，我正在訓練我的個人AI助手。這個語音樣本將有助於創建更自然和個性化的體驗。'
+            },
+            'ru-RU': {
+                name: 'Russian (Russia)',
+                wakeWords: ['привет horizon', 'horizon', 'привет помощник', 'помощник'],
+                sampleText: 'Привет, я обучаю своего персонального ИИ-помощника. Этот образец голоса поможет создать более естественный и персонализированный опыт.'
+            },
+            'ar-SA': {
+                name: 'Arabic (Saudi Arabia)',
+                wakeWords: ['مرحبا horizon', 'horizon', 'مرحبا مساعد', 'مساعد'],
+                sampleText: 'مرحبا، أنا أدرب مساعد الذكاء الاصطناعي الشخصي الخاص بي. ستساعد عينة الصوت هذه في إنشاء تجربة أكثر طبيعية وشخصية.'
+            },
+            'hi-IN': {
+                name: 'Hindi (India)',
+                wakeWords: ['नमस्ते horizon', 'horizon', 'नमस्ते सहायक', 'सहायक'],
+                sampleText: 'नमस्ते, मैं अपने व्यक्तिगत AI सहायक को प्रशिक्षित कर रहा हूं। यह आवाज़ का नमूना अधिक प्राकृतिक और व्यक्तिगत अनुभव बनाने में मदद करेगा।'
+            }
+        };
+        
+        // Background listening mode
+        this.backgroundMode = {
+            enabled: false,
+            minimized: false,
+            lowPowerMode: false,
+            batteryOptimization: true,
+            continuousHours: 0,
+            maxContinuousHours: 8, // Auto-pause after 8 hours for battery
+            pauseOnInactivity: true,
+            inactivityTimeout: 30 // minutes
+        };
+        
         // Voice cloning properties
         this.voiceSettings = {
             enabled: false,
@@ -17,7 +109,8 @@ class VoiceEnhancements {
             personalizedVoices: {},
             voiceCloneEnabled: false,
             recordedSamples: [],
-            elevenlabsApiKey: null
+            elevenlabsApiKey: null,
+            languageSpecificModels: {} // Store voice models per language
         };
         
         this.init();
