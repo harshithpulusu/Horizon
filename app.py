@@ -1877,9 +1877,77 @@ def init_db():
             )
         ''')
         
+        # 🎤 VOICE ENHANCEMENT TABLES
+        
+        # Voice samples for cloning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS voice_samples (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                filename TEXT,
+                file_path TEXT,
+                upload_time TEXT,
+                file_size INTEGER,
+                duration REAL,
+                quality_score REAL DEFAULT 0.0,
+                is_processed INTEGER DEFAULT 0,
+                processing_status TEXT DEFAULT 'uploaded'
+            )
+        ''')
+        
+        # Voice models for cloning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS voice_models (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                model_id TEXT UNIQUE,
+                model_name TEXT,
+                training_time TEXT,
+                status TEXT DEFAULT 'training',
+                sample_count INTEGER,
+                quality_rating REAL DEFAULT 0.0,
+                usage_count INTEGER DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Wake word detection settings and history
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS wake_word_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                wake_word TEXT DEFAULT 'Hey Horizon',
+                detection_time TEXT,
+                confidence_score REAL,
+                was_valid_detection INTEGER DEFAULT 1,
+                subsequent_action TEXT,
+                session_id TEXT
+            )
+        ''')
+        
+        # Voice interaction preferences
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS voice_preferences (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                wake_word_enabled INTEGER DEFAULT 1,
+                wake_word_phrase TEXT DEFAULT 'Hey Horizon',
+                wake_word_sensitivity REAL DEFAULT 0.7,
+                voice_cloning_enabled INTEGER DEFAULT 0,
+                preferred_voice_model TEXT,
+                speech_rate REAL DEFAULT 1.0,
+                speech_pitch REAL DEFAULT 1.0,
+                auto_response_enabled INTEGER DEFAULT 1,
+                voice_feedback_enabled INTEGER DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
-        print("✅ Database initialized with AI Intelligence features")
+        print("✅ Database initialized with AI Intelligence and Voice Enhancement features")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
 
