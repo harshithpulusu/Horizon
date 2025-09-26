@@ -1940,14 +1940,77 @@ def init_db():
                 speech_pitch REAL DEFAULT 1.0,
                 auto_response_enabled INTEGER DEFAULT 1,
                 voice_feedback_enabled INTEGER DEFAULT 1,
+                language_code TEXT DEFAULT 'en-US',
+                background_listening_enabled INTEGER DEFAULT 0,
+                background_low_power_mode INTEGER DEFAULT 0,
+                background_pause_on_inactivity INTEGER DEFAULT 1,
+                background_max_continuous_hours INTEGER DEFAULT 8,
+                background_battery_optimization INTEGER DEFAULT 1,
                 created_at TEXT,
                 updated_at TEXT
             )
         ''')
         
+        # Language-specific settings and data
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS language_settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                language_code TEXT,
+                language_name TEXT,
+                wake_words TEXT, -- JSON array of wake words for this language
+                is_active INTEGER DEFAULT 0,
+                recognition_accuracy REAL DEFAULT 0.0,
+                usage_count INTEGER DEFAULT 0,
+                last_used_at TEXT,
+                custom_phrases TEXT, -- JSON array of user-defined phrases
+                pronunciation_corrections TEXT, -- JSON object for pronunciation adjustments
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Background listening session logs
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS background_listening_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                session_start_time TEXT,
+                session_end_time TEXT,
+                total_duration_minutes INTEGER,
+                wake_word_detections INTEGER DEFAULT 0,
+                successful_activations INTEGER DEFAULT 0,
+                battery_level_start REAL,
+                battery_level_end REAL,
+                power_mode TEXT DEFAULT 'normal', -- normal, low_power, battery_saver
+                pause_reason TEXT, -- inactivity, battery_low, manual, max_hours_reached
+                language_used TEXT DEFAULT 'en-US',
+                average_confidence_score REAL DEFAULT 0.0,
+                session_notes TEXT
+            )
+        ''')
+        
+        # Multi-language wake word training data
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS multilang_wake_word_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                language_code TEXT,
+                wake_word_phrase TEXT,
+                detected_phrase TEXT,
+                confidence_score REAL,
+                was_successful_activation INTEGER,
+                detection_time TEXT,
+                user_feedback INTEGER, -- 1 for correct, 0 for incorrect, -1 for false positive
+                acoustic_features TEXT, -- JSON object with audio analysis data
+                improvement_suggestions TEXT, -- JSON array of suggestions for better recognition
+                session_id TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
-        print("✅ Database initialized with AI Intelligence and Voice Enhancement features")
+        print("✅ Database initialized with AI Intelligence, Voice Enhancement, Language Support, and Background Mode features")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
 
@@ -14617,6 +14680,245 @@ def get_voice_clone_status():
         
     except Exception as e:
         print(f"Error getting voice clone status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Language Support API Endpoints
+
+@app.route('/api/language/supported', methods=['GET'])
+def get_supported_languages():
+    """Get list of supported languages"""
+    supported_languages = {
+        'en-US': {'name': 'English (US)', 'region': 'United States'},
+        'en-GB': {'name': 'English (UK)', 'region': 'United Kingdom'},
+        'es-ES': {'name': 'Spanish (Spain)', 'region': 'Spain'},
+        'es-MX': {'name': 'Spanish (Mexico)', 'region': 'Mexico'},
+        'fr-FR': {'name': 'French (France)', 'region': 'France'},
+        'de-DE': {'name': 'German (Germany)', 'region': 'Germany'},
+        'it-IT': {'name': 'Italian (Italy)', 'region': 'Italy'},
+        'pt-BR': {'name': 'Portuguese (Brazil)', 'region': 'Brazil'},
+        'ja-JP': {'name': 'Japanese (Japan)', 'region': 'Japan'},
+        'ko-KR': {'name': 'Korean (Korea)', 'region': 'South Korea'},
+        'zh-CN': {'name': 'Chinese (Simplified)', 'region': 'China'},
+        'zh-TW': {'name': 'Chinese (Traditional)', 'region': 'Taiwan'},
+        'ru-RU': {'name': 'Russian (Russia)', 'region': 'Russia'},
+        'ar-SA': {'name': 'Arabic (Saudi Arabia)', 'region': 'Saudi Arabia'},
+        'hi-IN': {'name': 'Hindi (India)', 'region': 'India'}
+    }
+    
+    return jsonify({
+        'success': True,
+        'languages': supported_languages
+    })
+
+@app.route('/api/language/set', methods=['POST'])
+def set_user_language():
+    """Set user's preferred language"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        language_code = data.get('language_code', 'en-US')
+        
+        # Update or insert language preference
+        cursor.execute('''
+            INSERT OR REPLACE INTO language_settings 
+            (user_id, language_code, language_name, is_active, last_used_at, created_at, updated_at)
+            VALUES (?, ?, ?, 1, ?, ?, ?)
+        ''', (
+            user_id,
+            language_code,
+            data.get('language_name', 'Unknown'),
+            datetime.now().isoformat(),
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        # Deactivate other languages for this user
+        cursor.execute('''
+            UPDATE language_settings SET is_active = 0 
+            WHERE user_id = ? AND language_code != ?
+        ''', (user_id, language_code))
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Language set to {language_code}',
+            'language_code': language_code
+        })
+        
+    except Exception as e:
+        print(f"Error setting user language: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/language/current', methods=['GET'])
+def get_current_language():
+    """Get user's current language setting"""
+    try:
+        user_id = request.args.get('user_id', 'default')
+        
+        cursor.execute('''
+            SELECT language_code, language_name, last_used_at 
+            FROM language_settings 
+            WHERE user_id = ? AND is_active = 1
+            LIMIT 1
+        ''', (user_id,))
+        
+        result = cursor.fetchone()
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'language_code': result[0],
+                'language_name': result[1],
+                'last_used_at': result[2]
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'language_code': 'en-US',
+                'language_name': 'English (US)',
+                'last_used_at': None
+            })
+        
+    except Exception as e:
+        print(f"Error getting current language: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Background Listening API Endpoints
+
+@app.route('/api/background/start', methods=['POST'])
+def start_background_listening():
+    """Start a background listening session"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        language_code = data.get('language_code', 'en-US')
+        
+        # Create new background session
+        cursor.execute('''
+            INSERT INTO background_listening_sessions 
+            (user_id, session_start_time, language_used, power_mode)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            user_id,
+            datetime.now().isoformat(),
+            language_code,
+            data.get('power_mode', 'normal')
+        ))
+        
+        session_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'message': 'Background listening session started',
+            'start_time': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error starting background listening: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background/end', methods=['POST'])
+def end_background_listening():
+    """End a background listening session"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        user_id = data.get('user_id', 'default')
+        
+        if not session_id:
+            return jsonify({'error': 'Session ID required'}), 400
+        
+        # Update session with end data
+        cursor.execute('''
+            UPDATE background_listening_sessions 
+            SET session_end_time = ?,
+                total_duration_minutes = ?,
+                wake_word_detections = ?,
+                successful_activations = ?,
+                battery_level_end = ?,
+                pause_reason = ?,
+                session_notes = ?
+            WHERE id = ? AND user_id = ?
+        ''', (
+            datetime.now().isoformat(),
+            data.get('duration_minutes', 0),
+            data.get('wake_word_detections', 0),
+            data.get('successful_activations', 0),
+            data.get('battery_level_end', 0.0),
+            data.get('pause_reason', 'manual'),
+            data.get('session_notes', ''),
+            session_id,
+            user_id
+        ))
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Background listening session ended',
+            'end_time': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error ending background listening: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background/stats', methods=['GET'])
+def get_background_listening_stats():
+    """Get background listening statistics"""
+    try:
+        user_id = request.args.get('user_id', 'default')
+        
+        # Get overall stats
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as session_count,
+                AVG(total_duration_minutes) as avg_duration,
+                SUM(total_duration_minutes) as total_duration,
+                SUM(wake_word_detections) as total_detections,
+                SUM(successful_activations) as total_activations
+            FROM background_listening_sessions 
+            WHERE user_id = ?
+        ''', (user_id,))
+        
+        stats = cursor.fetchone()
+        
+        # Get recent sessions
+        cursor.execute('''
+            SELECT session_start_time, total_duration_minutes, wake_word_detections, language_used
+            FROM background_listening_sessions 
+            WHERE user_id = ?
+            ORDER BY session_start_time DESC
+            LIMIT 10
+        ''', (user_id,))
+        
+        recent_sessions = [
+            {
+                'start_time': row[0],
+                'duration_minutes': row[1] or 0,
+                'detections': row[2] or 0,
+                'language': row[3]
+            } for row in cursor.fetchall()
+        ]
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'session_count': stats[0] or 0,
+                'avg_duration_minutes': round(stats[1] or 0, 2),
+                'total_duration_minutes': stats[2] or 0,
+                'total_detections': stats[3] or 0,
+                'total_activations': stats[4] or 0,
+                'success_rate': round((stats[4] or 0) / max(stats[3] or 1, 1) * 100, 2)
+            },
+            'recent_sessions': recent_sessions
+        })
+        
+    except Exception as e:
+        print(f"Error getting background listening stats: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/personality', methods=['POST'])

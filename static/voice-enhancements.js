@@ -934,9 +934,92 @@ class VoiceEnhancements {
     // ===== UI MANAGEMENT =====
     
     addUI() {
+        this.addLanguageSelector();
         this.addWakeWordControls();
+        this.addBackgroundModeControls();
         this.addVoiceCloneControls();
         this.addStatusIndicators();
+    }
+    
+    addLanguageSelector() {
+        const controlsContainer = document.querySelector('.voice-controls') || document.querySelector('.controls');
+        if (!controlsContainer) return;
+        
+        const languageDiv = document.createElement('div');
+        languageDiv.className = 'language-section';
+        languageDiv.innerHTML = `
+            <div class="feature-section">
+                <h4>🌍 Language & Region</h4>
+                <div class="language-controls">
+                    <select id="languageSelect" class="language-select">
+                        ${Object.entries(this.supportedLanguages).map(([code, info]) => 
+                            `<option value="${code}" ${code === this.currentLanguage ? 'selected' : ''}>${info.name}</option>`
+                        ).join('')}
+                    </select>
+                    <div class="language-info">
+                        <small id="wakeWordExamples">Say "${this.wakeWords[0]}" or "${this.wakeWords[1]}" to activate</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        controlsContainer.appendChild(languageDiv);
+        
+        // Add event listener
+        document.getElementById('languageSelect')?.addEventListener('change', (e) => {
+            this.setLanguage(e.target.value);
+        });
+    }
+    
+    addBackgroundModeControls() {
+        const controlsContainer = document.querySelector('.voice-controls') || document.querySelector('.controls');
+        if (!controlsContainer) return;
+        
+        const backgroundDiv = document.createElement('div');
+        backgroundDiv.className = 'background-mode-section';
+        backgroundDiv.innerHTML = `
+            <div class="feature-section">
+                <h4>🔄 Background Listening</h4>
+                <div class="background-controls">
+                    <button id="toggleBackgroundMode" class="background-btn ${this.backgroundMode.enabled ? 'active' : ''}">
+                        🔄 Background: ${this.backgroundMode.enabled ? 'ON' : 'OFF'}
+                    </button>
+                    <div class="background-settings">
+                        <label class="setting-row">
+                            <input type="checkbox" id="pauseOnInactivity" ${this.backgroundMode.pauseOnInactivity ? 'checked' : ''}>
+                            <span>Pause when inactive</span>
+                        </label>
+                        <label class="setting-row">
+                            <input type="checkbox" id="batteryOptimization" ${this.backgroundMode.batteryOptimization ? 'checked' : ''}>
+                            <span>Battery optimization</span>
+                        </label>
+                        <div class="setting-row">
+                            <label>Max continuous hours:</label>
+                            <input type="range" id="maxContinuousHours" min="1" max="12" value="${this.backgroundMode.maxContinuousHours}" step="1">
+                            <span class="range-value">${this.backgroundMode.maxContinuousHours}h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        controlsContainer.appendChild(backgroundDiv);
+        
+        // Add event listeners
+        document.getElementById('toggleBackgroundMode')?.addEventListener('click', () => this.toggleBackgroundMode());
+        document.getElementById('pauseOnInactivity')?.addEventListener('change', (e) => {
+            this.backgroundMode.pauseOnInactivity = e.target.checked;
+            this.saveBackgroundSettings();
+        });
+        document.getElementById('batteryOptimization')?.addEventListener('change', (e) => {
+            this.backgroundMode.batteryOptimization = e.target.checked;
+            this.saveBackgroundSettings();
+        });
+        document.getElementById('maxContinuousHours')?.addEventListener('input', (e) => {
+            this.backgroundMode.maxContinuousHours = parseInt(e.target.value);
+            document.querySelector('.range-value').textContent = `${e.target.value}h`;
+            this.saveBackgroundSettings();
+        });
     }
     
     addWakeWordControls() {
@@ -1015,6 +1098,72 @@ class VoiceEnhancements {
                 font-size: 1em;
             }
             
+            .language-select {
+                background: rgba(78, 205, 196, 0.1);
+                border: 2px solid #4ecdc4;
+                color: white;
+                padding: 8px 15px;
+                border-radius: 10px;
+                font-size: 0.9em;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            
+            .language-select option {
+                background: #1a1a2e;
+                color: white;
+            }
+            
+            .background-btn {
+                background: rgba(255, 159, 0, 0.1);
+                border: 2px solid #ff9f00;
+                color: white;
+                padding: 8px 15px;
+                border-radius: 20px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-bottom: 10px;
+            }
+            
+            .background-btn.active {
+                background: rgba(255, 159, 0, 0.3);
+                box-shadow: 0 0 10px rgba(255, 159, 0, 0.5);
+            }
+            
+            .background-settings {
+                margin-top: 10px;
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 5px;
+                border-left: 3px solid #ff9f00;
+            }
+            
+            .setting-row {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                font-size: 0.9em;
+                color: #96ceb4;
+            }
+            
+            .setting-row input[type="checkbox"] {
+                margin-right: 8px;
+                accent-color: #4ecdc4;
+            }
+            
+            .setting-row input[type="range"] {
+                margin: 0 10px;
+                flex: 1;
+                accent-color: #4ecdc4;
+            }
+            
+            .range-value {
+                min-width: 30px;
+                text-align: right;
+                font-weight: bold;
+                color: #4ecdc4;
+            }
+            
             .wake-word-btn, .voice-clone-btn {
                 background: rgba(78, 205, 196, 0.1);
                 border: 2px solid #4ecdc4;
@@ -1051,7 +1200,7 @@ class VoiceEnhancements {
                 cursor: not-allowed;
             }
             
-            .voice-samples-info, .wake-word-info {
+            .voice-samples-info, .wake-word-info, .language-info {
                 margin-top: 8px;
             }
             
@@ -1099,6 +1248,8 @@ class VoiceEnhancements {
                 border-left: 3px solid #4ecdc4;
                 margin: 15px 0;
                 font-style: italic;
+                text-align: left;
+                line-height: 1.5;
             }
             
             .stop-recording-btn {
@@ -1123,9 +1274,23 @@ class VoiceEnhancements {
                 50% { opacity: 0.5; }
                 100% { opacity: 1; }
             }
+            
+            @keyframes backgroundPulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.6; transform: scale(1.2); }
+                100% { opacity: 1; transform: scale(1); }
+            }
         `;
         
         document.head.appendChild(style);
+    }
+    
+    toggleBackgroundMode() {
+        if (this.backgroundMode.enabled) {
+            this.disableBackgroundMode();
+        } else {
+            this.enableBackgroundMode();
+        }
     }
     
     toggleWakeWord() {
@@ -1159,13 +1324,36 @@ class VoiceEnhancements {
     }
     
     loadSettings() {
-        // Initialize with saved settings
+        // Load all settings
         this.loadVoiceSettings();
+        this.loadBackgroundSettings();
+        
+        // Load language preference
+        try {
+            const savedLang = localStorage.getItem('horizon_language');
+            if (savedLang && this.supportedLanguages[savedLang]) {
+                this.setLanguage(savedLang);
+            }
+        } catch (error) {
+            console.log('Could not load language settings:', error);
+        }
         
         // Update UI based on settings
         const sampleCount = document.getElementById('sampleCount');
         if (sampleCount && this.voiceSettings.recordedSamples) {
             sampleCount.textContent = this.voiceSettings.recordedSamples.length;
+        }
+    }
+    
+    saveSettings() {
+        this.saveVoiceSettings();
+        this.saveBackgroundSettings();
+        
+        // Save language preference
+        try {
+            localStorage.setItem('horizon_language', this.currentLanguage);
+        } catch (error) {
+            console.log('Could not save language settings:', error);
         }
     }
     
@@ -1181,6 +1369,27 @@ class VoiceEnhancements {
     
     getSampleCount() {
         return this.voiceSettings.recordedSamples.length;
+    }
+    
+    getCurrentLanguage() {
+        return {
+            code: this.currentLanguage,
+            name: this.supportedLanguages[this.currentLanguage].name,
+            wakeWords: this.wakeWords
+        };
+    }
+    
+    getBackgroundModeStatus() {
+        return {
+            enabled: this.backgroundMode.enabled,
+            lowPowerMode: this.backgroundMode.lowPowerMode,
+            continuousHours: this.backgroundMode.continuousHours,
+            pauseOnInactivity: this.backgroundMode.pauseOnInactivity
+        };
+    }
+    
+    getSupportedLanguages() {
+        return this.supportedLanguages;
     }
 }
 
