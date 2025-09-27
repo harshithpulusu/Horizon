@@ -2008,6 +2008,195 @@ def init_db():
             )
         ''')
         
+        # 🧠 CROSS-SESSION MEMORY PERSISTENCE TABLES
+        
+        # Persistent user context across sessions
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS persistent_user_context (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                context_type TEXT, -- personal_info, preferences, conversation_history, topics_discussed, emotional_state
+                context_category TEXT, -- work, personal, technical, creative, health, education, entertainment
+                context_key TEXT,
+                context_value TEXT, -- JSON object with the actual context data
+                importance_score REAL DEFAULT 0.5, -- 0.0 to 1.0, higher means more important to remember
+                confidence_score REAL DEFAULT 0.8, -- how confident we are about this information
+                last_referenced TEXT, -- when this context was last used or mentioned
+                reference_count INTEGER DEFAULT 1, -- how many times this has been referenced
+                decay_rate REAL DEFAULT 0.1, -- how quickly this context becomes less relevant
+                expiry_date TEXT, -- when this context should expire (null for permanent)
+                source_session_id TEXT, -- which session this context originated from
+                verification_status TEXT DEFAULT 'unverified', -- unverified, confirmed, disputed, outdated
+                related_contexts TEXT, -- JSON array of related context IDs
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Long-term conversation memory
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversation_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                memory_type TEXT, -- fact, preference, story, goal, relationship, skill, interest
+                memory_content TEXT, -- the actual memory content
+                memory_summary TEXT, -- brief summary for quick reference
+                emotional_context TEXT, -- JSON object with emotional context when memory was formed
+                conversation_context TEXT, -- JSON object with conversation details
+                relevance_score REAL DEFAULT 0.5, -- how relevant this memory is to future conversations
+                accuracy_confidence REAL DEFAULT 0.8, -- how accurate we believe this memory to be
+                last_accessed TEXT, -- when this memory was last retrieved
+                access_frequency INTEGER DEFAULT 1, -- how often this memory is accessed
+                memory_strength REAL DEFAULT 1.0, -- strength of the memory (can decay over time)
+                reinforcement_count INTEGER DEFAULT 0, -- how many times this memory has been reinforced
+                contradiction_flags TEXT, -- JSON array of times this memory was contradicted
+                source_sessions TEXT, -- JSON array of session IDs where this memory was formed/updated
+                tags TEXT, -- JSON array of tags for easy categorization
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # User behavioral patterns and habits
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_behavioral_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                pattern_type TEXT, -- time_preference, topic_interest, communication_style, request_patterns, mood_patterns
+                pattern_name TEXT,
+                pattern_description TEXT,
+                pattern_data TEXT, -- JSON object with detailed pattern information
+                detection_confidence REAL DEFAULT 0.7, -- how confident we are about this pattern
+                pattern_strength REAL DEFAULT 0.5, -- how strong/consistent this pattern is
+                first_observed TEXT, -- when we first noticed this pattern
+                last_observed TEXT, -- when we last observed this pattern
+                observation_count INTEGER DEFAULT 1, -- how many times we've seen this pattern
+                prediction_accuracy REAL DEFAULT 0.0, -- how accurate our predictions based on this pattern are
+                seasonal_variations TEXT, -- JSON object describing how pattern varies by time/season
+                exceptions TEXT, -- JSON array of noted exceptions to this pattern
+                related_patterns TEXT, -- JSON array of related pattern IDs
+                adaptation_suggestions TEXT, -- JSON array of how AI should adapt based on this pattern
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Context bridges between sessions
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS session_context_bridges (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                previous_session_id TEXT,
+                current_session_id TEXT,
+                bridge_type TEXT, -- topic_continuation, unresolved_question, follow_up_task, emotional_continuity
+                bridge_data TEXT, -- JSON object with bridge information
+                importance_level INTEGER DEFAULT 1, -- 1=low, 5=critical for session continuity
+                resolution_status TEXT DEFAULT 'pending', -- pending, addressed, resolved, expired
+                auto_mention_threshold REAL DEFAULT 0.7, -- confidence threshold for auto-mentioning
+                user_acknowledgment INTEGER DEFAULT 0, -- whether user acknowledged the bridge
+                effectiveness_score REAL DEFAULT 0.0, -- how effective this bridge was
+                created_at TEXT,
+                resolved_at TEXT
+            )
+        ''')
+        
+        # 📊 USER PREFERENCE LEARNING TABLES
+        
+        # Adaptive user preferences with learning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS adaptive_user_preferences (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                preference_category TEXT, -- communication, personality, topics, features, timing, format
+                preference_name TEXT,
+                preference_value TEXT, -- JSON object with preference details
+                confidence_level REAL DEFAULT 0.5, -- how confident we are about this preference
+                learning_source TEXT, -- explicit_feedback, behavioral_analysis, pattern_detection, user_stated
+                preference_strength REAL DEFAULT 0.5, -- how strong this preference is (0.0 to 1.0)
+                stability_score REAL DEFAULT 0.5, -- how stable/consistent this preference is
+                first_detected TEXT, -- when we first detected this preference
+                last_confirmed TEXT, -- when this preference was last confirmed
+                adaptation_count INTEGER DEFAULT 0, -- how many times we've adapted to this preference
+                success_rate REAL DEFAULT 0.0, -- success rate when applying this preference
+                conflicting_preferences TEXT, -- JSON array of conflicting preference IDs
+                contextual_variations TEXT, -- JSON object describing how preference varies by context
+                evolution_history TEXT, -- JSON array tracking how this preference has evolved
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Preference learning feedback and validation
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS preference_learning_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                preference_id INTEGER,
+                session_id TEXT,
+                feedback_type TEXT, -- positive, negative, neutral, correction, clarification
+                feedback_context TEXT, -- what triggered this feedback
+                user_response TEXT, -- actual user response/feedback
+                ai_prediction TEXT, -- what the AI predicted user would want
+                accuracy_assessment REAL, -- how accurate the AI prediction was
+                learning_adjustment TEXT, -- JSON object describing what adjustments were made
+                confidence_before REAL, -- confidence level before this feedback
+                confidence_after REAL, -- confidence level after processing feedback
+                preference_update_required INTEGER DEFAULT 0, -- whether preference needs updating
+                notes TEXT, -- additional notes about the feedback
+                timestamp TEXT,
+                FOREIGN KEY (preference_id) REFERENCES adaptive_user_preferences (id)
+            )
+        ''')
+        
+        # User interaction quality and satisfaction tracking
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS interaction_quality_metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                session_id TEXT,
+                interaction_id TEXT, -- unique identifier for specific interaction
+                quality_dimensions TEXT, -- JSON object: {relevance: 0.8, helpfulness: 0.9, personalization: 0.7}
+                user_satisfaction_score REAL, -- overall satisfaction (0.0 to 1.0)
+                response_appropriateness REAL, -- how appropriate the AI response was
+                personalization_effectiveness REAL, -- how well personalized the response was
+                context_awareness_score REAL, -- how well AI used context
+                preference_adherence_score REAL, -- how well AI followed user preferences
+                improvement_areas TEXT, -- JSON array of areas needing improvement
+                positive_aspects TEXT, -- JSON array of what worked well
+                user_feedback_explicit TEXT, -- any explicit feedback from user
+                behavioral_feedback_implicit TEXT, -- implicit feedback from user behavior
+                ai_confidence_level REAL, -- AI's confidence in its response
+                learning_opportunities TEXT, -- JSON array of learning opportunities identified
+                timestamp TEXT
+            )
+        ''')
+        
+        # Intelligent suggestion and recommendation engine
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS intelligent_suggestions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT DEFAULT 'default',
+                suggestion_type TEXT, -- feature_recommendation, content_suggestion, workflow_optimization, preference_adjustment
+                suggestion_category TEXT, -- productivity, entertainment, learning, communication, personalization
+                suggestion_content TEXT, -- JSON object with suggestion details
+                reasoning TEXT, -- explanation of why this suggestion was made
+                confidence_score REAL DEFAULT 0.5, -- how confident AI is about this suggestion
+                priority_level INTEGER DEFAULT 3, -- 1=low, 5=urgent
+                trigger_context TEXT, -- JSON object describing what triggered this suggestion
+                expected_benefit TEXT, -- what benefit this suggestion should provide
+                implementation_complexity TEXT, -- how complex it would be to implement
+                user_response TEXT, -- accepted, rejected, deferred, modified
+                effectiveness_score REAL DEFAULT 0.0, -- how effective the suggestion was if implemented
+                similar_suggestions TEXT, -- JSON array of similar suggestions made before
+                suggestion_status TEXT DEFAULT 'pending', -- pending, presented, accepted, rejected, implemented
+                presentation_count INTEGER DEFAULT 0, -- how many times this suggestion was presented
+                optimal_presentation_context TEXT, -- JSON object describing best time/way to present
+                created_at TEXT,
+                presented_at TEXT,
+                resolved_at TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         print("✅ Database initialized with AI Intelligence, Voice Enhancement, Language Support, and Background Mode features")
