@@ -15110,6 +15110,380 @@ def get_background_listening_stats():
         print(f"Error getting background listening stats: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Cross-Session Memory Persistence API Endpoints
+
+@app.route('/api/memory/context/store', methods=['POST'])
+def store_persistent_context():
+    """Store persistent context that carries across sessions"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        # Store or update persistent context
+        cursor.execute('''
+            INSERT OR REPLACE INTO persistent_user_context 
+            (user_id, context_type, context_category, context_key, context_value, 
+             importance_score, confidence_score, last_referenced, reference_count, 
+             source_session_id, verification_status, related_contexts, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            data.get('context_type'),
+            data.get('context_category', 'general'),
+            data.get('context_key'),
+            json.dumps(data.get('context_value')),
+            data.get('importance_score', 0.5),
+            data.get('confidence_score', 0.8),
+            datetime.now().isoformat(),
+            data.get('reference_count', 1),
+            data.get('session_id'),
+            data.get('verification_status', 'unverified'),
+            json.dumps(data.get('related_contexts', [])),
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        context_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'context_id': context_id,
+            'message': 'Context stored successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error storing persistent context: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/context/retrieve', methods=['GET'])
+def retrieve_persistent_context():
+    """Retrieve relevant context for current session"""
+    try:
+        user_id = request.args.get('user_id', 'default')
+        context_type = request.args.get('context_type')
+        context_category = request.args.get('context_category')
+        limit = int(request.args.get('limit', 50))
+        
+        # Build dynamic query based on filters
+        query_conditions = ['user_id = ?']
+        query_params = [user_id]
+        
+        if context_type:
+            query_conditions.append('context_type = ?')
+            query_params.append(context_type)
+            
+        if context_category:
+            query_conditions.append('context_category = ?')
+            query_params.append(context_category)
+        
+        # Retrieve context ordered by relevance (importance * recent usage)
+        cursor.execute(f'''
+            SELECT context_type, context_category, context_key, context_value, 
+                   importance_score, confidence_score, last_referenced, reference_count,
+                   verification_status, created_at
+            FROM persistent_user_context 
+            WHERE {' AND '.join(query_conditions)}
+            ORDER BY (importance_score * reference_count) DESC
+            LIMIT ?
+        ''', query_params + [limit])
+        
+        contexts = []
+        for row in cursor.fetchall():
+            try:
+                context_value = json.loads(row[3]) if row[3] else {}
+            except:
+                context_value = row[3]
+                
+            contexts.append({
+                'context_type': row[0],
+                'context_category': row[1],
+                'context_key': row[2],
+                'context_value': context_value,
+                'importance_score': row[4],
+                'confidence_score': row[5],
+                'last_referenced': row[6],
+                'reference_count': row[7],
+                'verification_status': row[8],
+                'created_at': row[9]
+            })
+        
+        return jsonify({
+            'success': True,
+            'contexts': contexts,
+            'count': len(contexts)
+        })
+        
+    except Exception as e:
+        print(f"Error retrieving persistent context: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/conversation/store', methods=['POST'])
+def store_conversation_memory():
+    """Store important conversation memories for long-term recall"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        cursor.execute('''
+            INSERT INTO conversation_memory 
+            (user_id, memory_type, memory_content, memory_summary, emotional_context,
+             conversation_context, relevance_score, accuracy_confidence, last_accessed,
+             access_frequency, memory_strength, source_sessions, tags, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            data.get('memory_type'),
+            data.get('memory_content'),
+            data.get('memory_summary'),
+            json.dumps(data.get('emotional_context', {})),
+            json.dumps(data.get('conversation_context', {})),
+            data.get('relevance_score', 0.5),
+            data.get('accuracy_confidence', 0.8),
+            datetime.now().isoformat(),
+            1,
+            data.get('memory_strength', 1.0),
+            json.dumps([data.get('session_id')]),
+            json.dumps(data.get('tags', [])),
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        memory_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'memory_id': memory_id,
+            'message': 'Memory stored successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error storing conversation memory: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/bridge/create', methods=['POST'])
+def create_session_bridge():
+    """Create a bridge between sessions for continuity"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        cursor.execute('''
+            INSERT INTO session_context_bridges 
+            (user_id, previous_session_id, current_session_id, bridge_type, bridge_data,
+             importance_level, auto_mention_threshold, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            data.get('previous_session_id'),
+            data.get('current_session_id'),
+            data.get('bridge_type'),
+            json.dumps(data.get('bridge_data')),
+            data.get('importance_level', 3),
+            data.get('auto_mention_threshold', 0.7),
+            datetime.now().isoformat()
+        ))
+        
+        bridge_id = cursor.lastrowid
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'bridge_id': bridge_id,
+            'message': 'Session bridge created successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error creating session bridge: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# User Preference Learning API Endpoints
+
+@app.route('/api/preferences/adaptive/learn', methods=['POST'])
+def learn_user_preference():
+    """Learn and store adaptive user preferences"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        # Check if preference already exists
+        cursor.execute('''
+            SELECT id, confidence_level, preference_strength FROM adaptive_user_preferences
+            WHERE user_id = ? AND preference_category = ? AND preference_name = ?
+        ''', (user_id, data.get('preference_category'), data.get('preference_name')))
+        
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing preference with new learning
+            new_confidence = min(1.0, existing[1] + data.get('confidence_boost', 0.1))
+            new_strength = (existing[2] + data.get('preference_strength', 0.5)) / 2
+            
+            cursor.execute('''
+                UPDATE adaptive_user_preferences 
+                SET preference_value = ?, confidence_level = ?, preference_strength = ?,
+                    last_confirmed = ?, adaptation_count = adaptation_count + 1,
+                    updated_at = ?
+                WHERE id = ?
+            ''', (
+                json.dumps(data.get('preference_value')),
+                new_confidence,
+                new_strength,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                existing[0]
+            ))
+            preference_id = existing[0]
+        else:
+            # Create new preference
+            cursor.execute('''
+                INSERT INTO adaptive_user_preferences 
+                (user_id, preference_category, preference_name, preference_value, 
+                 confidence_level, learning_source, preference_strength, stability_score,
+                 first_detected, last_confirmed, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                user_id,
+                data.get('preference_category'),
+                data.get('preference_name'),
+                json.dumps(data.get('preference_value')),
+                data.get('confidence_level', 0.5),
+                data.get('learning_source', 'behavioral_analysis'),
+                data.get('preference_strength', 0.5),
+                data.get('stability_score', 0.5),
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                datetime.now().isoformat()
+            ))
+            preference_id = cursor.lastrowid
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'preference_id': preference_id,
+            'action': 'updated' if existing else 'created',
+            'message': 'Preference learned successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error learning user preference: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preferences/adaptive/get', methods=['GET'])
+def get_adaptive_preferences():
+    """Get user's adaptive preferences"""
+    try:
+        user_id = request.args.get('user_id', 'default')
+        category = request.args.get('category')
+        min_confidence = float(request.args.get('min_confidence', 0.3))
+        
+        query_conditions = ['user_id = ?', 'confidence_level >= ?']
+        query_params = [user_id, min_confidence]
+        
+        if category:
+            query_conditions.append('preference_category = ?')
+            query_params.append(category)
+        
+        cursor.execute(f'''
+            SELECT preference_category, preference_name, preference_value, confidence_level,
+                   preference_strength, stability_score, last_confirmed, adaptation_count,
+                   success_rate, contextual_variations
+            FROM adaptive_user_preferences 
+            WHERE {' AND '.join(query_conditions)}
+            ORDER BY (confidence_level * preference_strength) DESC
+        ''', query_params)
+        
+        preferences = []
+        for row in cursor.fetchall():
+            try:
+                preference_value = json.loads(row[2]) if row[2] else {}
+                contextual_variations = json.loads(row[9]) if row[9] else {}
+            except:
+                preference_value = row[2]
+                contextual_variations = {}
+                
+            preferences.append({
+                'category': row[0],
+                'name': row[1],
+                'value': preference_value,
+                'confidence_level': row[3],
+                'strength': row[4],
+                'stability': row[5],
+                'last_confirmed': row[6],
+                'adaptation_count': row[7],
+                'success_rate': row[8] or 0.0,
+                'contextual_variations': contextual_variations
+            })
+        
+        return jsonify({
+            'success': True,
+            'preferences': preferences,
+            'count': len(preferences)
+        })
+        
+    except Exception as e:
+        print(f"Error getting adaptive preferences: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preferences/feedback', methods=['POST'])
+def record_preference_feedback():
+    """Record feedback about preference predictions"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', 'default')
+        
+        cursor.execute('''
+            INSERT INTO preference_learning_feedback 
+            (user_id, preference_id, session_id, feedback_type, feedback_context,
+             user_response, ai_prediction, accuracy_assessment, learning_adjustment,
+             confidence_before, confidence_after, preference_update_required, notes, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            data.get('preference_id'),
+            data.get('session_id'),
+            data.get('feedback_type'),
+            data.get('feedback_context'),
+            data.get('user_response'),
+            data.get('ai_prediction'),
+            data.get('accuracy_assessment', 0.5),
+            json.dumps(data.get('learning_adjustment', {})),
+            data.get('confidence_before', 0.5),
+            data.get('confidence_after', 0.5),
+            1 if data.get('preference_update_required') else 0,
+            data.get('notes', ''),
+            datetime.now().isoformat()
+        ))
+        
+        feedback_id = cursor.lastrowid
+        
+        # Update preference success rate if preference_id provided
+        if data.get('preference_id'):
+            cursor.execute('''
+                UPDATE adaptive_user_preferences 
+                SET success_rate = (
+                    SELECT AVG(accuracy_assessment) 
+                    FROM preference_learning_feedback 
+                    WHERE preference_id = ?
+                )
+                WHERE id = ?
+            ''', (data.get('preference_id'), data.get('preference_id')))
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'feedback_id': feedback_id,
+            'message': 'Preference feedback recorded successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error recording preference feedback: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/personality', methods=['POST'])
 def update_personality():
     """Update personality for the current session"""
