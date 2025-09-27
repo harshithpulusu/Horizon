@@ -43,7 +43,7 @@ class MemoryLearningSystem {
     }
     
     async storePersistentContext(contextData) {
-        """Store context that should persist across sessions"""
+        // Store context that should persist across sessions
         try {
             const response = await fetch('/api/memory/context/store', {
                 method: 'POST',
@@ -77,7 +77,7 @@ class MemoryLearningSystem {
     }
     
     async retrievePersistentContext(filters = {}) {
-        """Retrieve relevant context for current session"""
+        // Retrieve relevant context for current session
         try {
             const params = new URLSearchParams({
                 user_id: this.userId,
@@ -104,7 +104,7 @@ class MemoryLearningSystem {
     }
     
     async storeConversationMemory(memoryData) {
-        """Store important conversation memories"""
+        // Store important conversation memories
         try {
             const response = await fetch('/api/memory/conversation/store', {
                 method: 'POST',
@@ -131,7 +131,7 @@ class MemoryLearningSystem {
     }
     
     async createSessionBridge(bridgeData) {
-        """Create continuity bridge between sessions"""
+        // Create continuity bridge between sessions
         try {
             const response = await fetch('/api/memory/bridge/create', {
                 method: 'POST',
@@ -331,7 +331,7 @@ class MemoryLearningSystem {
     }
     
     async learnUserPreference(preferenceData) {
-        """Learn and store user preferences"""
+        // Learn and store user preferences
         try {
             const response = await fetch('/api/preferences/adaptive/learn', {
                 method: 'POST',
@@ -369,7 +369,7 @@ class MemoryLearningSystem {
     }
     
     async getAdaptivePreferences(category = null, minConfidence = 0.3) {
-        """Get user's learned preferences"""
+        // Get user's learned preferences
         try {
             const params = new URLSearchParams({
                 user_id: this.userId,
@@ -400,7 +400,7 @@ class MemoryLearningSystem {
     }
     
     async recordPreferenceFeedback(feedbackData) {
-        """Record feedback about AI predictions"""
+        // Record feedback about AI predictions
         try {
             const response = await fetch('/api/preferences/feedback', {
                 method: 'POST',
@@ -429,7 +429,7 @@ class MemoryLearningSystem {
     // ===== INTELLIGENT CONTEXT MANAGEMENT =====
     
     async loadPersistentContext() {
-        """Load relevant context for current session"""
+        // Load relevant context for current session
         const contexts = await this.retrievePersistentContext({
             limit: 30
         });
@@ -444,7 +444,7 @@ class MemoryLearningSystem {
     }
     
     applyContextToSession(context) {
-        """Apply persistent context to current session"""
+        // Apply persistent context to current session
         switch (context.context_type) {
             case 'personal_info':
                 this.applyPersonalContext(context);
@@ -475,7 +475,7 @@ class MemoryLearningSystem {
     }
     
     setupSessionBridges() {
-        """Set up bridges for session continuity"""
+        // Set up bridges for session continuity
         // Check for pending bridges from previous sessions
         this.checkPendingBridges();
         
@@ -529,7 +529,7 @@ class MemoryLearningSystem {
     // ===== MEMORY PROCESSING =====
     
     processMemoryDecay() {
-        """Process memory decay and cleanup"""
+        // Process memory decay and cleanup
         this.persistentMemory.forEach((memory, key) => {
             if (memory.decay_rate && memory.last_referenced) {
                 const daysSinceReference = this.daysSince(new Date(memory.last_referenced));

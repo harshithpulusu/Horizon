@@ -33,6 +33,7 @@ class EnhancedAIVoiceAssistant {
         this.sessionId = null;
         this.conversationLength = 0;
         this.contextUsed = false;
+        this.memorySystem = null;  // Will be set when memory system is available
         
         this.init();
         this.initEventListeners();
@@ -312,6 +313,8 @@ class EnhancedAIVoiceAssistant {
         document.getElementById('toggleVoiceClone')?.addEventListener('click', () => this.toggleVoiceCloning());
         document.getElementById('recordVoiceSample')?.addEventListener('click', () => this.recordVoiceSample());
     }
+
+    addWakeWordUI() {
         // Add wake word toggle to the UI
         const controlsDiv = document.querySelector('.controls');
         if (controlsDiv && !document.getElementById('wakeWordToggle')) {
@@ -689,6 +692,16 @@ class EnhancedAIVoiceAssistant {
         this.updateStatus('Processing...');
         this.lastInput = input;
         
+        // Record user interaction patterns for learning
+        if (this.memorySystem) {
+            this.memorySystem.recordInteraction('user_message', {
+                message: input,
+                timestamp: new Date().toISOString(),
+                message_length: input.length,
+                session_id: this.sessionId
+            });
+        }
+        
         try {
             const response = await fetch('/api/process', {
                 method: 'POST',
@@ -717,11 +730,60 @@ class EnhancedAIVoiceAssistant {
             
             this.handleAIResponse(data);
             
+            // Learn from the interaction
+            if (this.memorySystem && data.response) {
+                this.learnFromInteraction(input, data.response);
+            }
+            
         } catch (error) {
             console.error('Error processing input:', error);
             this.addMessage('AI', 'Sorry, I encountered an error processing your request.', 'error');
             this.updateStatus('Error');
         }
+    }
+    
+    // Learn from user-AI interactions
+    learnFromInteraction(userInput, aiResponse) {
+        // Extract important facts from user input
+        const personalKeywords = ['my name is', 'i am', 'i work', 'i live', 'i like', 'i prefer', 'remember'];
+        const lowerInput = userInput.toLowerCase();
+        
+        personalKeywords.forEach(keyword => {
+            if (lowerInput.includes(keyword)) {
+                this.recordConversationFact(userInput, 0.8);
+                
+                // Store personal context
+                this.updatePersonalContext({
+                    key: `user_statement_${Date.now()}`,
+                    value: userInput,
+                    category: 'personal_info',
+                    confidence: 0.8
+                });
+            }
+        });
+        
+        // Learn response preferences
+        if (this.memorySystem) {
+            this.memorySystem.learnUserPreference({
+                preference_category: 'response_style',
+                preference_name: 'interaction_pattern',
+                preference_value: {
+                    user_input_style: this.analyzeInputStyle(userInput),
+                    preferred_response_length: aiResponse.length > 200 ? 'detailed' : aiResponse.length > 50 ? 'medium' : 'brief',
+                    interaction_timestamp: new Date().toISOString()
+                },
+                learning_source: 'conversation_analysis',
+                confidence_level: 0.6
+            });
+        }
+    }
+    
+    analyzeInputStyle(input) {
+        if (input.length < 20) return 'brief';
+        if (input.includes('?')) return 'questioning';
+        if (input.includes('please') || input.includes('thank')) return 'polite';
+        if (input.includes('!')) return 'enthusiastic';
+        return 'neutral';
     }
     
     handleAIResponse(data) {
@@ -1429,6 +1491,11 @@ class EnhancedAIVoiceAssistant {
     
     async clearConversation() {
         try {
+            // Store conversation data before clearing (if memory system is available)
+            if (this.memorySystem && this.conversationHistory.length > 0) {
+                await this.endConversationWithMemory();
+            }
+            
             await this.createNewSession();
             
             // Clear messages
@@ -1442,8 +1509,15 @@ class EnhancedAIVoiceAssistant {
                 this.conversationCount.textContent = '0';
             }
             
-            // Add welcome message
-            this.addMessage('AI', 'Hello! I\'m Horizon, your AI assistant. How can I help you today?', 'ai');
+            // Add welcome message with context awareness
+            let welcomeMessage = 'Hello! I\'m Horizon, your AI assistant. How can I help you today?';
+            
+            // Check if we have persistent context to acknowledge
+            if (this.memorySystem && this.memorySystem.persistentMemory.size > 0) {
+                welcomeMessage = 'Hello again! I remember our previous conversations. How can I help you today?';
+            }
+            
+            this.addMessage('AI', welcomeMessage, 'ai');
             
         } catch (error) {
             console.error('Error clearing conversation:', error);
@@ -1470,6 +1544,299 @@ class EnhancedAIVoiceAssistant {
         
         this.addMessage('Horizon AI', `Horizon is a next-generation AI chatbot that goes beyond conversation—combining ChatGPT-style intelligence with fast-action features like quick commands, instant timers, and smart reminders. Designed for both productivity and natural interaction, Horizon delivers lightning-fast responses while helping users stay organized and in control.`, 'ai');
     }
+    
+    // ===== MEMORY & LEARNING INTEGRATION =====
+    
+    // Integration with memory system
+    setupMemoryIntegration() {
+        if (window.memoryLearning) {
+            console.log('🔗 Integrating with Memory & Learning system');
+            this.memorySystem = window.memoryLearning;
+            
+            // Set up event listeners for memory integration
+            this.addEventListener('conversation_ended', (event) => {
+                if (this.memorySystem) {
+                    this.memorySystem.onConversationEnd(event.detail);
+                }
+            });
+        }
+    }
+    
+    // Update personal context for memory system
+    updatePersonalContext(context) {
+        console.log('📝 Updating personal context:', context);
+        
+        // Store in memory system if available
+        if (this.memorySystem) {
+            this.memorySystem.storePersistentContext({
+                context_type: 'personal_info',
+                context_key: context.key || 'personal_data',
+                context_value: context,
+                importance_score: 0.9,
+                decay_rate: 0.01 // Very slow decay for personal info
+            });
+        }
+    }
+    
+    // Record important conversation facts
+    recordConversationFact(fact, importance = 0.7) {
+        if (this.memorySystem) {
+            this.memorySystem.storePersistentContext({
+                context_type: 'conversation_fact',
+                context_key: `fact_${Date.now()}`,
+                context_value: { fact: fact, timestamp: new Date().toISOString() },
+                importance_score: importance,
+                decay_rate: 0.05
+            });
+        }
+    }
+    
+    // Learn from user feedback
+    learnFromFeedback(feedback, responseContext) {
+        if (this.memorySystem) {
+            this.memorySystem.recordPreferenceFeedback({
+                feedback_type: feedback.type, // 'positive', 'negative', 'correction'
+                interaction_context: responseContext,
+                user_feedback: feedback.message,
+                response_quality_rating: feedback.rating || 0.5,
+                feedback_category: feedback.category || 'general'
+            });
+        }
+    }
+    
+    // Enhanced conversation ending with memory storage
+    async endConversationWithMemory() {
+        const conversationData = {
+            important_facts: this.extractImportantFacts(),
+            unresolved_questions: this.findUnresolvedQuestions(),
+            user_preferences: this.inferredPreferences(),
+            summary: this.generateConversationSummary(),
+            session_id: this.sessionId,
+            conversation_length: this.conversationLength
+        };
+        
+        // Dispatch event for memory system
+        const event = new CustomEvent('conversation_ended', {
+            detail: conversationData
+        });
+        this.dispatchEvent(event);
+        
+        // Store conversation summary
+        if (this.memorySystem) {
+            this.memorySystem.storeConversationMemory({
+                memory_type: 'session_summary',
+                memory_content: conversationData.summary,
+                memory_summary: `Session with ${this.conversationLength} exchanges`,
+                relevance_score: this.conversationLength > 5 ? 0.8 : 0.4
+            });
+        }
+    }
+    
+    // Extract important facts from conversation
+    extractImportantFacts() {
+        const facts = [];
+        const keywords = ['my name is', 'i am', 'i work at', 'i live in', 'i like', 'i prefer', 'remember that'];
+        
+        this.conversationHistory.forEach(message => {
+            if (message.type === 'user') {
+                const lowerText = message.text.toLowerCase();
+                keywords.forEach(keyword => {
+                    if (lowerText.includes(keyword)) {
+                        facts.push({
+                            fact: message.text,
+                            timestamp: message.timestamp || new Date().toISOString(),
+                            confidence: 0.8
+                        });
+                    }
+                });
+            }
+        });
+        
+        return facts;
+    }
+    
+    // Find unresolved questions
+    findUnresolvedQuestions() {
+        const questions = [];
+        
+        this.conversationHistory.forEach(message => {
+            if (message.text.includes('?') && message.type === 'user') {
+                // Check if there's a follow-up that indicates resolution
+                const messageIndex = this.conversationHistory.indexOf(message);
+                const nextMessages = this.conversationHistory.slice(messageIndex + 1, messageIndex + 3);
+                
+                const hasResolution = nextMessages.some(msg => 
+                    msg.type === 'user' && 
+                    (msg.text.toLowerCase().includes('thank') || 
+                     msg.text.toLowerCase().includes('got it') ||
+                     msg.text.toLowerCase().includes('perfect'))
+                );
+                
+                if (!hasResolution) {
+                    questions.push({
+                        question: message.text,
+                        timestamp: message.timestamp || new Date().toISOString(),
+                        context: nextMessages.map(m => m.text).join(' ')
+                    });
+                }
+            }
+        });
+        
+        return questions;
+    }
+    
+    // Infer user preferences from conversation
+    inferredPreferences() {
+        const preferences = {};
+        
+        // Analyze response lengths preference
+        const userMessages = this.conversationHistory.filter(m => m.type === 'user');
+        const avgUserLength = userMessages.reduce((sum, m) => sum + m.text.length, 0) / userMessages.length;
+        
+        if (avgUserLength < 50) {
+            preferences.communication_style = 'concise';
+        } else if (avgUserLength > 200) {
+            preferences.communication_style = 'detailed';
+        } else {
+            preferences.communication_style = 'balanced';
+        }
+        
+        // Analyze topic interests
+        const topics = ['technology', 'science', 'business', 'creative', 'personal', 'learning'];
+        topics.forEach(topic => {
+            const mentions = this.conversationHistory.filter(m => 
+                m.text.toLowerCase().includes(topic)
+            ).length;
+            
+            if (mentions > 0) {
+                preferences[`interest_${topic}`] = Math.min(mentions / 10, 1.0);
+            }
+        });
+        
+        return preferences;
+    }
+    
+    // Generate conversation summary
+    generateConversationSummary() {
+        const totalMessages = this.conversationHistory.length;
+        const userMessages = this.conversationHistory.filter(m => m.type === 'user').length;
+        const aiMessages = this.conversationHistory.filter(m => m.type === 'ai').length;
+        
+        const topics = this.extractMainTopics();
+        const duration = this.calculateSessionDuration();
+        
+        return {
+            total_exchanges: Math.floor(totalMessages / 2),
+            user_messages: userMessages,
+            ai_messages: aiMessages,
+            main_topics: topics,
+            session_duration_minutes: duration,
+            engagement_level: this.calculateEngagementLevel()
+        };
+    }
+    
+    extractMainTopics() {
+        // Simple topic extraction based on keywords
+        const topicKeywords = {
+            technical: ['code', 'programming', 'software', 'technology', 'computer'],
+            creative: ['design', 'art', 'music', 'creative', 'writing'],
+            personal: ['personal', 'life', 'family', 'friends', 'relationship'],
+            business: ['work', 'job', 'business', 'career', 'professional'],
+            learning: ['learn', 'study', 'education', 'course', 'tutorial']
+        };
+        
+        const allText = this.conversationHistory.map(m => m.text.toLowerCase()).join(' ');
+        const topics = [];
+        
+        Object.entries(topicKeywords).forEach(([topic, keywords]) => {
+            const mentions = keywords.filter(keyword => allText.includes(keyword)).length;
+            if (mentions > 0) {
+                topics.push({ topic, relevance: Math.min(mentions / 5, 1.0) });
+            }
+        });
+        
+        return topics.sort((a, b) => b.relevance - a.relevance).slice(0, 3);
+    }
+    
+    calculateSessionDuration() {
+        if (this.conversationHistory.length < 2) return 0;
+        
+        const firstMessage = this.conversationHistory[0];
+        const lastMessage = this.conversationHistory[this.conversationHistory.length - 1];
+        
+        if (firstMessage.timestamp && lastMessage.timestamp) {
+            const start = new Date(firstMessage.timestamp);
+            const end = new Date(lastMessage.timestamp);
+            return Math.round((end - start) / (1000 * 60)); // minutes
+        }
+        
+        return 0;
+    }
+    
+    calculateEngagementLevel() {
+        // Calculate engagement based on message frequency and length
+        const avgResponseTime = this.calculateAverageResponseTime();
+        const avgMessageLength = this.conversationHistory.reduce((sum, m) => sum + m.text.length, 0) / this.conversationHistory.length;
+        
+        let engagement = 0.5; // baseline
+        
+        // Quick responses indicate high engagement
+        if (avgResponseTime < 30000) engagement += 0.2; // < 30 seconds
+        if (avgResponseTime < 10000) engagement += 0.1; // < 10 seconds
+        
+        // Longer messages indicate engagement
+        if (avgMessageLength > 100) engagement += 0.1;
+        if (avgMessageLength > 200) engagement += 0.1;
+        
+        // Conversation length indicates engagement
+        if (this.conversationHistory.length > 10) engagement += 0.1;
+        if (this.conversationHistory.length > 20) engagement += 0.1;
+        
+        return Math.min(engagement, 1.0);
+    }
+    
+    calculateAverageResponseTime() {
+        let totalTime = 0;
+        let pairs = 0;
+        
+        for (let i = 1; i < this.conversationHistory.length; i++) {
+            const current = this.conversationHistory[i];
+            const previous = this.conversationHistory[i - 1];
+            
+            if (current.timestamp && previous.timestamp) {
+                totalTime += new Date(current.timestamp) - new Date(previous.timestamp);
+                pairs++;
+            }
+        }
+        
+        return pairs > 0 ? totalTime / pairs : 0;
+    }
+    
+    // EventTarget implementation for dispatching events
+    addEventListener(type, listener) {
+        if (!this._eventListeners) this._eventListeners = {};
+        if (!this._eventListeners[type]) this._eventListeners[type] = [];
+        this._eventListeners[type].push(listener);
+    }
+    
+    removeEventListener(type, listener) {
+        if (!this._eventListeners || !this._eventListeners[type]) return;
+        const index = this._eventListeners[type].indexOf(listener);
+        if (index > -1) {
+            this._eventListeners[type].splice(index, 1);
+        }
+    }
+    
+    dispatchEvent(event) {
+        if (!this._eventListeners || !this._eventListeners[event.type]) return;
+        this._eventListeners[event.type].forEach(listener => {
+            try {
+                listener(event);
+            } catch (error) {
+                console.error('Error in event listener:', error);
+            }
+        });
+    }
 }
 
 // Initialize the enhanced AI assistant when the page loads
@@ -1483,6 +1850,13 @@ document.addEventListener('DOMContentLoaded', () => {
             window.aiAssistant.showHorizonHelp();
         });
     }
+    
+    // Set up memory integration when memory system is available
+    setTimeout(() => {
+        if (window.memoryLearning) {
+            window.aiAssistant.setupMemoryIntegration();
+        }
+    }, 2000); // Wait for memory system to load
     
     // Initialize educational features
     initializeEducationalFeatures();
