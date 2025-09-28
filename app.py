@@ -13539,6 +13539,98 @@ def is_quick_command(intent):
     quick_commands = ['time', 'date', 'math', 'timer', 'reminder', 'greeting', 'goodbye', 'joke', 'image_generation', 'video_generation', 'gif_generation', 'music_generation', 'voice_generation', 'audio_transcription', 'logo_generation', 'game_master', 'code_generation', 'quiz_generation', 'story_generation', 'comic_generation', 'fashion_design', 'ar_integration', 'dream_journal', 'time_capsule', 'virtual_world_builder', 'model_training', 'model_marketplace', 'prompt_engineering', 'performance_analytics']
     return intent in quick_commands
 
+def process_user_input_with_context(user_input, personality='friendly', session_id=None, user_id='anonymous', context_data=None, original_input=None):
+    """Enhanced process user input with contextual intelligence - location, time, weather awareness"""
+    if not user_input or not user_input.strip():
+        return "I didn't quite catch that. Could you please say something?", session_id, False, {}
+    
+    # Initialize database if needed
+    init_db()
+    
+    # Recognize intent first
+    intent = recognize_intent(user_input)
+    context_used = False
+    ai_insights = {}
+    
+    # Extract contextual information
+    location_context = context_data.get('location') if context_data else None
+    time_context = context_data.get('time') if context_data else None
+    weather_context = context_data.get('weather') if context_data else None
+    
+    # Analyze emotion for all inputs (enhanced with contextual awareness)
+    emotion_data = analyze_emotion_with_context(user_input, context_data)
+    detected_emotion = emotion_data.get('emotion', 'neutral')
+    sentiment_score = emotion_data.get('sentiment', 0.0)
+    
+    ai_insights = {
+        'emotion_detected': detected_emotion,
+        'emotion_confidence': emotion_data.get('confidence', 0.0),
+        'sentiment_score': sentiment_score,
+        'mood': classify_mood(sentiment_score),
+        'intent_detected': intent,
+        'contextual_enhancement': bool(context_data),
+        'location_aware': bool(location_context),
+        'time_aware': bool(time_context),
+        'weather_aware': bool(weather_context)
+    }
+    
+    # Handle contextually-enhanced quick commands
+    if is_quick_command(intent):
+        print(f"🚀 Contextual quick command: {intent}")
+        
+        if intent == 'greeting':
+            response = handle_contextual_greeting(personality, time_context, weather_context)
+        elif intent == 'time':
+            response = handle_contextual_time(time_context)
+        elif intent == 'date':
+            response = handle_contextual_date(time_context)
+        elif intent == 'weather':
+            response = handle_weather_query(weather_context, location_context)
+        elif intent == 'location':
+            response = handle_location_query(location_context)
+        elif intent == 'joke':
+            response = handle_contextual_joke(personality, time_context)
+        elif intent == 'timer':
+            response = handle_timer(user_input, time_context)
+        elif intent == 'reminder':
+            response = handle_reminder(user_input, time_context)
+        elif intent == 'math':
+            response = handle_math(user_input)
+        elif intent == 'compliment':
+            response = handle_compliment(personality, time_context)
+        else:
+            response = handle_contextual_quick_response(intent, personality, context_data)
+        
+        # Store interaction for learning
+        store_contextual_interaction(user_id, session_id, user_input, response, intent, 'quick_command', context_data)
+        
+    else:
+        # Enhanced AI processing with full contextual awareness
+        print(f"🧠 AI processing with contextual intelligence for: {intent}")
+        
+        # Get conversation context for this session/user
+        context = get_contextual_conversation_context(session_id, user_id, context_data)
+        context_used = bool(context)
+        
+        # Enhanced prompt with contextual awareness
+        enhanced_prompt = build_contextual_prompt(user_input, personality, context, context_data, original_input)
+        
+        # Get AI response using enhanced prompt
+        ai_response = get_contextual_ai_response(enhanced_prompt, personality, context_data)
+        response = ai_response
+        
+        # Post-process response with contextual enhancements
+        response = enhance_response_with_context(response, context_data, time_context, location_context, weather_context)
+        
+        # Store enhanced interaction for learning
+        store_contextual_interaction(user_id, session_id, user_input, response, intent, 'ai_response', context_data)
+    
+    # Store this interaction in conversation context
+    if session_id:
+        store_contextual_conversation(session_id, user_id, user_input, response, context_data)
+    
+    return response, session_id, context_used, ai_insights
+
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
     """Process user input and return appropriate response with conversation context and AI intelligence"""
     if not user_input or not user_input.strip():
@@ -13891,16 +13983,20 @@ def process_message():
             return jsonify({'error': 'No data provided'}), 400
         
         user_input = data.get('input', '').strip()
+        original_input = data.get('original_input', user_input)  # For contextual enhancement tracking
         personality = data.get('personality', 'friendly')
         session_id = data.get('session_id')  # Optional session ID from client
         user_id = data.get('user_id', 'anonymous')  # User identifier for AI intelligence
+        context_data = data.get('context_data', {})  # Location, time, weather context
         
         if not user_input:
             return jsonify({'error': 'No input provided'}), 400
         
-        # Process the input with AI intelligence features
+        # Process the input with AI intelligence features and contextual data
         start_time = time.time()
-        response, session_id, context_used, ai_insights = process_user_input(user_input, personality, session_id, user_id)
+        response, session_id, context_used, ai_insights = process_user_input_with_context(
+            user_input, personality, session_id, user_id, context_data, original_input
+        )
         response_time = round(time.time() - start_time, 2)
         
         # Determine if this was a quick command or AI-powered response
