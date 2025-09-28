@@ -34,6 +34,7 @@ class EnhancedAIVoiceAssistant {
         this.conversationLength = 0;
         this.contextUsed = false;
         this.memorySystem = null;  // Will be set when memory system is available
+        this.contextualIntelligence = null;  // Will be set when contextual system is available
         
         this.init();
         this.initEventListeners();
@@ -692,10 +693,17 @@ class EnhancedAIVoiceAssistant {
         this.updateStatus('Processing...');
         this.lastInput = input;
         
+        // Enhance input with contextual intelligence
+        let enhancedInput = input;
+        if (this.contextualIntelligence) {
+            enhancedInput = this.contextualIntelligence.enhanceUserMessage(input);
+        }
+        
         // Record user interaction patterns for learning
         if (this.memorySystem) {
             this.memorySystem.recordInteraction('user_message', {
                 message: input,
+                enhanced_message: enhancedInput,
                 timestamp: new Date().toISOString(),
                 message_length: input.length,
                 session_id: this.sessionId
@@ -707,9 +715,11 @@ class EnhancedAIVoiceAssistant {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    input: input,
+                    input: enhancedInput,
+                    original_input: input,
                     personality: this.currentPersonality,
-                    session_id: this.sessionId
+                    session_id: this.sessionId,
+                    context_data: this.getContextualData()
                 })
             });
             
@@ -1560,6 +1570,26 @@ class EnhancedAIVoiceAssistant {
                 }
             });
         }
+    }
+    
+    // Integration with contextual intelligence
+    setupContextualIntegration() {
+        if (window.contextualIntelligence) {
+            console.log('🌍 Integrating with Contextual Intelligence system');
+            this.contextualIntelligence = window.contextualIntelligence;
+        }
+    }
+    
+    // Get contextual data for API requests
+    getContextualData() {
+        if (!this.contextualIntelligence) return null;
+        
+        return {
+            location: this.contextualIntelligence.getLocationContext(),
+            time: this.contextualIntelligence.getTimeContext(),
+            weather: this.contextualIntelligence.getWeatherContext(),
+            suggestions: this.contextualIntelligence.getContextualSuggestions()
+        };
     }
     
     // Update personal context for memory system
