@@ -1888,6 +1888,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 2000); // Wait for memory system to load
     
+    // Set up contextual intelligence integration 
+    setTimeout(() => {
+        if (window.contextualIntelligence) {
+            window.aiAssistant.setupContextualIntegration();
+        }
+    }, 3000); // Wait for contextual system to load
+    
     // Initialize educational features
     initializeEducationalFeatures();
 });
