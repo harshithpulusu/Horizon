@@ -1728,6 +1728,76 @@ def init_db():
             )
         ''')
         
+        # Personality Blending System Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personality_blends (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                blend_name TEXT UNIQUE,
+                blend_description TEXT,
+                personality_components TEXT, -- JSON array of personality names
+                blend_weights TEXT, -- JSON array of weights (0.0-1.0)
+                blended_traits TEXT, -- JSON object of resulting trait values
+                context_type TEXT, -- general, creative_work, problem_solving, etc.
+                effectiveness_score REAL DEFAULT 0.0,
+                usage_count INTEGER DEFAULT 0,
+                user_rating REAL DEFAULT 0.0,
+                is_preset BOOLEAN DEFAULT 0,
+                created_by TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # Mood-Based Personality Switching Tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS mood_personality_mappings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mood_state TEXT NOT NULL,
+                recommended_personalities TEXT, -- JSON array of personality names
+                mood_modifiers TEXT, -- JSON object of trait modifiers
+                switch_threshold REAL DEFAULT 0.7, -- confidence threshold for auto-switch
+                priority_order INTEGER DEFAULT 1,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        ''')
+        
+        # User Mood History
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_mood_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                session_id TEXT,
+                detected_mood TEXT,
+                confidence_score REAL,
+                mood_indicators TEXT, -- JSON array of detected indicators
+                context_factors TEXT, -- JSON object of contextual factors
+                personality_switched_to TEXT,
+                switch_triggered BOOLEAN DEFAULT 0,
+                timestamp TEXT,
+                created_at TEXT
+            )
+        ''')
+        
+        # Personality Blend Usage Analytics
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS blend_usage_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                blend_id INTEGER,
+                user_id TEXT,
+                session_id TEXT,
+                usage_context TEXT,
+                user_satisfaction INTEGER, -- 1-5 rating
+                effectiveness_metrics TEXT, -- JSON object of performance metrics
+                interaction_count INTEGER DEFAULT 1,
+                usage_duration INTEGER, -- seconds
+                user_feedback TEXT,
+                timestamp TEXT,
+                FOREIGN KEY (blend_id) REFERENCES personality_blends (id)
+            )
+        ''')
+        
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS personality_skills (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
