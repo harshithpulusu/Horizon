@@ -651,6 +651,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS conversations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT,
+                user_id TEXT DEFAULT 'anonymous', -- User identifier
                 timestamp TEXT,
                 user_input TEXT,
                 ai_response TEXT,
@@ -660,7 +661,14 @@ def init_db():
                 context_used INTEGER DEFAULT 0,
                 emotion_detected TEXT,
                 sentiment_score REAL,
-                learning_data TEXT
+                learning_data TEXT,
+                
+                -- Contextual Intelligence Fields
+                context_data TEXT, -- Full contextual data JSON
+                location_used INTEGER DEFAULT 0, -- Whether location context was used
+                time_used INTEGER DEFAULT 0, -- Whether time context was used  
+                weather_used INTEGER DEFAULT 0, -- Whether weather context was used
+                contextual_enhancement INTEGER DEFAULT 0 -- Whether any context was applied
             )
         ''')
         
@@ -2148,12 +2156,16 @@ def init_db():
             )
         ''')
         
-        # User interaction quality and satisfaction tracking
+        # User interaction quality and satisfaction tracking (Enhanced with Contextual Intelligence)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS interaction_quality_metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT DEFAULT 'default',
                 session_id TEXT,
+                user_input TEXT, -- The user's input message
+                ai_response TEXT, -- The AI's response
+                intent_detected TEXT, -- Recognized intent
+                response_type TEXT, -- 'quick_command' or 'ai_response'
                 interaction_id TEXT, -- unique identifier for specific interaction
                 quality_dimensions TEXT, -- JSON object: {relevance: 0.8, helpfulness: 0.9, personalization: 0.7}
                 user_satisfaction_score REAL, -- overall satisfaction (0.0 to 1.0)
@@ -2161,6 +2173,17 @@ def init_db():
                 personalization_effectiveness REAL, -- how well personalized the response was
                 context_awareness_score REAL, -- how well AI used context
                 preference_adherence_score REAL, -- how well AI followed user preferences
+                
+                -- Contextual Intelligence Fields
+                context_data TEXT, -- Full context data JSON
+                location_context TEXT, -- Location context JSON 
+                time_context TEXT, -- Time context JSON
+                weather_context TEXT, -- Weather context JSON
+                contextual_enhancement_used INTEGER DEFAULT 0, -- Whether context was used
+                location_relevance_score REAL, -- How relevant location was to response
+                time_relevance_score REAL, -- How relevant time was to response
+                weather_relevance_score REAL, -- How relevant weather was to response
+                
                 improvement_areas TEXT, -- JSON array of areas needing improvement
                 positive_aspects TEXT, -- JSON array of what worked well
                 user_feedback_explicit TEXT, -- any explicit feedback from user
@@ -17759,6 +17782,392 @@ def api_get_vocabulary():
     except Exception as e:
         print(f"Error getting vocabulary: {e}")
         return jsonify({'error': 'Failed to get vocabulary'}), 500
+
+    except Exception as e:
+        print(f"❌ Error setting up device sync: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== CONTEXTUAL INTELLIGENCE FUNCTIONS =====
+
+def analyze_emotion_with_context(user_input, context_data=None):
+    """Enhanced emotion analysis with contextual awareness"""
+    base_emotion = analyze_emotion(user_input)
+    
+    if context_data:
+        time_context = context_data.get('time', {})
+        weather_context = context_data.get('weather', {})
+        
+        # Time-based emotion adjustments
+        if time_context:
+            period = time_context.get('period')
+            if period == 'morning' and base_emotion.get('emotion') == 'neutral':
+                base_emotion['context_modifier'] = 'energetic_morning'
+            elif period == 'night' and base_emotion.get('emotion') == 'positive':
+                base_emotion['context_modifier'] = 'relaxed_evening'
+        
+        # Weather-based emotion adjustments  
+        if weather_context:
+            condition = weather_context.get('condition')
+            if condition == 'rainy' and base_emotion.get('sentiment', 0) < 0:
+                base_emotion['weather_influence'] = 'rainy_day_blues'
+            elif condition == 'sunny' and base_emotion.get('sentiment', 0) > 0:
+                base_emotion['weather_influence'] = 'sunny_day_boost'
+    
+    return base_emotion
+
+def handle_contextual_greeting(personality, time_context=None, weather_context=None):
+    """Generate contextual greetings based on time and weather"""
+    base_greetings = {
+        'friendly': ["Hello there!", "Hi! Great to see you!", "Hey! How can I help?"],
+        'professional': ["Good day!", "Hello, how may I assist you?", "Greetings!"],
+        'casual': ["Hey!", "What's up?", "Hi there!"],
+        'enthusiastic': ["Hello! I'm excited to help!", "Hi there! Ready for something awesome?", "Hey! Let's make today amazing!"]
+    }
+    
+    if time_context:
+        period = time_context.get('period', 'day')
+        local_time = time_context.get('local_time', '')
+        
+        if period == 'morning':
+            time_greetings = ["Good morning!", "Rise and shine!", "Morning! Hope you're having a great start to your day!"]
+        elif period == 'afternoon': 
+            time_greetings = ["Good afternoon!", "Hope your day is going well!", "Afternoon! How's your day treating you?"]
+        elif period == 'evening':
+            time_greetings = ["Good evening!", "Evening! Hope you had a productive day!", "Good evening! Ready to unwind?"]
+        else:  # night
+            time_greetings = ["Good evening!", "Working late tonight?", "Evening! Hope you're having a peaceful night!"]
+        
+        greeting = random.choice(time_greetings)
+        
+        # Add weather context if available
+        if weather_context:
+            condition = weather_context.get('condition')
+            temp = weather_context.get('temperature')
+            
+            if condition == 'sunny':
+                greeting += f" Beautiful sunny day today!"
+            elif condition == 'rainy':
+                greeting += f" Hope you're staying cozy despite the rain!"
+            elif condition == 'cloudy':
+                greeting += f" Nice and cloudy today!"
+            
+            if temp and isinstance(temp, (int, float)):
+                if temp > 25:
+                    greeting += f" It's quite warm at {temp}°C!"
+                elif temp < 10:
+                    greeting += f" Bundle up - it's {temp}°C out there!"
+        
+        return greeting
+    
+    return random.choice(base_greetings.get(personality, base_greetings['friendly']))
+
+def handle_contextual_time(time_context=None):
+    """Enhanced time handling with timezone awareness"""
+    if time_context:
+        local_time = time_context.get('local_time', '')
+        day_name = time_context.get('day_name', '')
+        period = time_context.get('period', '')
+        timezone = time_context.get('timezone', '')
+        
+        response = f"It's {local_time}"
+        if day_name:
+            response += f" on {day_name}"
+        if period:
+            response += f" ({period})"
+        if timezone:
+            response += f" in your timezone ({timezone})"
+        
+        # Add contextual time insights
+        if time_context.get('is_weekend'):
+            response += " - Enjoy your weekend!"
+        elif time_context.get('is_work_hours'):
+            response += " - Hope your workday is going well!"
+        elif period == 'night':
+            response += " - Perhaps time to wind down?"
+        
+        return response
+    
+    return handle_time()
+
+def handle_contextual_date(time_context=None):
+    """Enhanced date handling with additional context"""
+    if time_context:
+        day_name = time_context.get('day_name', '')
+        month_name = time_context.get('month_name', '')
+        day_of_month = time_context.get('day_of_month', '')
+        year = time_context.get('year', '')
+        
+        response = f"Today is {day_name}, {month_name} {day_of_month}, {year}"
+        
+        # Add seasonal context
+        month = time_context.get('month', 0)
+        if month in [11, 0, 1]:  # Winter
+            response += " ❄️ Winter season"
+        elif month in [2, 3, 4]:  # Spring
+            response += " 🌸 Spring season"  
+        elif month in [5, 6, 7]:  # Summer
+            response += " ☀️ Summer season"
+        else:  # Fall
+            response += " 🍂 Fall season"
+        
+        return response
+    
+    return handle_date()
+
+def handle_weather_query(weather_context=None, location_context=None):
+    """Handle weather-related queries with location context"""
+    if weather_context and location_context:
+        condition = weather_context.get('condition', 'unknown')
+        temp = weather_context.get('temperature', 'unknown')
+        city = location_context.get('address', {}).get('city', 'your location')
+        
+        response = f"The weather in {city} is currently {condition}"
+        if temp != 'unknown':
+            response += f" with a temperature of {temp}°C"
+        
+        # Add weather advice
+        if condition == 'rainy':
+            response += ". Don't forget your umbrella!"
+        elif condition == 'sunny' and isinstance(temp, (int, float)) and temp > 25:
+            response += ". Perfect weather for outdoor activities!"
+        elif condition == 'cloudy':
+            response += ". Great weather for a walk!"
+            
+        return response
+    
+    return "I don't have current weather information. Please enable location services for weather updates!"
+
+def handle_location_query(location_context=None):
+    """Handle location-related queries"""
+    if location_context:
+        address = location_context.get('address', {})
+        city = address.get('city', 'Unknown')
+        country = address.get('country', 'Unknown')
+        
+        response = f"You're currently in {city}, {country}"
+        
+        # Add location insights
+        if city != 'Unknown':
+            response += f". {city} is a great place!"
+        
+        return response
+    
+    return "I don't have your current location. Please enable location services for location-aware features!"
+
+def handle_contextual_joke(personality, time_context=None):
+    """Time-aware joke selection"""
+    base_joke = handle_joke(personality)
+    
+    if time_context:
+        period = time_context.get('period')
+        day_name = time_context.get('day_name', '')
+        
+        if period == 'morning':
+            morning_jokes = [
+                "Why don't scientists trust atoms in the morning? Because they make up everything... including excuses for being late!",
+                "What do you call a morning person? A myth!",
+                "Morning is nature's way of saying 'Let's party!' But I think nature is still asleep..."
+            ]
+            return random.choice(morning_jokes)
+        
+        elif day_name == 'Monday':
+            monday_jokes = [
+                "Monday is like a math problem. Add the irritation, subtract the sleep, multiply the problems, divide the happiness!",
+                "Dear Monday, I want to break up. I'm seeing Tuesday and dreaming about Friday!",
+                "Monday should be optional!"
+            ]
+            return random.choice(monday_jokes)
+    
+    return base_joke
+
+def handle_contextual_quick_response(intent, personality, context_data):
+    """Handle other quick commands with contextual awareness"""
+    base_response = f"I understand you're asking about {intent}. "
+    
+    if context_data:
+        time_context = context_data.get('time', {})
+        period = time_context.get('period')
+        
+        if period == 'morning':
+            base_response += "Perfect timing to start your day with this!"
+        elif period == 'evening':
+            base_response += "Great way to wrap up your day!"
+        elif period == 'night':
+            base_response += "Hope this helps you unwind tonight!"
+    
+    return base_response + " How else can I assist you?"
+
+def get_contextual_conversation_context(session_id, user_id, context_data=None):
+    """Get conversation context enhanced with location/time awareness"""
+    base_context = get_conversation_context(session_id) if session_id else ""
+    
+    if context_data:
+        contextual_info = []
+        
+        location = context_data.get('location')
+        if location and location.get('address'):
+            city = location['address'].get('city', 'Unknown')
+            contextual_info.append(f"User location: {city}")
+        
+        time_ctx = context_data.get('time')
+        if time_ctx:
+            period = time_ctx.get('period', 'day')
+            day_name = time_ctx.get('day_name', '')
+            contextual_info.append(f"Time context: {period} on {day_name}")
+        
+        weather = context_data.get('weather')
+        if weather:
+            condition = weather.get('condition', 'unknown')
+            temp = weather.get('temperature', 'unknown')
+            contextual_info.append(f"Weather: {condition}, {temp}°C")
+        
+        if contextual_info:
+            context_prefix = f"[Context: {', '.join(contextual_info)}]\\n"
+            return context_prefix + base_context
+    
+    return base_context
+
+def build_contextual_prompt(user_input, personality, context, context_data, original_input=None):
+    """Build enhanced prompt with contextual intelligence"""
+    base_prompt = build_conversation_prompt(user_input, personality, context)
+    
+    if context_data:
+        contextual_enhancements = []
+        
+        # Add location context
+        location = context_data.get('location')
+        if location:
+            address = location.get('address', {})
+            city = address.get('city')
+            country = address.get('country')
+            if city and country:
+                contextual_enhancements.append(f"User is located in {city}, {country}")
+        
+        # Add time context
+        time_ctx = context_data.get('time')
+        if time_ctx:
+            period = time_ctx.get('period')
+            day_name = time_ctx.get('day_name')
+            local_time = time_ctx.get('local_time')
+            if period and day_name:
+                contextual_enhancements.append(f"Current time context: {period} on {day_name} ({local_time})")
+                
+                if time_ctx.get('is_weekend'):
+                    contextual_enhancements.append("It's currently the weekend")
+                elif time_ctx.get('is_work_hours'):
+                    contextual_enhancements.append("It's currently work hours")
+        
+        # Add weather context
+        weather = context_data.get('weather')
+        if weather:
+            condition = weather.get('condition')
+            temperature = weather.get('temperature')
+            if condition and temperature:
+                contextual_enhancements.append(f"Current weather: {condition}, {temperature}°C")
+        
+        if contextual_enhancements:
+            context_section = "\\n[Contextual Information: " + "; ".join(contextual_enhancements) + "]"
+            
+            # If user input was enhanced, note the original
+            if original_input and original_input != user_input:
+                context_section += f"\\n[Note: User's original message was '{original_input}', enhanced with context for better understanding]"
+            
+            base_prompt += context_section
+    
+    return base_prompt
+
+def get_contextual_ai_response(prompt, personality, context_data):
+    """Get AI response with contextual awareness"""
+    # Use the existing AI response function but with enhanced context
+    return get_ai_response(prompt, personality)
+
+def enhance_response_with_context(response, context_data, time_context, location_context, weather_context):
+    """Post-process AI response with contextual enhancements"""
+    enhanced_response = response
+    
+    # Add time-sensitive suggestions
+    if time_context:
+        period = time_context.get('period')
+        if period == 'morning' and 'plan' in response.lower():
+            enhanced_response += "\\n\\n💡 *Since it's morning, this might be perfect for starting your day productively!*"
+        elif period == 'evening' and ('relax' in response.lower() or 'rest' in response.lower()):
+            enhanced_response += "\\n\\n🌙 *Perfect timing for some evening relaxation!*"
+    
+    # Add location-relevant suggestions
+    if location_context and ('find' in response.lower() or 'search' in response.lower()):
+        city = location_context.get('address', {}).get('city')
+        if city:
+            enhanced_response += f"\\n\\n📍 *I can help you find local options in {city} if needed!*"
+    
+    # Add weather-relevant advice
+    if weather_context:
+        condition = weather_context.get('condition')
+        if condition == 'rainy' and ('outside' in response.lower() or 'outdoor' in response.lower()):
+            enhanced_response += "\\n\\n☔ *Given the rainy weather, you might want to consider indoor alternatives!*"
+        elif condition == 'sunny' and ('activity' in response.lower() or 'exercise' in response.lower()):
+            enhanced_response += "\\n\\n☀️ *Great weather for outdoor activities today!*"
+    
+    return enhanced_response
+
+def store_contextual_interaction(user_id, session_id, user_input, response, intent, response_type, context_data):
+    """Store interaction with contextual metadata for learning"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Enhanced interaction storage with context
+        cursor.execute('''
+            INSERT INTO interaction_quality_metrics 
+            (user_id, session_id, user_input, ai_response, intent_detected, response_type, 
+             context_data, location_context, time_context, weather_context, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            session_id,
+            user_input,
+            response,
+            intent,
+            response_type,
+            json.dumps(context_data) if context_data else None,
+            json.dumps(context_data.get('location')) if context_data and context_data.get('location') else None,
+            json.dumps(context_data.get('time')) if context_data and context_data.get('time') else None,
+            json.dumps(context_data.get('weather')) if context_data and context_data.get('weather') else None,
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error storing contextual interaction: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def store_contextual_conversation(session_id, user_id, user_input, response, context_data):
+    """Store conversation with contextual metadata"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Store in conversations table with context
+        cursor.execute('''
+            INSERT INTO conversations 
+            (session_id, user_id, user_input, ai_response, context_data, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            session_id,
+            user_id,
+            user_input,
+            response,
+            json.dumps(context_data) if context_data else None,
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error storing contextual conversation: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
