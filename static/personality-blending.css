@@ -1,0 +1,545 @@
+/* Personality Blending System Styles */
+.personality-blending-panel {
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(100, 255, 200, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px 0;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.blending-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(100, 255, 200, 0.2);
+}
+
+.blending-header h3 {
+    color: #64FFCC;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.toggle-advanced {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-advanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Blend Visualization */
+.current-blend-display {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(10, 10, 20, 0.8);
+    border-radius: 10px;
+    border: 1px solid rgba(100, 255, 200, 0.1);
+}
+
+.blend-components .blend-component {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.personality-info {
+    display: flex;
+    align-items: center;
+    min-width: 120px;
+}
+
+.personality-icon {
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+.personality-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.personality-strength {
+    flex: 1;
+    height: 8px;
+    background: linear-gradient(90deg, #64FFCC, #667eea);
+    border-radius: 4px;
+    margin: 0 10px;
+    transition: width 0.3s ease;
+}
+
+.weight-percentage {
+    font-size: 0.8rem;
+    color: #64FFCC;
+    min-width: 35px;
+    text-align: right;
+}
+
+.effectiveness-score {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Mood Indicator */
+.mood-indicator {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(30, 30, 50, 0.8);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 119, 198, 0.3);
+}
+
+.mood-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.mood-icon {
+    font-size: 1.5rem;
+}
+
+.mood-text {
+    font-weight: 600;
+    color: #FF77C6;
+    text-transform: capitalize;
+}
+
+.mood-confidence {
+    background: rgba(255, 119, 198, 0.2);
+    color: #FF77C6;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.mood-history {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+}
+
+.mood-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    min-width: 40px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mood-entry:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.mood-entry .confidence {
+    font-size: 0.7rem;
+    color: #ccc;
+}
+
+/* Personality Grid */
+.personality-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.personality-card {
+    background: rgba(20, 20, 40, 0.8);
+    border: 1px solid rgba(100, 255, 200, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.personality-card:hover {
+    border-color: #64FFCC;
+    background: rgba(20, 20, 40, 0.95);
+    transform: translateY(-2px);
+}
+
+.personality-card.selected {
+    border-color: #64FFCC;
+    background: rgba(100, 255, 200, 0.1);
+}
+
+.personality-card .personality-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.personality-card .personality-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    text-transform: capitalize;
+}
+
+.personality-traits {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 8px;
+}
+
+.selection-checkbox {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.selection-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #64FFCC;
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.selection-checkbox input[type="checkbox"]:checked {
+    background: #64FFCC;
+}
+
+.selection-checkbox input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    color: black;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Weight Sliders */
+.weight-sliders {
+    margin-bottom: 20px;
+}
+
+.weight-slider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.weight-slider label {
+    min-width: 100px;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+}
+
+.weight-slider input[type="range"] {
+    flex: 1;
+    margin: 0 10px;
+    appearance: none;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+.weight-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #64FFCC;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.weight-value {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 600;
+    color: #64FFCC;
+}
+
+/* Context Selector */
+.context-selector {
+    margin-bottom: 20px;
+}
+
+.context-selector select {
+    width: 100%;
+    padding: 10px;
+    background: rgba(20, 20, 40, 0.9);
+    border: 1px solid rgba(100, 255, 200, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+/* Blend Actions */
+.blend-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.blend-actions button {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.create-blend-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.create-blend-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.save-preset-btn {
+    background: linear-gradient(135deg, #64FFCC 0%, #667eea 100%);
+    color: black;
+}
+
+.save-preset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(100, 255, 200, 0.4);
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, #ff7675 0%, #fd79a8 100%);
+    color: white;
+}
+
+.reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 118, 117, 0.4);
+}
+
+/* Mood-Based Switching */
+.mood-based-switching {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(40, 40, 60, 0.8);
+    border-radius: 10px;
+    border: 1px solid rgba(120, 200, 255, 0.3);
+}
+
+.mood-based-switching h4 {
+    color: #78C8FF;
+    margin-bottom: 15px;
+}
+
+.auto-switch-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.auto-switch-toggle span {
+    margin-left: 10px;
+    font-size: 0.9rem;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #333;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #64FFCC;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.mood-sensitivity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mood-sensitivity label {
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.mood-sensitivity input[type="range"] {
+    flex: 1;
+    appearance: none;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+.mood-sensitivity input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #78C8FF;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#sensitivity-value {
+    color: #78C8FF;
+    font-weight: 600;
+}
+
+/* Preset Grid */
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.preset-card {
+    background: rgba(30, 30, 50, 0.8);
+    border: 1px solid rgba(100, 255, 200, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preset-card:hover {
+    border-color: #64FFCC;
+    background: rgba(30, 30, 50, 0.95);
+    transform: translateY(-2px);
+}
+
+.preset-name {
+    font-weight: 600;
+    color: #64FFCC;
+    margin-bottom: 5px;
+}
+
+.preset-description {
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .personality-blending-panel {
+        padding: 15px;
+        margin: 5px;
+    }
+    
+    .personality-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+    }
+    
+    .blend-actions {
+        flex-direction: column;
+    }
+    
+    .blend-actions button {
+        flex: none;
+    }
+}
+
+/* Animation Classes */
+@keyframes blendCreated {
+    0% { 
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.blend-created {
+    animation: blendCreated 0.5s ease-out;
+}
+
+@keyframes moodDetected {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.mood-detected {
+    animation: moodDetected 0.6s ease-in-out;
+}

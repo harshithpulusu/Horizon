@@ -431,11 +431,52 @@ def download_and_save_image(image_url, prompt):
         return None, None
 
 def ask_chatgpt(user_input, personality, session_id=None, user_id='anonymous'):
-    """Use ChatGPT API for intelligent responses with conversation context and AI intelligence features"""
+    """Use ChatGPT API with personality blending and mood-based switching"""
     if not AI_MODEL_AVAILABLE or not client:
         return None, False
     
     try:
+        session_id = session_id or str(uuid.uuid4())
+        
+        # Detect user mood from input
+        mood_data = detect_mood_from_text(user_input)
+        print(f"🧠 Detected mood: {mood_data['mood']} (confidence: {mood_data['confidence']:.2f})")
+        
+        # Store mood detection
+        store_mood_detection(user_id, session_id, mood_data)
+        
+        # Check for mood-based personality enhancement
+        if mood_data['confidence'] > 0.7:
+            mood_recommendations = get_mood_based_personality_recommendation(mood_data['mood'])
+            if mood_recommendations and mood_recommendations.get('personalities'):
+                # Consider enhancing with mood-appropriate personality
+                recommended_personality = mood_recommendations['personalities'][0]
+                if recommended_personality != personality:
+                    print(f"🎭 Mood-based personality enhancement: {personality} + {recommended_personality}")
+                    # Create a mood-enhanced blend
+                    blend_data = create_personality_blend(
+                        [personality, recommended_personality], 
+                        [0.7, 0.3], 
+                        'mood_enhancement', 
+                        user_id
+                    )
+                    if not blend_data.get('error'):
+                        personality_profile = {
+                            'name': blend_data['description'],
+                            'traits': blend_data['traits'],
+                            'is_blend': True,
+                            'blend_info': blend_data
+                        }
+                        print(f"🎭 Using mood-enhanced blend: {blend_data['description']}")
+                    else:
+                        personality_profile = get_personality_profile(personality)
+                else:
+                    personality_profile = get_personality_profile(personality)
+            else:
+                personality_profile = get_personality_profile(personality)
+        else:
+            personality_profile = get_personality_profile(personality)
+        
         # Update personality usage
         update_personality_usage(personality)
         
@@ -446,9 +487,6 @@ def ask_chatgpt(user_input, personality, session_id=None, user_id='anonymous'):
         
         # Retrieve user memory and context
         user_memories = retrieve_user_memory(user_id)
-        
-        # Get personality profile
-        personality_profile = get_personality_profile(personality)
         
         # Create enhanced personality-specific system prompt
         personality_prompts = {
@@ -2291,8 +2329,73 @@ def init_db():
         ''')
         
         conn.commit()
+        
+        # Initialize default mood-personality mappings
+        default_mood_mappings = [
+            {
+                'mood': 'excited',
+                'personalities': ['enthusiastic', 'creative', 'friendly'],
+                'modifiers': {'energy': 1.2, 'enthusiasm': 1.3, 'expressiveness': 1.2},
+                'threshold': 0.75
+            },
+            {
+                'mood': 'stressed', 
+                'personalities': ['zen', 'supportive', 'calming'],
+                'modifiers': {'calmness': 1.4, 'supportiveness': 1.3, 'patience': 1.2},
+                'threshold': 0.8
+            },
+            {
+                'mood': 'focused',
+                'personalities': ['analytical', 'professional', 'systematic'],
+                'modifiers': {'precision': 1.3, 'efficiency': 1.2, 'structure': 1.2},
+                'threshold': 0.7
+            },
+            {
+                'mood': 'playful',
+                'personalities': ['witty', 'creative', 'casual'],
+                'modifiers': {'humor': 1.4, 'creativity': 1.2, 'flexibility': 1.3},
+                'threshold': 0.75
+            },
+            {
+                'mood': 'contemplative',
+                'personalities': ['philosophical', 'zen', 'wise'],
+                'modifiers': {'wisdom': 1.3, 'thoughtfulness': 1.4, 'depth': 1.2},
+                'threshold': 0.7
+            },
+            {
+                'mood': 'creative',
+                'personalities': ['artistic', 'imaginative', 'innovative'],
+                'modifiers': {'creativity': 1.5, 'imagination': 1.3, 'expressiveness': 1.2},
+                'threshold': 0.75
+            },
+            {
+                'mood': 'social',
+                'personalities': ['friendly', 'charismatic', 'engaging'],
+                'modifiers': {'empathy': 1.3, 'warmth': 1.4, 'sociability': 1.5},
+                'threshold': 0.7
+            }
+        ]
+        
+        for i, mapping in enumerate(default_mood_mappings):
+            cursor.execute('''
+                INSERT OR IGNORE INTO mood_personality_mappings
+                (mood_state, recommended_personalities, mood_modifiers, switch_threshold, 
+                 priority_order, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                mapping['mood'],
+                json.dumps(mapping['personalities']),
+                json.dumps(mapping['modifiers']),
+                mapping['threshold'],
+                i + 1,
+                1,
+                datetime.now().isoformat(),
+                datetime.now().isoformat()
+            ))
+        
+        conn.commit()
         conn.close()
-        print("✅ Database initialized with AI Intelligence, Voice Enhancement, Language Support, and Background Mode features")
+        print("✅ Database initialized with AI Intelligence, Voice Enhancement, Language Support, Background Mode, Personality Blending, and Mood-Based Switching features")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
 
@@ -14341,6 +14444,317 @@ def get_ai_insights_api():
         print(f"Error getting AI insights: {e}")
         return jsonify({'error': 'Failed to get AI insights'}), 500
 
+# ===== PERSONALITY BLENDING SYSTEM =====
+def create_personality_blend(personalities, weights, context='general', user_id='anonymous'):
+    """Create a new personality blend with specified weights"""
+    try:
+        if len(personalities) != len(weights) or len(personalities) < 2:
+            return {'error': 'Invalid personalities or weights configuration'}
+            
+        # Calculate blended traits
+        blended_traits = calculate_blended_traits(personalities, weights)
+        
+        # Generate blend description
+        blend_description = generate_blend_description(personalities, weights)
+        
+        # Calculate effectiveness score
+        effectiveness_score = calculate_blend_effectiveness(personalities, weights, context)
+        
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        blend_name = f"blend_{int(time.time())}"
+        
+        cursor.execute('''
+            INSERT INTO personality_blends 
+            (blend_name, blend_description, personality_components, blend_weights, 
+             blended_traits, context_type, effectiveness_score, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            blend_name,
+            blend_description,
+            json.dumps(personalities),
+            json.dumps(weights),
+            json.dumps(blended_traits),
+            context,
+            effectiveness_score,
+            user_id,
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        blend_id = cursor.lastrowid
+        conn.commit()
+        
+        blend_data = {
+            'id': blend_id,
+            'name': blend_name,
+            'description': blend_description,
+            'personalities': personalities,
+            'weights': weights,
+            'traits': blended_traits,
+            'context': context,
+            'effectiveness': effectiveness_score
+        }
+        
+        print(f"🎭 Created personality blend: {blend_name} with effectiveness {effectiveness_score:.2f}")
+        return blend_data
+        
+    except Exception as e:
+        print(f"Error creating personality blend: {e}")
+        return {'error': str(e)}
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def calculate_blended_traits(personalities, weights):
+    """Calculate blended personality traits using weighted average"""
+    blended_traits = {}
+    
+    # Define base traits for each personality
+    personality_base_traits = {
+        'friendly': {'empathy': 0.9, 'warmth': 0.9, 'optimism': 0.8, 'energy': 0.7, 'formality': 0.3},
+        'professional': {'formality': 0.9, 'precision': 0.9, 'efficiency': 0.8, 'structure': 0.9, 'warmth': 0.4},
+        'creative': {'creativity': 0.95, 'imagination': 0.9, 'expressiveness': 0.8, 'flexibility': 0.8, 'structure': 0.3},
+        'analytical': {'logic': 0.95, 'precision': 0.9, 'objectivity': 0.9, 'thoroughness': 0.8, 'empathy': 0.4},
+        'enthusiastic': {'energy': 0.95, 'motivation': 0.9, 'positivity': 0.9, 'passion': 0.8, 'calmness': 0.2},
+        'zen': {'calmness': 0.95, 'mindfulness': 0.9, 'wisdom': 0.8, 'balance': 0.9, 'energy': 0.3},
+        'witty': {'humor': 0.9, 'cleverness': 0.8, 'playfulness': 0.8, 'expressiveness': 0.7, 'formality': 0.2},
+        'casual': {'relaxed': 0.9, 'approachability': 0.8, 'flexibility': 0.8, 'informality': 0.9, 'structure': 0.2}
+    }
+    
+    # Collect all possible trait names
+    all_traits = set()
+    for personality in personalities:
+        if personality in personality_base_traits:
+            all_traits.update(personality_base_traits[personality].keys())
+    
+    # Calculate weighted average for each trait
+    for trait in all_traits:
+        weighted_sum = 0
+        total_weight = 0
+        
+        for i, personality in enumerate(personalities):
+            if personality in personality_base_traits:
+                trait_value = personality_base_traits[personality].get(trait, 0.5)
+                weighted_sum += trait_value * weights[i]
+                total_weight += weights[i]
+        
+        if total_weight > 0:
+            blended_traits[trait] = min(1.0, weighted_sum / total_weight)
+    
+    return blended_traits
+
+def generate_blend_description(personalities, weights):
+    """Generate a human-readable description of the personality blend"""
+    primary_personality = personalities[weights.index(max(weights))]
+    secondary_personalities = [p for i, p in enumerate(personalities) if i != weights.index(max(weights))]
+    
+    if len(secondary_personalities) == 1:
+        return f"{primary_personality.title()} with {secondary_personalities[0]} influences"
+    else:
+        return f"{primary_personality.title()} blended with {', '.join(secondary_personalities)}"
+
+def calculate_blend_effectiveness(personalities, weights, context):
+    """Calculate how effective a personality blend is for a given context"""
+    # Context-personality compatibility scores
+    context_compatibility = {
+        'creative_work': {'creative': 1.0, 'enthusiastic': 0.8, 'artistic': 0.9, 'friendly': 0.6},
+        'problem_solving': {'analytical': 1.0, 'logical': 0.9, 'systematic': 0.8, 'professional': 0.7},
+        'social_interaction': {'friendly': 1.0, 'empathetic': 0.9, 'charismatic': 0.8, 'casual': 0.7},
+        'learning': {'curious': 1.0, 'analytical': 0.8, 'patient': 0.7, 'encouraging': 0.6},
+        'emotional_support': {'empathetic': 1.0, 'supportive': 0.9, 'zen': 0.8, 'friendly': 0.7},
+        'general': {'friendly': 0.8, 'professional': 0.7, 'helpful': 0.8, 'balanced': 0.9}
+    }
+    
+    base_score = 0.7
+    context_scores = context_compatibility.get(context, {})
+    
+    # Calculate weighted compatibility score
+    total_compatibility = 0
+    for i, personality in enumerate(personalities):
+        compatibility = context_scores.get(personality, 0.5)
+        total_compatibility += compatibility * weights[i]
+    
+    # Bonus for balanced blends (avoid extreme weights)
+    balance_bonus = 1.0 - max(weights) * 0.3
+    
+    # Penalty for incompatible personality combinations
+    incompatible_combinations = [
+        ('creative', 'analytical'), ('enthusiastic', 'zen'),
+        ('casual', 'professional'), ('playful', 'serious')
+    ]
+    
+    incompatibility_penalty = 0
+    for combo in incompatible_combinations:
+        if combo[0] in personalities and combo[1] in personalities:
+            incompatibility_penalty += 0.1
+    
+    final_score = min(1.0, max(0.0, base_score + total_compatibility * 0.3 + balance_bonus * 0.1 - incompatibility_penalty))
+    return round(final_score, 3)
+
+# ===== MOOD-BASED PERSONALITY SWITCHING =====
+def detect_mood_from_text(user_input, conversation_history=None):
+    """Detect user mood from their input text and conversation history"""
+    mood_indicators = {
+        'excited': ['amazing', 'awesome', 'fantastic', 'incredible', 'wow', '!', 'love it'],
+        'stressed': ['overwhelmed', 'pressure', 'anxious', 'worried', 'stressed', 'tired', 'exhausted'],
+        'focused': ['analyze', 'data', 'research', 'study', 'understand', 'explain', 'details'],
+        'playful': ['fun', 'joke', 'play', 'silly', 'haha', 'lol', 'funny', 'humor'],
+        'contemplative': ['think', 'philosophy', 'meaning', 'purpose', 'deep', 'reflect', 'consider'],
+        'creative': ['design', 'create', 'art', 'imagine', 'innovative', 'inspiration', 'brainstorm'],
+        'social': ['friends', 'together', 'share', 'community', 'connect', 'people', 'relationship']
+    }
+    
+    text = user_input.lower()
+    mood_scores = {}
+    
+    for mood, indicators in mood_indicators.items():
+        score = sum(1 for indicator in indicators if indicator in text)
+        if score > 0:
+            mood_scores[mood] = score / len(indicators)  # Normalize by number of indicators
+    
+    if mood_scores:
+        detected_mood = max(mood_scores, key=mood_scores.get)
+        confidence = min(0.9, mood_scores[detected_mood] * 2)  # Cap at 90%
+        return {'mood': detected_mood, 'confidence': confidence}
+    
+    return {'mood': 'neutral', 'confidence': 0.5}
+
+def get_mood_based_personality_recommendation(mood, confidence_threshold=0.7):
+    """Get personality recommendations based on detected mood"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT recommended_personalities, mood_modifiers, switch_threshold
+            FROM mood_personality_mappings 
+            WHERE mood_state = ? AND is_active = 1
+            ORDER BY priority_order ASC
+        ''', (mood,))
+        
+        result = cursor.fetchone()
+        if result:
+            personalities = json.loads(result[0])
+            modifiers = json.loads(result[1]) if result[1] else {}
+            threshold = result[2]
+            
+            return {
+                'personalities': personalities,
+                'modifiers': modifiers,
+                'threshold': threshold
+            }
+    except Exception as e:
+        print(f"Error getting mood-based personality recommendation: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+    
+    # Fallback recommendations
+    fallback_recommendations = {
+        'excited': {'personalities': ['enthusiastic', 'creative', 'friendly'], 'modifiers': {'energy': 1.2}},
+        'stressed': {'personalities': ['zen', 'supportive', 'calming'], 'modifiers': {'calmness': 1.4}},
+        'focused': {'personalities': ['analytical', 'professional', 'systematic'], 'modifiers': {'precision': 1.3}},
+        'playful': {'personalities': ['witty', 'creative', 'casual'], 'modifiers': {'humor': 1.4}},
+        'contemplative': {'personalities': ['philosophical', 'zen', 'wise'], 'modifiers': {'wisdom': 1.3}}
+    }
+    
+    return fallback_recommendations.get(mood, {
+        'personalities': ['friendly'], 
+        'modifiers': {}
+    })
+
+def store_mood_detection(user_id, session_id, mood_data, personality_switched=None):
+    """Store mood detection results for analytics and learning"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO user_mood_history
+            (user_id, session_id, detected_mood, confidence_score, mood_indicators, 
+             personality_switched_to, switch_triggered, timestamp, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            session_id,
+            mood_data['mood'],
+            mood_data['confidence'],
+            json.dumps(mood_data.get('indicators', [])),
+            personality_switched,
+            1 if personality_switched else 0,
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        
+        conn.commit()
+        print(f"🧠 Stored mood detection: {mood_data['mood']} ({mood_data['confidence']:.2f})")
+        
+    except Exception as e:
+        print(f"Error storing mood detection: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/personality-blend', methods=['POST'])
+def create_personality_blend_endpoint():
+    """Create a new personality blend"""
+    try:
+        data = request.get_json()
+        personalities = data.get('personalities', [])
+        weights = data.get('weights', [])
+        context = data.get('context', 'general')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not personalities or not weights or len(personalities) != len(weights):
+            return jsonify({
+                'status': 'error', 
+                'message': 'Invalid personalities or weights configuration'
+            })
+        
+        blend_result = create_personality_blend(personalities, weights, context, user_id)
+        
+        if 'error' in blend_result:
+            return jsonify({'status': 'error', 'message': blend_result['error']})
+        
+        return jsonify({
+            'status': 'success',
+            'blend': blend_result,
+            'message': 'Personality blend created successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/mood-detection', methods=['POST'])
+def detect_mood_endpoint():
+    """Detect mood from user input and return personality recommendations"""
+    try:
+        data = request.get_json()
+        user_input = data.get('input', '')
+        user_id = data.get('user_id', 'anonymous')
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        
+        # Detect mood
+        mood_data = detect_mood_from_text(user_input)
+        
+        # Get personality recommendations
+        recommendations = get_mood_based_personality_recommendation(mood_data['mood'])
+        
+        # Store mood detection
+        store_mood_detection(user_id, session_id, mood_data)
+        
+        return jsonify({
+            'status': 'success',
+            'mood': mood_data,
+            'recommendations': recommendations,
+            'switch_suggested': mood_data['confidence'] > 0.7
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/personalities', methods=['GET'])
 def get_personalities():
     """Get all available AI personalities"""
@@ -14411,6 +14825,108 @@ def rate_personality():
     except Exception as e:
         print(f"Error rating personality: {e}")
         return jsonify({'error': 'Failed to rate personality'}), 500
+
+@app.route('/api/personality-blends', methods=['GET'])
+def get_personality_blends():
+    """Get all saved personality blends"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, blend_name, blend_description, personality_components, 
+                   blend_weights, blended_traits, context_type, effectiveness_score,
+                   usage_count, user_rating, is_preset, created_at
+            FROM personality_blends 
+            ORDER BY usage_count DESC, effectiveness_score DESC
+        ''')
+        
+        blends = []
+        for row in cursor.fetchall():
+            blends.append({
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'personalities': json.loads(row[3]) if row[3] else [],
+                'weights': json.loads(row[4]) if row[4] else [],
+                'traits': json.loads(row[5]) if row[5] else {},
+                'context': row[6],
+                'effectiveness': row[7],
+                'usage_count': row[8],
+                'rating': row[9],
+                'is_preset': row[10],
+                'created_at': row[11]
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'blends': blends,
+            'total_count': len(blends)
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/api/mood-analytics', methods=['GET'])
+def get_mood_analytics():
+    """Get mood detection analytics and patterns"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get recent mood history
+        cursor.execute('''
+            SELECT detected_mood, confidence_score, personality_switched_to, 
+                   switch_triggered, timestamp
+            FROM user_mood_history 
+            WHERE timestamp >= datetime('now', '-7 days')
+            ORDER BY timestamp DESC
+            LIMIT 100
+        ''')
+        
+        mood_history = []
+        for row in cursor.fetchall():
+            mood_history.append({
+                'mood': row[0],
+                'confidence': row[1],
+                'personality_switched': row[2],
+                'switch_triggered': row[3],
+                'timestamp': row[4]
+            })
+        
+        # Get mood frequency stats
+        cursor.execute('''
+            SELECT detected_mood, COUNT(*) as frequency,
+                   AVG(confidence_score) as avg_confidence
+            FROM user_mood_history 
+            WHERE timestamp >= datetime('now', '-7 days')
+            GROUP BY detected_mood
+            ORDER BY frequency DESC
+        ''')
+        
+        mood_stats = []
+        for row in cursor.fetchall():
+            mood_stats.append({
+                'mood': row[0],
+                'frequency': row[1],
+                'avg_confidence': round(row[2], 3) if row[2] else 0
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'mood_history': mood_history,
+            'mood_statistics': mood_stats,
+            'analysis_period': '7 days'
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 @app.route('/api/personalities/switch', methods=['POST'])
 def switch_personality():
