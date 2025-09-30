@@ -117,102 +117,137 @@ class PersonalityBlendingSystem {
     createBlendingUI() {
         // Create personality blending control panel
         const blendingPanel = document.createElement('div');
-        blendingPanel.className = 'personality-blending-panel';
+        blendingPanel.className = 'personality-blending-panel collapsed';
         blendingPanel.innerHTML = `
-            <div class="blending-header">
+            <div class="blending-header" id="personality-blending-header">
                 <h3>🎭 Personality Blending</h3>
-                <button class="toggle-advanced" onclick="personalityBlending.toggleAdvancedMode()">
-                    Advanced Mode
-                </button>
+                <span class="collapse-indicator">▼</span>
             </div>
             
-            <div class="current-blend-display">
-                <div class="blend-visualization" id="blend-viz">
-                    <div class="primary-personality">
-                        <span class="personality-name">Friendly</span>
-                        <div class="personality-strength" style="width: 70%"></div>
+            <div class="blending-content">
+                <div class="current-blend-display">
+                    <div class="blend-visualization" id="blend-viz">
+                        <div class="primary-personality">
+                            <span class="personality-name">Friendly</span>
+                            <div class="personality-strength" style="width: 70%"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="mood-indicator">
-                <div class="mood-display">
-                    <span class="mood-icon">😊</span>
-                    <span class="mood-text">Neutral</span>
-                    <div class="mood-confidence">85%</div>
+                <div class="mood-indicator">
+                    <div class="mood-display">
+                        <span class="mood-icon">😊</span>
+                        <span class="mood-text">Neutral</span>
+                        <div class="mood-confidence">85%</div>
+                    </div>
+                    <div class="mood-history" id="mood-history"></div>
                 </div>
-                <div class="mood-history" id="mood-history"></div>
-            </div>
 
-            <div class="blending-controls">
-                <div class="personality-selector">
-                    <h4>Select Personalities to Blend</h4>
-                    <div class="personality-grid" id="personality-grid"></div>
+                <div class="blending-controls">
+                    <div class="personality-selector">
+                        <h4>Select Personalities to Blend</h4>
+                        <div class="personality-grid" id="personality-grid"></div>
+                    </div>
+                    
+                    <div class="blend-weights">
+                        <h4>Blend Weights</h4>
+                        <div class="weight-sliders" id="weight-sliders"></div>
+                    </div>
+                    
+                    <div class="context-selector">
+                        <h4>Context Awareness</h4>
+                        <select id="context-selector">
+                            <option value="general">General Conversation</option>
+                            <option value="creative_work">Creative Work</option>
+                            <option value="problem_solving">Problem Solving</option>
+                            <option value="social_interaction">Social Interaction</option>
+                            <option value="learning">Learning & Teaching</option>
+                            <option value="emotional_support">Emotional Support</option>
+                        </select>
+                    </div>
+                    
+                    <div class="blend-actions">
+                        <button id="create-blend-btn" class="create-blend-btn">
+                            Create Blend
+                        </button>
+                        <button id="save-preset-btn" class="save-preset-btn">
+                            Save Preset
+                        </button>
+                        <button id="reset-btn" class="reset-btn">
+                            Reset
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="blend-weights">
-                    <h4>Blend Weights</h4>
-                    <div class="weight-sliders" id="weight-sliders"></div>
-                </div>
-                
-                <div class="context-selector">
-                    <h4>Context Awareness</h4>
-                    <select id="context-selector">
-                        <option value="general">General Conversation</option>
-                        <option value="creative_work">Creative Work</option>
-                        <option value="problem_solving">Problem Solving</option>
-                        <option value="social_interaction">Social Interaction</option>
-                        <option value="learning">Learning & Teaching</option>
-                        <option value="emotional_support">Emotional Support</option>
-                    </select>
-                </div>
-                
-                <div class="blend-actions">
-                    <button onclick="personalityBlending.createCustomBlend()" class="create-blend-btn">
-                        Create Blend
-                    </button>
-                    <button onclick="personalityBlending.saveBlendPreset()" class="save-preset-btn">
-                        Save Preset
-                    </button>
-                    <button onclick="personalityBlending.resetToDefault()" class="reset-btn">
-                        Reset
-                    </button>
-                </div>
-            </div>
 
-            <div class="mood-based-switching">
-                <h4>🧠 Mood-Based Auto-Switching</h4>
-                <div class="auto-switch-toggle">
-                    <label class="switch">
-                        <input type="checkbox" id="mood-auto-switch" checked>
-                        <span class="slider round"></span>
-                    </label>
-                    <span>Enable Automatic Mood-Based Personality Switching</span>
+                <div class="mood-based-switching">
+                    <h4>🧠 Mood-Based Auto-Switching</h4>
+                    <div class="auto-switch-toggle">
+                        <label class="switch">
+                            <input type="checkbox" id="mood-auto-switch" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Enable Automatic Mood-Based Personality Switching</span>
+                    </div>
+                    
+                    <div class="mood-sensitivity">
+                        <label>Mood Sensitivity: <span id="sensitivity-value">70%</span></label>
+                        <input type="range" id="mood-sensitivity" min="10" max="100" value="70">
+                    </div>
                 </div>
-                
-                <div class="mood-sensitivity">
-                    <label>Mood Sensitivity: <span id="sensitivity-value">70%</span></label>
-                    <input type="range" id="mood-sensitivity" min="10" max="100" value="70">
-                </div>
-            </div>
 
-            <div class="blend-presets">
-                <h4>🎨 Saved Blends</h4>
-                <div class="preset-grid" id="preset-grid"></div>
+                <div class="blend-presets">
+                    <h4>🎨 Saved Blends</h4>
+                    <div class="preset-grid" id="preset-grid"></div>
+                </div>
             </div>
         `;
 
         // Add to sidebar or create floating panel
         this.insertBlendingPanel(blendingPanel);
+        this.setupBlendingEventListeners();
         this.populatePersonalityGrid();
         this.loadSavedPresets();
     }
 
+    setupBlendingEventListeners() {
+        // Add click listener for the header to toggle panel
+        const header = document.getElementById('personality-blending-header');
+        if (header) {
+            header.addEventListener('click', () => this.togglePanel());
+        }
+        
+        // Add event listeners for action buttons
+        const createBlendBtn = document.getElementById('create-blend-btn');
+        if (createBlendBtn) {
+            createBlendBtn.addEventListener('click', () => this.createCustomBlend());
+        }
+        
+        const savePresetBtn = document.getElementById('save-preset-btn');
+        if (savePresetBtn) {
+            savePresetBtn.addEventListener('click', () => this.saveBlendPreset());
+        }
+        
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetToDefault());
+        }
+    }
+
+    togglePanel() {
+        const panel = document.querySelector('.personality-blending-panel');
+        if (panel) {
+            panel.classList.toggle('collapsed');
+            console.log('🎭 Personality blending panel toggled:', panel.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        } else {
+            console.error('❌ Personality blending panel not found');
+        }
+    }
+
     insertBlendingPanel(panel) {
         // Try to find sidebar first
-        let sidebar = document.querySelector('.ai-sidebar');
+        let sidebar = document.querySelector('.sidebar');
         if (sidebar) {
-            sidebar.appendChild(panel);
+            sidebar.insertBefore(panel, sidebar.firstChild);
         } else {
             // Create floating panel
             panel.style.position = 'fixed';

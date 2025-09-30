@@ -1,27 +1,66 @@
 /* Personality Blending System Styles */
 .personality-blending-panel {
-    background: rgba(20, 20, 30, 0.95);
-    border: 1px solid rgba(100, 255, 200, 0.3);
-    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     padding: 20px;
-    margin: 10px 0;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-height: 300px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease;
+}
+
+.personality-blending-panel.collapsed {
+    max-height: 60px;
+    overflow: hidden;
 }
 
 .blending-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(100, 255, 200, 0.2);
+    margin-bottom: 15px;
+    cursor: pointer;
+    user-select: none;
+    padding: 5px 0;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.blending-header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .blending-header h3 {
+    background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
+    font-size: 1.1em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.collapse-indicator {
+    font-size: 0.8rem;
     color: #64FFCC;
-    font-size: 1.2rem;
-    font-weight: 600;
+    transition: transform 0.3s ease;
+}
+
+.personality-blending-panel.collapsed .collapse-indicator {
+    transform: rotate(-90deg);
+}
+
+.blending-content {
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.personality-blending-panel.collapsed .blending-content {
+    display: none;
 }
 
 .toggle-advanced {
@@ -500,19 +539,27 @@ input:checked + .slider:before {
     .personality-blending-panel {
         padding: 15px;
         margin: 5px;
+        max-height: 250px;
     }
     
     .personality-grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 6px;
     }
     
     .blend-actions {
         flex-direction: column;
+        gap: 5px;
     }
     
     .blend-actions button {
         flex: none;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .blending-header h3 {
+        font-size: 1rem;
     }
 }
 
