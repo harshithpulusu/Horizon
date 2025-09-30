@@ -283,7 +283,7 @@ class PersonalityBlendingSystem {
         }
         
         grid.innerHTML = personalities.map(personality => `
-            <div class="personality-card" data-personality="${personality}">
+            <div class="personality-card clickable-card" data-personality="${personality}">
                 <div class="personality-icon">${this.getPersonalityIcon(personality)}</div>
                 <div class="personality-name">${personality}</div>
                 <div class="personality-traits">
@@ -295,7 +295,91 @@ class PersonalityBlendingSystem {
             </div>
         `).join('');
         
+        // Add click handlers to make entire cards clickable
+        this.addCardClickHandlers();
+        
         console.log('✅ Personality grid populated with', personalities.length, 'personalities');
+    }
+
+    addCardClickHandlers() {
+        const cards = document.querySelectorAll('.personality-card.clickable-card');
+        cards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Don't trigger if clicking directly on the checkbox
+                if (e.target.type === 'checkbox') {
+                    return;
+                }
+                
+                const personality = card.dataset.personality;
+                const checkbox = card.querySelector(`#select-${personality}`);
+                
+                if (checkbox) {
+                    // Toggle checkbox state
+                    checkbox.checked = !checkbox.checked;
+                    
+                    // Update card visual state
+                    if (checkbox.checked) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                    
+                    // Update weight sliders if needed
+                    this.updateWeightSliders();
+                    
+                    console.log(`🎭 ${checkbox.checked ? 'Selected' : 'Deselected'} personality: ${personality}`);
+                }
+            });
+        });
+    }
+
+    updateWeightSliders() {
+        const selectedPersonalities = Array.from(document.querySelectorAll('#personality-grid input:checked'))
+            .map(checkbox => checkbox.value);
+        
+        const weightSlidersContainer = document.getElementById('weight-sliders');
+        if (!weightSlidersContainer) return;
+        
+        if (selectedPersonalities.length === 0) {
+            weightSlidersContainer.innerHTML = '<p>Select personalities to adjust weights</p>';
+            return;
+        }
+        
+        weightSlidersContainer.innerHTML = selectedPersonalities.map(personality => `
+            <div class="weight-slider">
+                <label for="weight-${personality}">${personality}</label>
+                <input type="range" id="weight-${personality}" min="0" max="100" value="${Math.floor(100 / selectedPersonalities.length)}">
+                <span class="weight-value">${Math.floor(100 / selectedPersonalities.length)}%</span>
+            </div>
+        `).join('');
+        
+        // Add event listeners to weight sliders
+        selectedPersonalities.forEach(personality => {
+            const slider = document.getElementById(`weight-${personality}`);
+            const valueSpan = slider.parentElement.querySelector('.weight-value');
+            
+            slider.addEventListener('input', (e) => {
+                valueSpan.textContent = `${e.target.value}%`;
+                this.normalizeWeights();
+            });
+        });
+    }
+
+    normalizeWeights() {
+        const sliders = document.querySelectorAll('#weight-sliders input[type="range"]');
+        let total = Array.from(sliders).reduce((sum, slider) => sum + parseInt(slider.value), 0);
+        
+        if (total !== 100 && sliders.length > 1) {
+            // Auto-adjust other sliders to maintain 100% total
+            const adjustment = (100 - total) / (sliders.length - 1);
+            sliders.forEach(slider => {
+                if (slider !== document.activeElement) {
+                    const newValue = Math.max(0, Math.min(100, parseInt(slider.value) + adjustment));
+                    slider.value = Math.floor(newValue);
+                    slider.parentElement.querySelector('.weight-value').textContent = `${Math.floor(newValue)}%`;
+                }
+            });
+        }
     }
 
     createPersonalityBlend(personalities, context = 'general') {

@@ -218,17 +218,25 @@
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    user-select: none;
 }
 
 .personality-card:hover {
     border-color: #64FFCC;
     background: rgba(20, 20, 40, 0.95);
     transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(100, 255, 200, 0.2);
 }
 
 .personality-card.selected {
     border-color: #64FFCC;
-    background: rgba(100, 255, 200, 0.1);
+    background: rgba(100, 255, 200, 0.15);
+    box-shadow: 0 0 20px rgba(100, 255, 200, 0.3);
+}
+
+.personality-card.clickable-card:active {
+    transform: translateY(0px);
+    transition: transform 0.1s ease;
 }
 
 .personality-card .personality-icon {
@@ -252,6 +260,8 @@
     position: absolute;
     top: 8px;
     right: 8px;
+    pointer-events: none; /* Prevent checkbox from being directly clicked */
+    opacity: 0.8;
 }
 
 .selection-checkbox input[type="checkbox"] {
@@ -263,10 +273,12 @@
     background: transparent;
     cursor: pointer;
     position: relative;
+    pointer-events: auto; /* Re-enable for the checkbox itself */
 }
 
 .selection-checkbox input[type="checkbox"]:checked {
     background: #64FFCC;
+    box-shadow: 0 0 10px rgba(100, 255, 200, 0.5);
 }
 
 .selection-checkbox input[type="checkbox"]:checked::after {

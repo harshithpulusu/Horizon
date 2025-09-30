@@ -885,3 +885,9 @@
 127.0.0.1 - - [29/Sep/2025 22:43:14] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
 127.0.0.1 - - [29/Sep/2025 22:43:14] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
 127.0.0.1 - - [29/Sep/2025 22:43:14] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+127.0.0.1 - - [29/Sep/2025 22:43:19] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
