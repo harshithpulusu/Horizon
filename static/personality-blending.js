@@ -269,7 +269,18 @@ class PersonalityBlendingSystem {
 
     populatePersonalityGrid() {
         const grid = document.getElementById('personality-grid');
+        if (!grid) {
+            console.error('❌ Personality grid element not found');
+            return;
+        }
+        
         const personalities = Object.keys(this.personalityTraits);
+        console.log('🎭 Populating personality grid with:', personalities);
+        
+        if (personalities.length === 0) {
+            console.error('❌ No personalities found in personalityTraits');
+            return;
+        }
         
         grid.innerHTML = personalities.map(personality => `
             <div class="personality-card" data-personality="${personality}">
@@ -283,6 +294,9 @@ class PersonalityBlendingSystem {
                 </div>
             </div>
         `).join('');
+        
+        console.log('✅ Personality grid populated with', personalities.length, 'personalities');
+    }
     }
 
     createPersonalityBlend(personalities, context = 'general') {
@@ -542,6 +556,12 @@ class PersonalityBlendingSystem {
             scientist: '🔬', philosopher: '🤔', engineer: '⚙️', writer: '✍️'
         };
         return icons[personality] || '🤖';
+    }
+
+    formatTraits(traits) {
+        return Object.keys(traits).slice(0, 3).map(trait => 
+            trait.charAt(0).toUpperCase() + trait.slice(1)
+        ).join(', ');
     }
 
     getMoodIcon(mood) {
