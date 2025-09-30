@@ -297,7 +297,6 @@ class PersonalityBlendingSystem {
         
         console.log('✅ Personality grid populated with', personalities.length, 'personalities');
     }
-    }
 
     createPersonalityBlend(personalities, context = 'general') {
         if (!personalities || personalities.length < 2) {
@@ -612,6 +611,26 @@ class PersonalityBlendingSystem {
         }
     }
 
+    resetToDefault() {
+        // Clear all selections
+        const checkboxes = document.querySelectorAll('#personality-grid input[type="checkbox"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        
+        // Reset to default friendly personality
+        this.currentBlend = null;
+        this.personalityWeights = { friendly: 1.0 };
+        
+        // Update visualization
+        this.updateBlendVisualization({
+            personalities: ['friendly'],
+            weights: [1.0],
+            description: 'Default Friendly Assistant',
+            effectiveness: 1.0
+        });
+        
+        console.log('🔄 Reset to default personality configuration');
+    }
+
     loadSavedPresets() {
         const presets = JSON.parse(localStorage.getItem('personalityBlendPresets') || '{}');
         const presetGrid = document.getElementById('preset-grid');
@@ -623,6 +642,17 @@ class PersonalityBlendingSystem {
                     <div class="preset-description">${presets[name].description}</div>
                 </div>
             `).join('');
+        }
+    }
+
+    loadPreset(name) {
+        const presets = JSON.parse(localStorage.getItem('personalityBlendPresets') || '{}');
+        const preset = presets[name];
+        
+        if (preset) {
+            this.currentBlend = preset;
+            this.updateBlendVisualization(preset);
+            console.log('✅ Loaded preset:', name);
         }
     }
 }
