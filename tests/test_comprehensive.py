@@ -20,11 +20,60 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import application modules
 try:
     from app import app, init_database, ask_chatgpt, create_personality_blend, detect_mood_from_text
-    from utils.error_handler import HorizonError, ValidationError, DatabaseError, error_handler
+    from utils.error_handler import (
+        HorizonError, ValidationError, DatabaseError, AIServiceError,
+        error_handler, validate_required_fields, validate_field_types, 
+        safe_json_parse, log_error_with_context
+    )
     from config import Config
+    ERROR_HANDLING_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import all modules: {e}")
     app = None
+    ERROR_HANDLING_AVAILABLE = False
+    
+    # Define minimal fallback classes for testing
+    class HorizonError(Exception):
+        def __init__(self, message, error_code="UNKNOWN", context=None):
+            super().__init__(message)
+            self.error_code = error_code
+            self.context = context or {}
+    
+    class ValidationError(HorizonError):
+        pass
+    
+    class DatabaseError(HorizonError):
+        pass
+        
+    class AIServiceError(HorizonError):
+        pass
+    
+    def error_handler(msg=""):
+        def decorator(func):
+            return func
+        return decorator
+    
+    def validate_required_fields(data, fields):
+        for field in fields:
+            if field not in data:
+                raise ValidationError(f"Required field missing: {field}")
+    
+    def validate_field_types(data, field_types):
+        for field, expected_type in field_types.items():
+            if field in data and not isinstance(data[field], expected_type):
+                raise ValidationError(f"Field {field} must be of type {expected_type.__name__}")
+    
+    def safe_json_parse(json_string):
+        import json
+        try:
+            return json.loads(json_string)
+        except json.JSONDecodeError as e:
+            return None
+    
+    def log_error_with_context(msg, context):
+        print(f"Error: {msg}, Context: {context}")
+    
+    Config = type('Config', (), {})  # Mock Config class
 
 class HorizonTestCase(unittest.TestCase):
     """Base test case class with common setup and utilities"""

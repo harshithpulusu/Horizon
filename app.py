@@ -3,6 +3,7 @@
 Horizon AI Assistant with ChatGPT API Integration
 Clean, fast, and intelligent AI responses using OpenAI's API
 Enhanced with AI Video Generation, GIF Creation, and Video Editing
+With comprehensive error handling and testing support
 """
 
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
@@ -22,6 +23,27 @@ import tempfile
 import io
 import base64
 from config import Config
+
+# Import standardized error handling
+try:
+    from utils.error_handler import (
+        HorizonError, AIServiceError, DatabaseError, ValidationError,
+        PersonalityBlendingError, FileOperationError, NetworkError,
+        api_error_handler, error_handler, validate_required_fields, 
+        validate_field_types, safe_db_operation, log_error, error_metrics
+    )
+    ERROR_HANDLING_AVAILABLE = True
+    print("✅ Standardized error handling loaded")
+except ImportError as e:
+    ERROR_HANDLING_AVAILABLE = False
+    print(f"⚠️ Error handling not available: {e}")
+    # Define minimal fallback decorators
+    def api_error_handler(func):
+        return func
+    def error_handler(msg=""):
+        def decorator(func):
+            return func
+        return decorator
 
 # Google Gemini AI imports
 try:
@@ -14172,22 +14194,33 @@ def api_upscale_image():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/process', methods=['POST'])
+@api_error_handler
 def process_message():
+    """Main message processing endpoint with standardized error handling"""
+    data = request.get_json()
+    
+    # Validate request data using standardized validation
+    if ERROR_HANDLING_AVAILABLE:
+        validate_required_fields(data, ['input'])
+        validate_field_types(data, {
+            'input': str,
+            'personality': str,
+            'user_id': str
+        })
+    elif not data:
+        raise ValidationError("No data provided")
+    
+    user_input = data.get('input', '').strip()
+    original_input = data.get('original_input', user_input)
+    personality = data.get('personality', 'friendly')
+    session_id = data.get('session_id')
+    user_id = data.get('user_id', 'anonymous')
+    context_data = data.get('context_data', {})
+    
+    if not user_input:
+        raise ValidationError("No input provided")
+        
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        user_input = data.get('input', '').strip()
-        original_input = data.get('original_input', user_input)  # For contextual enhancement tracking
-        personality = data.get('personality', 'friendly')
-        session_id = data.get('session_id')  # Optional session ID from client
-        user_id = data.get('user_id', 'anonymous')  # User identifier for AI intelligence
-        context_data = data.get('context_data', {})  # Location, time, weather context
-        
-        if not user_input:
-            return jsonify({'error': 'No input provided'}), 400
-        
         # Process the input with AI intelligence features and contextual data
         start_time = time.time()
         response, session_id, context_used, ai_insights = process_user_input_with_context(
@@ -14236,9 +14269,16 @@ def process_message():
             'learning_active': True
         })
         
+    except AIServiceError as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("AI service failed during message processing", 
+                                 {"user_input": user_input, "personality": personality})
+        raise e
     except Exception as e:
-        print(f"Error processing message: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Unexpected error in message processing", 
+                                 {"user_input": user_input, "error": str(e)})
+        raise AIServiceError(f"Message processing failed: {str(e)}")
 
 @app.route('/api/timers-reminders', methods=['GET'])
 def get_timers_reminders():
@@ -14698,25 +14738,37 @@ def store_mood_detection(user_id, session_id, mood_data, personality_switched=No
             conn.close()
 
 @app.route('/api/personality-blend', methods=['POST'])
+@api_error_handler
 def create_personality_blend_endpoint():
-    """Create a new personality blend"""
+    """Create a new personality blend with standardized error handling"""
+    data = request.get_json()
+    
+    # Validate input using standardized validation
+    if ERROR_HANDLING_AVAILABLE:
+        validate_required_fields(data, ['personalities', 'weights'])
+        validate_field_types(data, {
+            'personalities': list,
+            'weights': list,
+            'context': str,
+            'user_id': str
+        })
+    
+    personalities = data.get('personalities', [])
+    weights = data.get('weights', [])
+    context = data.get('context', 'general')
+    user_id = data.get('user_id', 'anonymous')
+    
+    if not personalities or not weights or len(personalities) != len(weights):
+        raise PersonalityBlendingError(
+            'Invalid personalities or weights configuration',
+            {'personalities_count': len(personalities), 'weights_count': len(weights)}
+        )
+    
     try:
-        data = request.get_json()
-        personalities = data.get('personalities', [])
-        weights = data.get('weights', [])
-        context = data.get('context', 'general')
-        user_id = data.get('user_id', 'anonymous')
-        
-        if not personalities or not weights or len(personalities) != len(weights):
-            return jsonify({
-                'status': 'error', 
-                'message': 'Invalid personalities or weights configuration'
-            })
-        
         blend_result = create_personality_blend(personalities, weights, context, user_id)
         
         if 'error' in blend_result:
-            return jsonify({'status': 'error', 'message': blend_result['error']})
+            raise PersonalityBlendingError(f"Blend creation failed: {blend_result['error']}")
         
         return jsonify({
             'status': 'success',
@@ -14724,8 +14776,13 @@ def create_personality_blend_endpoint():
             'message': 'Personality blend created successfully'
         })
         
+    except PersonalityBlendingError:
+        raise
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Personality blend creation failed", 
+                                 {"personalities": personalities, "weights": weights, "error": str(e)})
+        raise PersonalityBlendingError(f"Unexpected error during blend creation: {str(e)}")
 
 @app.route('/api/mood-detection', methods=['POST'])
 def detect_mood_endpoint():

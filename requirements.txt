@@ -12,3 +12,11 @@ pyaudio>=0.2.11
 mutagen>=1.47.0
 pydub>=0.25.1
 elevenlabs>=0.2.24
+
+# Testing Dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+pytest-flask>=1.2.0
+coverage>=7.3.0
+mock>=5.1.0
