@@ -18831,6 +18831,251 @@ def store_contextual_conversation(session_id, user_id, user_input, response, con
         if 'conn' in locals():
             conn.close()
 
+# ==========================================
+# PREDICTIVE ASSISTANCE API ENDPOINTS
+# ==========================================
+
+@app.route('/api/predictive/analyze', methods=['POST'])
+@api_error_handler
+def analyze_user_behavior_endpoint():
+    """Analyze user behavioral patterns for predictive assistance"""
+    data = request.get_json()
+    
+    if ERROR_HANDLING_AVAILABLE:
+        validate_required_fields(data, ['user_id'])
+        validate_field_types(data, {'user_id': str})
+    
+    user_id = data.get('user_id')
+    timeframe_days = data.get('timeframe_days', 30)
+    
+    if not user_id:
+        raise ValidationError("User ID is required for behavior analysis")
+    
+    try:
+        result = analyze_user_behavior(user_id, timeframe_days)
+        
+        return jsonify({
+            'status': 'success',
+            'user_id': user_id,
+            'analysis_result': result,
+            'timestamp': datetime.now().isoformat(),
+            'predictive_assistance_active': PREDICTIVE_ASSISTANT_AVAILABLE
+        })
+        
+    except Exception as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Behavior analysis failed", 
+                                 {"user_id": user_id, "error": str(e)})
+        raise AIServiceError(f"Behavior analysis failed: {str(e)}")
+
+@app.route('/api/predictive/suggestions', methods=['POST'])
+@api_error_handler
+def get_predictive_suggestions_endpoint():
+    """Get predictive suggestions based on user patterns and context"""
+    data = request.get_json()
+    
+    if ERROR_HANDLING_AVAILABLE:
+        validate_required_fields(data, ['user_id'])
+        validate_field_types(data, {'user_id': str})
+    
+    user_id = data.get('user_id')
+    context = data.get('context', {})
+    
+    if not user_id:
+        raise ValidationError("User ID is required for predictions")
+    
+    try:
+        # Add current context information
+        current_context = {
+            'timestamp': datetime.now().isoformat(),
+            'hour': datetime.now().hour,
+            'day_of_week': datetime.now().weekday(),
+            'session_id': data.get('session_id'),
+            **context
+        }
+        
+        result = get_predictive_suggestions(user_id, current_context)
+        
+        return jsonify({
+            'status': 'success',
+            'user_id': user_id,
+            'suggestions': result,
+            'context_used': current_context,
+            'timestamp': datetime.now().isoformat(),
+            'predictive_assistance_active': PREDICTIVE_ASSISTANT_AVAILABLE
+        })
+        
+    except Exception as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Predictive suggestions failed", 
+                                 {"user_id": user_id, "context": context, "error": str(e)})
+        raise AIServiceError(f"Predictive suggestions failed: {str(e)}")
+
+@app.route('/api/predictive/feedback', methods=['POST'])
+@api_error_handler
+def provide_prediction_feedback_endpoint():
+    """Provide feedback on prediction accuracy to improve future predictions"""
+    data = request.get_json()
+    
+    if ERROR_HANDLING_AVAILABLE:
+        validate_required_fields(data, ['user_id', 'prediction_type', 'was_helpful'])
+        validate_field_types(data, {
+            'user_id': str,
+            'prediction_type': str,
+            'was_helpful': bool
+        })
+    
+    user_id = data.get('user_id')
+    prediction_type = data.get('prediction_type')
+    was_helpful = data.get('was_helpful')
+    feedback = data.get('feedback', '')
+    
+    if not all([user_id, prediction_type, was_helpful is not None]):
+        raise ValidationError("user_id, prediction_type, and was_helpful are required")
+    
+    try:
+        result = provide_prediction_feedback(user_id, prediction_type, was_helpful, feedback)
+        
+        return jsonify({
+            'status': 'success',
+            'user_id': user_id,
+            'feedback_result': result,
+            'learning_active': True,
+            'timestamp': datetime.now().isoformat(),
+            'message': 'Thank you for your feedback! This helps improve future predictions.'
+        })
+        
+    except Exception as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Prediction feedback failed", 
+                                 {"user_id": user_id, "prediction_type": prediction_type, "error": str(e)})
+        raise AIServiceError(f"Prediction feedback failed: {str(e)}")
+
+@app.route('/api/predictive/status', methods=['GET'])
+@api_error_handler
+def get_predictive_status():
+    """Get status and capabilities of the predictive assistance system"""
+    try:
+        user_id = request.args.get('user_id')
+        
+        status_info = {
+            'predictive_assistance_available': PREDICTIVE_ASSISTANT_AVAILABLE,
+            'ml_libraries_available': 'numpy' in globals() and 'sklearn' in globals(),
+            'features': {
+                'behavioral_analysis': True,
+                'temporal_patterns': True,
+                'topic_patterns': True,
+                'contextual_predictions': True,
+                'proactive_suggestions': True,
+                'feedback_learning': True
+            },
+            'prediction_types': [
+                'temporal_interaction',
+                'topic_assistance', 
+                'style_adaptation',
+                'work_context',
+                'weather_context',
+                'weekend_context'
+            ],
+            'urgency_levels': ['low', 'medium', 'high', 'urgent'],
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        if user_id and PREDICTIVE_ASSISTANT_AVAILABLE:
+            # Get user-specific stats
+            try:
+                conn = sqlite3.connect('ai_memory.db')
+                cursor = conn.cursor()
+                
+                # Get pattern count
+                cursor.execute("""
+                    SELECT COUNT(*) FROM user_patterns WHERE user_id = ?
+                """, (user_id,))
+                pattern_count = cursor.fetchone()[0]
+                
+                # Get recent predictions count
+                cursor.execute("""
+                    SELECT COUNT(*) FROM prediction_history 
+                    WHERE user_id = ? AND datetime(created_at) > datetime('now', '-24 hours')
+                """, (user_id,))
+                recent_predictions = cursor.fetchone()[0]
+                
+                status_info['user_stats'] = {
+                    'patterns_discovered': pattern_count,
+                    'recent_predictions': recent_predictions,
+                    'user_id': user_id
+                }
+                
+            except Exception as e:
+                logger.error(f"Failed to get user stats: {e}")
+            finally:
+                if 'conn' in locals():
+                    conn.close()
+        
+        return jsonify({
+            'status': 'success',
+            'predictive_status': status_info
+        })
+        
+    except Exception as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Predictive status check failed", {"error": str(e)})
+        raise AIServiceError(f"Status check failed: {str(e)}")
+
+@app.route('/api/predictive/patterns', methods=['GET'])
+@api_error_handler
+def get_user_patterns_endpoint():
+    """Get discovered user patterns for analysis and debugging"""
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        raise ValidationError("User ID is required")
+    
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT pattern_type, pattern_data, frequency, success_rate, 
+                   last_occurrence, created_at, updated_at
+            FROM user_patterns 
+            WHERE user_id = ?
+            ORDER BY frequency DESC, success_rate DESC
+        """, (user_id,))
+        
+        patterns = []
+        for row in cursor.fetchall():
+            try:
+                pattern_data = json.loads(row[1])
+                patterns.append({
+                    'pattern_type': row[0],
+                    'pattern_data': pattern_data,
+                    'frequency': row[2],
+                    'success_rate': row[3],
+                    'last_occurrence': row[4],
+                    'created_at': row[5],
+                    'updated_at': row[6]
+                })
+            except json.JSONDecodeError:
+                continue
+        
+        return jsonify({
+            'status': 'success',
+            'user_id': user_id,
+            'patterns': patterns,
+            'total_patterns': len(patterns),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        if ERROR_HANDLING_AVAILABLE:
+            log_error_with_context("Pattern retrieval failed", 
+                                 {"user_id": user_id, "error": str(e)})
+        raise AIServiceError(f"Pattern retrieval failed: {str(e)}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant with ChatGPT...")
     
