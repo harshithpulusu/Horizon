@@ -45,6 +45,25 @@ except ImportError as e:
             return func
         return decorator
 
+# Import Predictive Assistance System
+try:
+    from utils.predictive_assistant import (
+        predictive_assistant, analyze_user_behavior, 
+        get_predictive_suggestions, provide_prediction_feedback
+    )
+    PREDICTIVE_ASSISTANT_AVAILABLE = True
+    print("🔮 Predictive Assistance System loaded successfully")
+except ImportError as e:
+    PREDICTIVE_ASSISTANT_AVAILABLE = False
+    print(f"⚠️ Predictive Assistance not available: {e}")
+    # Define fallback functions
+    def analyze_user_behavior(user_id, timeframe_days=30):
+        return {'status': 'error', 'message': 'Predictive assistance not available'}
+    def get_predictive_suggestions(user_id, context=None):
+        return {'status': 'error', 'message': 'Predictive assistance not available'}
+    def provide_prediction_feedback(user_id, prediction_type, was_helpful, feedback=""):
+        return {'status': 'error', 'message': 'Predictive assistance not available'}
+
 # Google Gemini AI imports
 try:
     import google.generativeai as genai
