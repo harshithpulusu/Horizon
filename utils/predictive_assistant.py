@@ -216,7 +216,16 @@ class PredictiveAssistant:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            # Get conversation patterns
+            # Check if conversations table exists
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='conversations'
+            """)
+            
+            if not cursor.fetchone():
+                # No conversations table, create basic patterns for new users
+                return self._generate_default_patterns(user_id)
+            
             cursor.execute("""
                 SELECT 
                     strftime('%H', timestamp) as hour,
@@ -245,6 +254,9 @@ class PredictiveAssistant:
                 style_pattern = self._analyze_interaction_style(conversations)
                 if style_pattern:
                     patterns.append(style_pattern)
+            else:
+                # No conversations found, use default patterns
+                patterns.extend(self._generate_default_patterns(user_id))
             
             # Store patterns in database
             self._store_patterns(user_id, patterns)
@@ -257,6 +269,42 @@ class PredictiveAssistant:
         finally:
             if 'conn' in locals():
                 conn.close()
+        
+        return patterns
+    
+    def _generate_default_patterns(self, user_id: str) -> List[UserPattern]:
+        """Generate default patterns for new users without conversation history"""
+        patterns = []
+        
+        try:
+            now = datetime.now()
+            
+            # Default temporal pattern (assume typical work hours)
+            patterns.append(UserPattern(
+                user_id=user_id,
+                pattern_type="temporal",
+                frequency=1.0,
+                last_occurrence=now.isoformat(),
+                typical_time="14:00",  # 2 PM
+                context_triggers=["work_hours", "afternoon"],
+                success_rate=0.7
+            ))
+            
+            # Default learning pattern
+            patterns.append(UserPattern(
+                user_id=user_id,
+                pattern_type="topic",
+                frequency=0.8,
+                last_occurrence=now.isoformat(),
+                typical_time="10:00",
+                context_triggers=["questions", "learning"],
+                success_rate=0.6
+            ))
+            
+            self.logger.info(f"✅ Generated {len(patterns)} default patterns for new user {user_id}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate default patterns: {e}")
         
         return patterns
     
@@ -465,6 +513,11 @@ class PredictiveAssistant:
             # Context-based predictions
             context_predictions = self._predict_from_context(user_id, current_context)
             predictions.extend(context_predictions)
+            
+            # Generate basic predictions if no patterns exist or for testing
+            if not predictions:
+                basic_predictions = self._generate_basic_context_predictions(current_context)
+                predictions.extend(basic_predictions)
             
             # Sort by confidence and urgency
             predictions.sort(key=lambda x: (
@@ -679,6 +732,72 @@ class PredictiveAssistant:
         
         return predictions
     
+    def _generate_basic_context_predictions(self, context: Dict) -> List[PredictionResult]:
+        """Generate basic context predictions for testing and new users"""
+        predictions = []
+        now = datetime.now()
+        
+        try:
+            if not context:
+                context = {}
+            
+            # Work context prediction
+            current_hour = context.get('hour', now.hour)
+            location = context.get('location', '')
+            
+            if location == 'office' or (isinstance(current_hour, int) and 9 <= current_hour <= 17):
+                predictions.append(PredictionResult(
+                    prediction_type="work_context",
+                    confidence=0.75,
+                    suggested_action="Focus time! I can help with productivity, writing, or research tasks.",
+                    context={"location": location, "work_hours": True},
+                    reasoning="Work context detected based on time/location",
+                    urgency="medium",
+                    timestamp=now.isoformat()
+                ))
+            
+            # Evening context
+            if isinstance(current_hour, int) and current_hour >= 18:
+                predictions.append(PredictionResult(
+                    prediction_type="evening_context",
+                    confidence=0.65,
+                    suggested_action="Evening time! Want help planning dinner, entertainment, or relaxation?",
+                    context={"time_period": "evening"},
+                    reasoning="Evening patterns typically involve leisure activities",
+                    urgency="low",
+                    timestamp=now.isoformat()
+                ))
+            
+            # Learning context
+            day_of_week = context.get('day_of_week', now.weekday())
+            if isinstance(day_of_week, int) and day_of_week in [1, 2, 3]:  # Tuesday, Wednesday, Thursday
+                predictions.append(PredictionResult(
+                    prediction_type="learning_context",
+                    confidence=0.60,
+                    suggested_action="Mid-week energy! Perfect time for learning something new or skill development.",
+                    context={"learning_optimal": True},
+                    reasoning="Mid-week periods are optimal for focused learning",
+                    urgency="low",
+                    timestamp=now.isoformat()
+                ))
+            
+            # Weekend context
+            if isinstance(day_of_week, int) and day_of_week >= 5:  # Saturday or Sunday
+                predictions.append(PredictionResult(
+                    prediction_type="weekend_context",
+                    confidence=0.80,
+                    suggested_action="Weekend vibes! Want help planning fun activities or personal projects?",
+                    context={"day_type": "weekend"},
+                    reasoning="Weekend patterns differ from weekdays",
+                    urgency="low",
+                    timestamp=now.isoformat()
+                ))
+        
+        except Exception as e:
+            self.logger.error(f"Basic context prediction failed: {e}")
+        
+        return predictions
+    
     def _store_predictions(self, user_id: str, predictions: List[PredictionResult]):
         """Store predictions in database for tracking accuracy"""
         try:
@@ -752,22 +871,36 @@ class PredictiveAssistant:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
+            # Find the most recent prediction to update
             cursor.execute("""
-                UPDATE prediction_history 
-                SET was_accurate = ?, user_feedback = ?, resolved_at = CURRENT_TIMESTAMP
+                SELECT id FROM prediction_history 
                 WHERE user_id = ? AND prediction_type = ? 
                 AND was_accurate IS NULL
                 ORDER BY created_at DESC
                 LIMIT 1
-            """, (was_accurate, feedback, user_id, prediction_type))
+            """, (user_id, prediction_type))
             
+            result = cursor.fetchone()
+            if result:
+                prediction_id = result[0]
+                cursor.execute("""
+                    UPDATE prediction_history 
+                    SET was_accurate = ?, user_feedback = ?, resolved_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (was_accurate, feedback, prediction_id))
+                updated_rows = cursor.rowcount
+            else:
+                updated_rows = 0
             conn.commit()
             
             # Update pattern success rates based on feedback
             self._update_pattern_success_rates(user_id, prediction_type, was_accurate)
             
+            return (True, f"Updated {updated_rows} predictions")
+            
         except Exception as e:
             logger.error(f"Failed to update feedback: {e}")
+            return (False, str(e))
         finally:
             if 'conn' in locals():
                 conn.close()

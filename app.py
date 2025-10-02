@@ -14266,6 +14266,38 @@ def process_message():
         # Get conversation stats
         message_count = len(get_conversation_history(session_id, limit=100))
         
+        # Generate predictive suggestions for the user
+        predictive_suggestions = []
+        if PREDICTIVE_ASSISTANT_AVAILABLE and user_id != 'anonymous':
+            try:
+                current_context = {
+                    'timestamp': datetime.now().isoformat(),
+                    'hour': datetime.now().hour,
+                    'day_of_week': datetime.now().weekday(),
+                    'session_id': session_id,
+                    'user_input': user_input,
+                    'intent': intent,
+                    'personality': personality,
+                    'message_count': message_count,
+                    **context_data
+                }
+                
+                suggestions_result = get_predictive_suggestions(user_id, current_context)
+                if suggestions_result.get('status') == 'success':
+                    predictive_suggestions = suggestions_result.get('proactive_suggestions', [])[:3]  # Top 3
+                    
+                    # Trigger background pattern analysis if this is a new conversation
+                    if message_count <= 2:
+                        # Run pattern analysis in background (non-blocking)
+                        threading.Thread(
+                            target=lambda: analyze_user_behavior(user_id, 30),
+                            daemon=True
+                        ).start()
+                
+            except Exception as e:
+                print(f"Predictive assistance error: {e}")
+                # Don't fail the main response if predictions fail
+        
         return jsonify({
             'response': response,
             'timestamp': datetime.now().isoformat(),
@@ -14285,7 +14317,9 @@ def process_message():
             'ai_intelligence_active': True,
             'emotion_detected': ai_insights.get('emotion_detected', 'neutral') if ai_insights else 'neutral',
             'sentiment_score': ai_insights.get('sentiment_score', 0.0) if ai_insights else 0.0,
-            'learning_active': True
+            'learning_active': True,
+            'predictive_suggestions': predictive_suggestions,
+            'predictive_assistance_active': PREDICTIVE_ASSISTANT_AVAILABLE
         })
         
     except AIServiceError as e:

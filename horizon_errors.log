@@ -1,0 +1,321 @@
+2025-10-01 22:55:30,920 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,921 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,933 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,933 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,944 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,944 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,953 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,953 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,961 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,962 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,968 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 22:55:30,977 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,977 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:30,984 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 22:55:30,993 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:30,993 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,001 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,001 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,006 - utils.predictive_assistant - INFO - ✅ Stored 1 patterns for user test_user_predictive
+2025-10-01 22:55:31,013 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,013 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,018 - utils.predictive_assistant - INFO - ✅ Stored 2 patterns for user test_user_predictive
+2025-10-01 22:55:31,021 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 22:55:31,027 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 22:55:31,035 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,035 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,047 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,047 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,048 - utils.predictive_assistant - ERROR - Pattern analysis failed for user performance_test_user: no such table: conversations
+2025-10-01 22:55:31,054 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,055 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,061 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,062 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,062 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 22:55:31,062 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,062 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 22:55:31,068 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,068 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,068 - utils.predictive_assistant - ERROR - Pattern analysis failed for user : no such table: conversations
+2025-10-01 22:55:31,076 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:55:31,077 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:55:31,077 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 22:57:45,671 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:57:45,672 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:57:55,407 - utils.error_handler - ERROR - Horizon AI Error: {
+  "error_type": "JSONDecodeError",
+  "error_message": "Expecting value: line 1 column 1 (char 0)",
+  "context": {
+    "json_string": "invalid json"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/harshithpulusu/Documents/Hobby Projects/Horizon/utils/error_handler.py\", line 213, in safe_json_parse\n    return json.loads(json_string)\n           ~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py\", line 345, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py\", line 363, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n"
+}
+2025-10-01 22:57:55,409 - utils.error_handler - ERROR - Horizon AI Error: {
+  "error_type": "JSONDecodeError",
+  "error_message": "Expecting value: line 1 column 1 (char 0)",
+  "context": {
+    "json_string": "invalid json"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/harshithpulusu/Documents/Hobby Projects/Horizon/utils/error_handler.py\", line 213, in safe_json_parse\n    return json.loads(json_string)\n           ~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py\", line 345, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py\", line 363, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n"
+}
+2025-10-01 22:58:01,242 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:01,243 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:07,539 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:07,539 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,414 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,415 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,424 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,424 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,432 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,432 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,440 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,440 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,446 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,446 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,451 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 22:58:13,458 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,458 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,462 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 22:58:13,471 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,471 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,477 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,477 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,483 - utils.predictive_assistant - INFO - ✅ Stored 1 patterns for user test_user_predictive
+2025-10-01 22:58:13,488 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,488 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,493 - utils.predictive_assistant - INFO - ✅ Stored 2 patterns for user test_user_predictive
+2025-10-01 22:58:13,496 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 22:58:13,502 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 22:58:13,508 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,508 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,520 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,520 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,521 - utils.predictive_assistant - ERROR - Pattern analysis failed for user performance_test_user: no such table: conversations
+2025-10-01 22:58:13,526 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,526 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,533 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,533 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,533 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 22:58:13,533 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,533 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 22:58:13,539 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,540 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,540 - utils.predictive_assistant - ERROR - Pattern analysis failed for user : no such table: conversations
+2025-10-01 22:58:13,547 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 22:58:13,547 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 22:58:13,547 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:00:28,554 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,555 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,571 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,572 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,592 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,592 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,600 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,600 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,604 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:00:28,611 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,612 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,614 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:00:28,621 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,621 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,624 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:00:28,632 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,632 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,639 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,640 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,643 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:00:28,650 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,650 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,653 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:00:28,656 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 23:00:28,667 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:00:28,675 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,675 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,719 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,720 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,721 - utils.predictive_assistant - ERROR - Failed to generate default patterns: UserPattern.__init__() got an unexpected keyword argument 'pattern_data'. Did you mean 'pattern_type'?
+2025-10-01 23:00:28,730 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,730 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,740 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,740 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,740 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 23:00:28,740 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,740 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 23:00:28,746 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,747 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,747 - utils.predictive_assistant - ERROR - Failed to generate default patterns: UserPattern.__init__() got an unexpected keyword argument 'pattern_data'. Did you mean 'pattern_type'?
+2025-10-01 23:00:28,757 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:00:28,757 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:00:28,757 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:00:28,757 - utils.predictive_assistant - ERROR - Basic context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:00:28,758 - utils.predictive_assistant - ERROR - Basic context prediction failed: '>=' not supported between instances of 'str' and 'int'
+2025-10-01 23:01:41,926 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,928 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,936 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,936 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,948 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,948 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,955 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,955 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,958 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:01:41,964 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,964 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,967 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:01:41,974 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,974 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,978 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:01:41,984 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,984 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,991 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:41,991 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:41,995 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:01:41,999 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,000 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,002 - utils.predictive_assistant - INFO - ✅ Stored 0 patterns for user test_user_predictive
+2025-10-01 23:01:42,005 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 23:01:42,016 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:01:42,024 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,024 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,086 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,086 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,087 - utils.predictive_assistant - ERROR - Failed to generate default patterns: 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:01:42,097 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,098 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,109 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,109 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,110 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 23:01:42,110 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,110 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 23:01:42,116 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,117 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,117 - utils.predictive_assistant - ERROR - Failed to generate default patterns: 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:01:42,124 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:01:42,125 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:01:42,126 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:02:26,883 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,884 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,896 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,897 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,911 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,912 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,922 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,922 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,926 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:02:26,934 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,935 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,941 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:02:26,950 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,950 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,955 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:02:26,964 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,964 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,978 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,978 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,983 - utils.predictive_assistant - INFO - ✅ Stored 1 patterns for user test_user_predictive
+2025-10-01 23:02:26,990 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:26,990 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:26,997 - utils.predictive_assistant - INFO - ✅ Stored 2 patterns for user test_user_predictive
+2025-10-01 23:02:27,000 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 23:02:27,013 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:02:27,019 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,019 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,054 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,054 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,055 - utils.predictive_assistant - ERROR - Pattern analysis failed for user performance_test_user: 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:02:27,061 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,062 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,072 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,072 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,073 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 23:02:27,073 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,073 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 23:02:27,081 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,081 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,082 - utils.predictive_assistant - ERROR - Pattern analysis failed for user : 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:02:27,091 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:27,091 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:27,092 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:02:55,145 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,147 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,155 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,155 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,163 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,163 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,168 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,169 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,172 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:02:55,181 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,181 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,185 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:02:55,191 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,192 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,195 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:02:55,203 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,203 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,210 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,210 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,214 - utils.predictive_assistant - INFO - ✅ Stored 1 patterns for user test_user_predictive
+2025-10-01 23:02:55,219 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,219 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,223 - utils.predictive_assistant - INFO - ✅ Stored 2 patterns for user test_user_predictive
+2025-10-01 23:02:55,225 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 23:02:55,235 - utils.predictive_assistant - ERROR - Failed to update feedback: near "ORDER": syntax error
+2025-10-01 23:02:55,241 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,242 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,282 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,282 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,284 - utils.predictive_assistant - ERROR - Pattern analysis failed for user performance_test_user: 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:02:55,297 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,297 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,306 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,306 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,306 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 23:02:55,306 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,307 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 23:02:55,313 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,313 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,313 - utils.predictive_assistant - ERROR - Pattern analysis failed for user : 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:02:55,321 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:02:55,322 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:02:55,322 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-01 23:03:14,455 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,455 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,463 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,463 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,472 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,473 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,479 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,479 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,493 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,494 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,497 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:03:14,505 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,505 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,509 - utils.predictive_assistant - INFO - ✅ Stored 3 patterns for user test_user_predictive
+2025-10-01 23:03:14,517 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,517 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,524 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,524 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,527 - utils.predictive_assistant - INFO - ✅ Stored 1 patterns for user test_user_predictive
+2025-10-01 23:03:14,534 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,534 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,538 - utils.predictive_assistant - INFO - ✅ Stored 2 patterns for user test_user_predictive
+2025-10-01 23:03:14,540 - utils.predictive_assistant - ERROR - Pattern analysis failed for user api_test_user: no such column: input
+2025-10-01 23:03:14,557 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,557 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,612 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,612 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,613 - utils.predictive_assistant - ERROR - Pattern analysis failed for user performance_test_user: 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:03:14,619 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,619 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,627 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,627 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,628 - utils.predictive_assistant - ERROR - Database initialization failed: unable to open database file
+2025-10-01 23:03:14,628 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,628 - utils.predictive_assistant - ERROR - Pattern analysis failed for user test_user: unable to open database file
+2025-10-01 23:03:14,633 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,633 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,634 - utils.predictive_assistant - ERROR - Pattern analysis failed for user : 'PredictiveAssistant' object has no attribute 'logger'
+2025-10-01 23:03:14,642 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-01 23:03:14,642 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-01 23:03:14,642 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'

@@ -47,7 +47,8 @@ def run_unittest_tests():
     test_files = [
         'tests/test_comprehensive.py',
         'tests/test_personality_blending.py',
-        'tests/test_api_endpoints.py'
+        'tests/test_api_endpoints.py',
+        'tests/test_predictive_assistant.py'
     ]
     
     results = []
