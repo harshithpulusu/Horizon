@@ -45,6 +45,23 @@ except ImportError as e:
             return func
         return decorator
 
+# Import Enterprise Security System
+try:
+    from utils.security_manager import (
+        SecurityMiddleware, AuthenticationManager, RateLimiter, 
+        ThreatDetector, EncryptionManager, SecurityConfig
+    )
+    from utils.security_database import security_db
+    ENTERPRISE_SECURITY_AVAILABLE = True
+    print("🔒 Enterprise Security System loaded successfully")
+except ImportError as e:
+    ENTERPRISE_SECURITY_AVAILABLE = False
+    print(f"⚠️ Enterprise Security not available: {e}")
+    # Define minimal fallback
+    class SecurityMiddleware:
+        def __init__(self, app=None): pass
+        def init_app(self, app): pass
+
 # Import Predictive Assistance System
 try:
     from utils.predictive_assistant import (
@@ -152,6 +169,24 @@ except ImportError as e:
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Initialize Enterprise Security
+if ENTERPRISE_SECURITY_AVAILABLE:
+    security_middleware = SecurityMiddleware(app)
+    print("🔒 Enterprise security middleware initialized")
+    
+    # Configure security settings
+    app.config['SECRET_KEY'] = SecurityConfig.JWT_SECRET_KEY
+    app.config['SECURITY_HEADERS'] = SecurityConfig.SECURITY_HEADERS
+
+# Initialize Enterprise Security
+if ENTERPRISE_SECURITY_AVAILABLE:
+    security_middleware = SecurityMiddleware(app)
+    print("🔒 Enterprise security middleware initialized")
+    
+    # Configure security settings
+    app.config['SECRET_KEY'] = SecurityConfig.JWT_SECRET_KEY
+    app.config['SECURITY_HEADERS'] = SecurityConfig.SECURITY_HEADERS
 
 # Create media directories if they don't exist
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_images')
