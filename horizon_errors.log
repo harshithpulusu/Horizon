@@ -319,3 +319,140 @@
 2025-10-01 23:03:14,642 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
 2025-10-01 23:03:14,642 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
 2025-10-01 23:03:14,642 - utils.predictive_assistant - ERROR - Context prediction failed: 'NoneType' object has no attribute 'get'
+2025-10-02 23:23:29,479 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:23:29,481 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:23:54,924 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:23:54,926 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:23:58,312 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-02 23:23:58,313 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-02 23:23:58,315 - werkzeug - INFO -  * Restarting with stat
+2025-10-02 23:24:02,098 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:24:02,099 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:24:05,107 - werkzeug - WARNING -  * Debugger is active!
+2025-10-02 23:24:05,131 - werkzeug - INFO -  * Debugger PIN: 121-855-384
+2025-10-02 23:25:03,967 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:25:03] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-10-02 23:25:04,747 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:25:04] "GET /?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-10-02 23:25:04,769 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:25:04] "GET /?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-10-02 23:25:04,989 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:25:04] "GET /?__debugger__=yes&cmd=resource&f=console.png&s=kQhBMQYEmsSuoua2NOYi HTTP/1.1" 200 -
+2025-10-02 23:25:05,606 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:25:05] "GET /?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-10-02 23:26:09,338 - werkzeug - INFO -  * Detected change in '/Users/harshithpulusu/Documents/Hobby Projects/Horizon/app.py', reloading
+2025-10-02 23:26:12,274 - werkzeug - INFO -  * Restarting with stat
+2025-10-02 23:26:16,893 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:26:16,894 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:26:20,033 - werkzeug - WARNING -  * Debugger is active!
+2025-10-02 23:26:20,062 - werkzeug - INFO -  * Debugger PIN: 121-855-384
+2025-10-02 23:28:01,226 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:28:01,228 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:28:30,930 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:28:30,931 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:28:33,318 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-02 23:28:33,318 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-02 23:28:33,320 - werkzeug - INFO -  * Restarting with stat
+2025-10-02 23:28:35,787 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:28:35,788 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:28:38,943 - werkzeug - WARNING -  * Debugger is active!
+2025-10-02 23:28:38,970 - werkzeug - INFO -  * Debugger PIN: 121-855-384
+2025-10-02 23:28:59,332 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET / HTTP/1.1" 200 -
+2025-10-02 23:28:59,590 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/professional-enhancements.css HTTP/1.1" 200 -
+2025-10-02 23:28:59,597 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/personality-blending.css HTTP/1.1" 200 -
+2025-10-02 23:28:59,623 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/enhanced_ai.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,624 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/professional-ui.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,631 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/interactive-background.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,638 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/voice-enhancements.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,645 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/memory-learning.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,650 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/contextual-intelligence.js HTTP/1.1" 200 -
+2025-10-02 23:28:59,678 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:28:59] "GET /static/personality-blending.js HTTP/1.1" 200 -
+2025-10-02 23:29:00,593 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:00,604 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:00,614 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:00,621 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:00,646 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "[33mGET /api/sync/status HTTP/1.1[0m" 404 -
+2025-10-02 23:29:00,663 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "GET /api/personalities HTTP/1.1" 200 -
+2025-10-02 23:29:00,667 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:00,682 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:00] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:05,007 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:05,009 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:05,010 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:05,016 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:05,100 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:05,107 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:05] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:10,559 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:10,561 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:10,563 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:10,571 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:10,580 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:10,590 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:10] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:15,366 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:15,370 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:15,375 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:15,376 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:15,384 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:15,395 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:15] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:21,050 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:21,051 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:21,052 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:21,053 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:21,067 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:21,076 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:21] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:25,086 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:25,090 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:25,099 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:25,112 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:25,129 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:25,136 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:25] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:31,108 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:31,111 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:31,113 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:31,129 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:31,138 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:31,219 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:31] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:36,100 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:36,103 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:36,104 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:36,111 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:36,119 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:36,134 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:40,437 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:40,442 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:40,446 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:40,451 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:40,460 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:40,470 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:40] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:45,085 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:45,086 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:45,088 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:45,094 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:45,100 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:45,107 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:45] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:50,139 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:50,141 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:50,145 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:50,150 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:50,156 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:50,165 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:50] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:55,088 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:55,090 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:55,092 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:55,093 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:29:55,103 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:29:55,109 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:29:55] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:00,738 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:00,741 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:00,743 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:00,744 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:00,755 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:00,762 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:00] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:05,164 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:05,166 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:05,167 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:05,172 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:05,178 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:05,185 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:05] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:36,102 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:36,106 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:36,114 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:36,118 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:30:36,130 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:36,137 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -

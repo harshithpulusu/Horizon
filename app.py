@@ -45,22 +45,8 @@ except ImportError as e:
             return func
         return decorator
 
-# Import Enterprise Security System
-try:
-    from utils.security_manager import (
-        SecurityMiddleware, AuthenticationManager, RateLimiter, 
-        ThreatDetector, EncryptionManager, SecurityConfig
-    )
-    from utils.security_database import security_db
-    ENTERPRISE_SECURITY_AVAILABLE = True
-    print("🔒 Enterprise Security System loaded successfully")
-except ImportError as e:
-    ENTERPRISE_SECURITY_AVAILABLE = False
-    print(f"⚠️ Enterprise Security not available: {e}")
-    # Define minimal fallback
-    class SecurityMiddleware:
-        def __init__(self, app=None): pass
-        def init_app(self, app): pass
+# Enterprise Security Disabled
+ENTERPRISE_SECURITY_AVAILABLE = False
 
 # Import Predictive Assistance System
 try:
@@ -170,23 +156,7 @@ except ImportError as e:
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Enterprise Security
-if ENTERPRISE_SECURITY_AVAILABLE:
-    security_middleware = SecurityMiddleware(app)
-    print("🔒 Enterprise security middleware initialized")
-    
-    # Configure security settings
-    app.config['SECRET_KEY'] = SecurityConfig.JWT_SECRET_KEY
-    app.config['SECURITY_HEADERS'] = SecurityConfig.SECURITY_HEADERS
-
-# Initialize Enterprise Security
-if ENTERPRISE_SECURITY_AVAILABLE:
-    security_middleware = SecurityMiddleware(app)
-    print("🔒 Enterprise security middleware initialized")
-    
-    # Configure security settings
-    app.config['SECRET_KEY'] = SecurityConfig.JWT_SECRET_KEY
-    app.config['SECURITY_HEADERS'] = SecurityConfig.SECURITY_HEADERS
+# Security disabled
 
 # Create media directories if they don't exist
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated_images')
@@ -14066,6 +14036,8 @@ def process_user_input(user_input, personality='friendly', session_id=None, user
         
         return response, session_id, context_used, ai_insights
 
+# Security disabled - routes removed
+
 # Routes
 @app.route('/')
 def home():
@@ -14250,7 +14222,20 @@ def api_upscale_image():
 @app.route('/api/process', methods=['POST'])
 @api_error_handler
 def process_message():
-    """Main message processing endpoint with standardized error handling"""
+    """Main message processing endpoint with standardized error handling and enterprise security"""
+    
+    # Enterprise Security: Log API usage for monitoring
+    if ENTERPRISE_SECURITY_AVAILABLE:
+        security_db.log_security_event(
+            event_type='API_USAGE',
+            ip_address=request.remote_addr,
+            event_data={
+                'endpoint': '/api/process',
+                'user_agent': request.headers.get('User-Agent', ''),
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+    
     data = request.get_json()
     
     # Validate request data using standardized validation

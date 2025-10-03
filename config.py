@@ -1,5 +1,6 @@
 # Configuration for Horizon AI Assistant
 import os
+import secrets
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -9,6 +10,60 @@ class Config:
     # Core AI APIs
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAFl8KrjvNuafGJc03CZqr8Cqzdki9z2AA')
+    
+    # === ENTERPRISE SECURITY CONFIGURATION ===
+    
+    # JWT & Authentication
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(32))
+    JWT_ALGORITHM = 'HS256'
+    JWT_EXPIRATION_HOURS = int(os.getenv('JWT_EXPIRATION_HOURS', '24'))
+    JWT_REFRESH_EXPIRATION_DAYS = int(os.getenv('JWT_REFRESH_EXPIRATION_DAYS', '30'))
+    
+    # Encryption
+    ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', secrets.token_urlsafe(32))
+    
+    # Rate Limiting
+    RATE_LIMIT_PER_MINUTE = int(os.getenv('RATE_LIMIT_PER_MINUTE', '60'))
+    RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', '1000'))
+    RATE_LIMIT_PER_DAY = int(os.getenv('RATE_LIMIT_PER_DAY', '10000'))
+    
+    # Password Policy
+    MIN_PASSWORD_LENGTH = int(os.getenv('MIN_PASSWORD_LENGTH', '12'))
+    REQUIRE_UPPERCASE = os.getenv('REQUIRE_UPPERCASE', 'true').lower() == 'true'
+    REQUIRE_LOWERCASE = os.getenv('REQUIRE_LOWERCASE', 'true').lower() == 'true'
+    REQUIRE_NUMBERS = os.getenv('REQUIRE_NUMBERS', 'true').lower() == 'true'
+    REQUIRE_SPECIAL_CHARS = os.getenv('REQUIRE_SPECIAL_CHARS', 'true').lower() == 'true'
+    PASSWORD_HISTORY_COUNT = int(os.getenv('PASSWORD_HISTORY_COUNT', '5'))
+    
+    # Session Security
+    SESSION_TIMEOUT_MINUTES = int(os.getenv('SESSION_TIMEOUT_MINUTES', '30'))
+    MAX_LOGIN_ATTEMPTS = int(os.getenv('MAX_LOGIN_ATTEMPTS', '5'))
+    LOCKOUT_DURATION_MINUTES = int(os.getenv('LOCKOUT_DURATION_MINUTES', '15'))
+    MAX_CONCURRENT_SESSIONS = int(os.getenv('MAX_CONCURRENT_SESSIONS', '5'))
+    
+    # Threat Detection
+    ENABLE_THREAT_DETECTION = os.getenv('ENABLE_THREAT_DETECTION', 'true').lower() == 'true'
+    ENABLE_IP_BLOCKING = os.getenv('ENABLE_IP_BLOCKING', 'true').lower() == 'true'
+    MAX_FAILED_REQUESTS = int(os.getenv('MAX_FAILED_REQUESTS', '10'))
+    
+    # Security Features
+    ENABLE_2FA = os.getenv('ENABLE_2FA', 'false').lower() == 'true'
+    ENABLE_AUDIT_LOGGING = os.getenv('ENABLE_AUDIT_LOGGING', 'true').lower() == 'true'
+    ENABLE_COMPLIANCE_MODE = os.getenv('ENABLE_COMPLIANCE_MODE', 'false').lower() == 'true'
+    
+    # Database Security
+    SECURITY_DATABASE_PATH = os.getenv('SECURITY_DATABASE_PATH', 'horizon_security.db')
+    DATABASE_ENCRYPTION_ENABLED = os.getenv('DATABASE_ENCRYPTION_ENABLED', 'true').lower() == 'true'
+    
+    # Redis Configuration (for rate limiting and sessions)
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
+    
+    # Security Headers
+    SECURITY_HEADERS_ENABLED = os.getenv('SECURITY_HEADERS_ENABLED', 'true').lower() == 'true'
+    CONTENT_SECURITY_POLICY = os.getenv('CONTENT_SECURITY_POLICY', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+    
+    # === END ENTERPRISE SECURITY ===
     
     # Google Cloud Configuration for Imagen
     GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', 'horizon-ai-project')
