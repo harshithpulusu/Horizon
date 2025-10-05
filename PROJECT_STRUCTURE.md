@@ -53,6 +53,8 @@ horizon/
 ### Week 1: Foundation & Architecture Setup (In Progress)
 - [x] **Day 1**: Project structure creation ✅
 - [x] **Day 1**: MCP dependency installation ✅
+- [x] **Day 1**: MCP specification research ✅
+- [x] **Day 1**: Development roadmap creation ✅
 - [ ] **Day 2**: Core extraction from app.py
 - [ ] **Day 3-4**: Refactor web interface
 - [ ] **Day 5-7**: Basic MCP server setup
@@ -64,6 +66,7 @@ horizon/
 2. ✅ Installed MCP dependencies (`mcp`, `pydantic`, `uvicorn`, `starlette`)
 3. ✅ Research MCP specification (Protocol version: 2025-06-18)
 4. ✅ Created module initialization files with documentation
+5. ✅ **Created comprehensive development roadmap** (see `DEVELOPMENT_ROADMAP.md`)
 
 #### MCP Research Summary:
 - **Protocol Version**: 2025-06-18 (current specification)
@@ -78,6 +81,8 @@ horizon/
 - Create `core/personality.py` with personality system
 - Create `core/database.py` with database operations
 - Create `core/media_generator.py` with generation functions
+
+**📋 For detailed task breakdown and timeline, see**: [`DEVELOPMENT_ROADMAP.md`](./DEVELOPMENT_ROADMAP.md)
 
 ## Benefits of This Structure
 
