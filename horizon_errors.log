@@ -456,3 +456,15 @@
 2025-10-02 23:30:36,118 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
 2025-10-02 23:30:36,130 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
 2025-10-02 23:30:36,137 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:30:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:30:56,319 - werkzeug - INFO -  * Detected change in '/Users/harshithpulusu/Documents/Hobby Projects/Horizon/app.py', reloading
+2025-10-02 23:30:59,471 - werkzeug - INFO -  * Restarting with stat
+2025-10-02 23:31:03,353 - utils.predictive_assistant - INFO - ✅ Predictive assistance database tables initialized
+2025-10-02 23:31:03,354 - utils.predictive_assistant - INFO - ✅ ML models initialized for predictive assistance
+2025-10-02 23:31:06,875 - werkzeug - WARNING -  * Debugger is active!
+2025-10-02 23:31:06,911 - werkzeug - INFO -  * Debugger PIN: 121-855-384
+2025-10-02 23:31:36,102 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "[33mGET /api/prompts/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:31:36,103 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "[33mGET /api/analytics/quick-stats HTTP/1.1[0m" 404 -
+2025-10-02 23:31:36,107 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "[33mGET /api/research/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:31:36,112 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "[33mGET /api/simulations/stats HTTP/1.1[0m" 404 -
+2025-10-02 23:31:36,118 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
+2025-10-02 23:31:36,124 - werkzeug - INFO - 127.0.0.1 - - [02/Oct/2025 23:31:36] "GET /api/collaboration-analytics?period=7d HTTP/1.1" 200 -
