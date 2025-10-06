@@ -370,16 +370,21 @@ class AIEngine:
     
     # Placeholder methods that will be moved to appropriate core modules
     def _detect_mood_from_text(self, text: str) -> Dict[str, Any]:
-        """Placeholder for mood detection (will be moved to personality module)."""
-        return {'mood': 'neutral', 'confidence': 0.5}
+        """Detect mood from text using the mood detector."""
+        from .personality import get_mood_detector
+        mood_detector = get_mood_detector()
+        return mood_detector.detect_mood_from_text(text)
     
     def _get_personality_profile(self, personality: str) -> Dict[str, Any]:
-        """Placeholder for personality profile (will be moved to personality module)."""
-        return {'traits': ['balanced'], 'style': 'adaptive'}
+        """Get personality profile using the personality engine."""
+        from .personality import get_personality_profile
+        return get_personality_profile(personality)
     
     def _analyze_emotion(self, text: str) -> Dict[str, Any]:
-        """Placeholder for emotion analysis (will be moved to personality module)."""
-        return {'emotion': 'neutral', 'confidence': 0.5, 'sentiment': 0.0}
+        """Analyze emotion using the emotion analyzer."""
+        from .personality import get_emotion_analyzer
+        emotion_analyzer = get_emotion_analyzer()
+        return emotion_analyzer.analyze_emotion(text)
     
     def _classify_mood(self, sentiment_score: float) -> str:
         """Classify overall mood based on sentiment score."""
@@ -411,8 +416,17 @@ class AIEngine:
         return personality_prompts.get(personality, personality_prompts['friendly'])
     
     def _enhance_response_with_emotion(self, response: str, emotion: str, personality: str) -> str:
-        """Enhance response based on detected emotion (placeholder)."""
-        # This will be implemented when personality module is ready
+        """Enhance response based on detected emotion using emotion analyzer."""
+        from .personality import get_emotion_analyzer
+        emotion_analyzer = get_emotion_analyzer()
+        
+        # Get emotional response modifier
+        emotion_data = {'emotion': emotion, 'intensity': 'medium'}
+        modifier = emotion_analyzer.get_emotional_response_modifier(emotion_data)
+        
+        if modifier and not response.startswith(modifier):
+            response = modifier + response
+        
         return response
 
 

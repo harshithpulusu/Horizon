@@ -17,14 +17,77 @@ Modules:
 __version__ = "1.0.0"
 __author__ = "Horizon AI Team"
 
-# Import AI engine components for easy access
+# Import AI engine components
 from .ai_engine import AIEngine, get_ai_engine, ask_chatgpt, ask_ai_model, generate_fallback_response
 
-# Make AI engine easily accessible
+# Import personality components
+from .personality import (
+    PersonalityEngine, EmotionAnalyzer, MoodDetector, PersonalityBlender,
+    get_personality_engine, get_emotion_analyzer, get_mood_detector, get_personality_blender,
+    get_personality_profile, analyze_emotion, detect_mood_from_text, blend_personalities
+)
+
+# Import database components
+from .database import (
+    DatabaseManager, UserManager, ConversationManager, MemoryManager, AnalyticsManager,
+    get_database_manager, get_user_manager, get_conversation_manager, 
+    get_memory_manager, get_analytics_manager,
+    get_database_connection, init_database, backup_database
+)
+
+# Import media generator components
+from .media_generator import (
+    MediaEngine, ImageGenerator, VideoGenerator, AudioGenerator, ModelGenerator,
+    get_media_engine, get_image_generator, get_video_generator, 
+    get_audio_generator, get_model_generator,
+    generate_image, generate_video, generate_audio, generate_3d_model
+)
+
+# Import memory system components
+from .memory_system import (
+    MemorySystem, UserMemory, ContextManager, LearningEngine,
+    get_memory_system, get_context_manager, get_learning_engine, get_user_memory,
+    store_user_memory, get_user_context, learn_from_interaction, get_personalized_response
+)
+
+# Import utility components
+from .utils import (
+    CoreLogger, ConfigValidator, InputSanitizer, ResponseFormatter, 
+    PerformanceMonitor, DataProcessor,
+    setup_logging, validate_config, sanitize_input, format_response,
+    generate_unique_id, measure_time, log_info, log_warning, log_error, log_debug
+)
+
+# Make key components easily accessible
 __all__ = [
-    'AIEngine',
-    'get_ai_engine', 
-    'ask_chatgpt',
-    'ask_ai_model',
-    'generate_fallback_response'
+    # AI Engine
+    'AIEngine', 'get_ai_engine', 'ask_chatgpt', 'ask_ai_model', 'generate_fallback_response',
+    
+    # Personality System
+    'PersonalityEngine', 'EmotionAnalyzer', 'MoodDetector', 'PersonalityBlender',
+    'get_personality_engine', 'get_emotion_analyzer', 'get_mood_detector', 'get_personality_blender',
+    'get_personality_profile', 'analyze_emotion', 'detect_mood_from_text', 'blend_personalities',
+    
+    # Database Operations
+    'DatabaseManager', 'UserManager', 'ConversationManager', 'MemoryManager', 'AnalyticsManager',
+    'get_database_manager', 'get_user_manager', 'get_conversation_manager', 
+    'get_memory_manager', 'get_analytics_manager',
+    'get_database_connection', 'init_database', 'backup_database',
+    
+    # Media Generation
+    'MediaEngine', 'ImageGenerator', 'VideoGenerator', 'AudioGenerator', 'ModelGenerator',
+    'get_media_engine', 'get_image_generator', 'get_video_generator', 
+    'get_audio_generator', 'get_model_generator',
+    'generate_image', 'generate_video', 'generate_audio', 'generate_3d_model',
+    
+    # Memory System
+    'MemorySystem', 'UserMemory', 'ContextManager', 'LearningEngine',
+    'get_memory_system', 'get_context_manager', 'get_learning_engine', 'get_user_memory',
+    'store_user_memory', 'get_user_context', 'learn_from_interaction', 'get_personalized_response',
+    
+    # Utilities
+    'CoreLogger', 'ConfigValidator', 'InputSanitizer', 'ResponseFormatter', 
+    'PerformanceMonitor', 'DataProcessor',
+    'setup_logging', 'validate_config', 'sanitize_input', 'format_response',
+    'generate_unique_id', 'measure_time', 'log_info', 'log_warning', 'log_error', 'log_debug'
 ]
