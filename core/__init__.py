@@ -16,3 +16,15 @@ Modules:
 
 __version__ = "1.0.0"
 __author__ = "Horizon AI Team"
+
+# Import AI engine components for easy access
+from .ai_engine import AIEngine, get_ai_engine, ask_chatgpt, ask_ai_model, generate_fallback_response
+
+# Make AI engine easily accessible
+__all__ = [
+    'AIEngine',
+    'get_ai_engine', 
+    'ask_chatgpt',
+    'ask_ai_model',
+    'generate_fallback_response'
+]
