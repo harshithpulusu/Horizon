@@ -25,71 +25,69 @@ from core import (
 # Initialize logging
 logger = setup_logging("HorizonWeb")
 
-def create_app(config_class=Config):
-    """
-    Create and configure the Flask application.
+def create_app():
+    """Create and configure the Flask application."""
+    app = Flask(__name__)
     
-    Args:
-        config_class: Configuration class to use
-        
-    Returns:
-        Configured Flask application
-    """
-    app = Flask(__name__, 
-                template_folder='../templates',
-                static_folder='../static')
-    
-    # Load configuration
-    app.config.from_object(config_class)
-    
-    # Set up session configuration
-    app.config['SECRET_KEY'] = getattr(Config, 'SECRET_KEY', 'horizon-ai-secret-key-change-in-production')
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+    # Configure app
+    app.config.from_object(Config)
     
     # Initialize core systems
-    @app.before_first_request
-    def initialize_core_systems():
-        """Initialize core systems when the app starts."""
-        logger.info("🚀 Initializing Horizon Web Application...")
-        
-        # Validate configuration
-        config_status = validate_config()
-        logger.info(f"📊 Configuration status: {config_status}")
-        
-        # Initialize core modules
-        ai_engine = get_ai_engine()
-        db_manager = get_database_manager()
-        personality_engine = get_personality_engine()
-        memory_system = get_memory_system()
-        media_engine = get_media_engine()
-        
-        logger.info("✅ All core systems initialized successfully")
-        
-        # Log available features
-        available_generators = media_engine.get_available_generators()
-        logger.info(f"🎨 Available media generators: {available_generators}")
-        
-        api_keys = config_status.get('api_keys', {})
-        enabled_apis = [api for api, enabled in api_keys.items() if enabled]
-        logger.info(f"🔑 Enabled APIs: {enabled_apis}")
+    def init_core_systems():
+        """Initialize core systems."""
+        try:
+            logger.info("� Initializing core systems...")
+            
+            # Initialize database
+            db_manager = get_database_manager()
+            db_manager.init_database()
+            
+            # Initialize AI engine
+            ai_engine = get_ai_engine()
+            logger.info(f"🤖 AI Engine status: {'Ready' if ai_engine.ai_model_available else 'Fallback mode'}")
+            
+            # Initialize personality engine
+            personality_engine = get_personality_engine()
+            personalities = personality_engine.get_available_personalities()
+            logger.info(f"🎭 Loaded {len(personalities)} personalities")
+            
+            # Initialize memory system
+            memory_system = get_memory_system()
+            logger.info("🧠 Memory system initialized")
+            
+            # Initialize media engine
+            media_engine = get_media_engine()
+            generators = media_engine.get_available_generators()
+            logger.info(f"🎨 Media engine: {len(generators)} generators available")
+            
+            logger.info("✅ Core systems initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Core system initialization failed: {e}")
     
-    # Register error handlers
+    # Call initialization immediately for modern Flask
+    with app.app_context():
+        init_core_systems()
+    
+    # Register routes
+    from web.routes import register_routes
+    register_routes(app)
+    
+    # Error handlers
     @app.errorhandler(404)
     def not_found_error(error):
-        """Handle 404 errors."""
-        return render_template('404.html'), 404
+        logger.warning(f"404 error: {request.url}")
+        return render_template('error.html', 
+                             error_code=404, 
+                             error_message="Page not found"), 404
     
     @app.errorhandler(500)
     def internal_error(error):
-        """Handle 500 errors."""
-        logger.error(f"Internal server error: {error}")
-        return render_template('500.html'), 500
+        logger.error(f"500 error: {error}")
+        return render_template('error.html', 
+                             error_code=500, 
+                             error_message="Internal server error"), 500
     
-    # Register blueprints/routes
-    from .routes import register_routes
-    register_routes(app)
-    
-    logger.info("🌐 Horizon Web Application created successfully")
     return app
 
 def get_app():

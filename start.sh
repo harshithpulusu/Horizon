@@ -30,25 +30,59 @@ echo "📥 Installing dependencies..."
 pip install -r requirements.txt
 
 # Create necessary directories
-mkdir -p static
+mkdir -p static/generated_images
+mkdir -p static/generated_videos
+mkdir -p static/generated_audio
+mkdir -p static/generated_music
+mkdir -p static/generated_3d_models
+mkdir -p static/generated_avatars
+mkdir -p static/generated_logos
+mkdir -p static/generated_designs
+mkdir -p static/generated_gifs
 mkdir -p templates
+mkdir -p logs
+mkdir -p backups
 
-# Check if all files exist
-required_files=("app.py" "templates/index.html" "static/enhanced_ai.js")
-for file in "${required_files[@]}"; do
-    if [ ! -f "$file" ]; then
-        echo "❌ Required file missing: $file"
+# Determine launch mode based on arguments
+MODE=${1:-web}
+HOST=${2:-0.0.0.0}
+PORT=${3:-5000}
+
+echo "✅ Environment ready!"
+
+case $MODE in
+    "web")
+        echo "🚀 Launching Horizon Web Interface..."
+        echo "📱 Open your browser and go to: http://$HOST:$PORT"
+        python scripts/launcher.py web --host $HOST --port $PORT
+        ;;
+    "mcp")
+        echo "🚀 Launching Horizon MCP Server..."
+        echo "🤖 MCP server will communicate via stdio"
+        python scripts/launcher.py mcp
+        ;;
+    "both")
+        echo "🚀 Launching Horizon Dual Mode..."
+        echo "🌐 Web interface: http://$HOST:$PORT"
+        echo "🤖 MCP server: stdio communication"
+        python scripts/launcher.py both --host $HOST --port $PORT
+        ;;
+    "setup")
+        echo "🚀 Setting up Horizon Development Environment..."
+        python scripts/launcher.py setup
+        ;;
+    *)
+        echo "Usage: $0 [web|mcp|both|setup] [host] [port]"
+        echo "  web  - Start web interface (default)"
+        echo "  mcp  - Start MCP server"
+        echo "  both - Start both servers"
+        echo "  setup - Setup development environment"
+        echo ""
+        echo "Examples:"
+        echo "  $0 web 0.0.0.0 8080"
+        echo "  $0 mcp"
+        echo "  $0 both"
+        echo "  $0 setup"
         exit 1
-    fi
-done
-
-echo "✅ All dependencies installed and files verified!"
-echo "🚀 Starting Horizon AI Assistant..."
-echo "📱 Open your browser and go to: http://localhost:5000"
-echo "🎤 Make sure to allow microphone access for voice features!"
-echo ""
-echo "Press Ctrl+C to stop the server"
-echo "================================================"
-
-# Start the Flask application
-python app.py
+        ;;
+esac

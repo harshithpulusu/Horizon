@@ -1,0 +1,161 @@
+2025-10-06 22:25:07,143 - HorizonLauncher - INFO - 🛠️ Setting up Horizon development environment...
+2025-10-06 22:25:07,322 - HorizonLauncher - ERROR - ❌ Launcher error: 'Flask' object has no attribute 'before_first_request'
+2025-10-06 22:25:39,793 - HorizonLauncher - INFO - 🛠️ Setting up Horizon development environment...
+2025-10-06 22:25:39,980 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:25:40,657 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:25:40,657 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:25:40,658 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:25:40,658 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:25:40,658 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:25:40,689 - HorizonDevSetup - INFO - 🛠️ Setting up Horizon development environment...
+2025-10-06 22:25:40,689 - HorizonDevSetup - INFO - 📁 Created directory: logs
+2025-10-06 22:25:40,689 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_images
+2025-10-06 22:25:40,689 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_videos
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_audio
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_music
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_3d_models
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_avatars
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_logos
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_designs
+2025-10-06 22:25:40,690 - HorizonDevSetup - INFO - 📁 Created directory: static/generated_gifs
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - 📁 Created directory: backups
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - 🗄 Initializing database...
+2025-10-06 22:25:40,691 - HorizonDevSetup - ERROR - ❌ Database initialization failed: cannot access local variable 'get_database_manager' where it is not associated with a value
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - 🔍 Validating configuration...
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - ✅ OPENAI API: Configured
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - ✅ GEMINI API: Configured
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - ✅ GOOGLE_CLOUD_PROJECT API: Configured
+2025-10-06 22:25:40,691 - HorizonDevSetup - INFO - ❌ REPLICATE API: Not configured
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory templates: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory core: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory logs: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static/generated_images: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static/generated_videos: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static/generated_audio: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static/generated_music: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Directory static/generated_3d_models: Exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - 📝 .env file already exists
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - 🧪 Testing core modules...
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ AI Engine: Available
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Personality Engine: 13 personalities available
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Media Engine: 1 generators available
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ✅ Memory System: Operational
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - 🎉 Development environment setup complete!
+2025-10-06 22:25:40,692 - HorizonDevSetup - INFO - ℹ️ Next steps:
+2025-10-06 22:25:40,693 - HorizonDevSetup - INFO -    1. Update .env file with your API keys
+2025-10-06 22:25:40,693 - HorizonDevSetup - INFO -    2. Run: python scripts/start_web.py
+2025-10-06 22:25:40,693 - HorizonDevSetup - INFO -    3. Or run: python scripts/start_mcp.py
+2025-10-06 22:25:40,693 - HorizonDevSetup - INFO -    4. Or run: python scripts/start_both.py
+2025-10-06 22:26:05,009 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:26:05,630 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:26:05,631 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:26:05,631 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:26:05,631 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:26:05,631 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:26:05,645 - HorizonLauncher - INFO - 🌐 Starting Horizon in Web Mode...
+2025-10-06 22:26:05,646 - HorizonWebServer - INFO - 🌐 Starting Horizon Web Server...
+2025-10-06 22:26:05,646 - HorizonWebServer - INFO - 🔗 Server will run on http://0.0.0.0:8080
+2025-10-06 22:26:05,646 - HorizonWebServer - INFO - 📊 Configuration status: {'api_keys': {'openai': True, 'gemini': True, 'google_cloud_project': True, 'replicate': False}, 'directories': {'static': True, 'templates': True, 'core': True, 'logs': True, 'static/generated_images': True, 'static/generated_videos': True, 'static/generated_audio': True, 'static/generated_music': True, 'static/generated_3d_models': True}, 'system_info': {'python_version': None, 'platform': None, 'memory_available': None, 'disk_space': None}}
+2025-10-06 22:26:05,647 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:26:05,651 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:26:05,651 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:26:05,652 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:26:05,652 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:26:05,652 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:26:05,658 - HorizonWebServer - INFO - ✅ Web server starting...
+2025-10-06 22:26:52,031 - HorizonDay3Validator - INFO - 🔍 Starting Day 3 Validation...
+2025-10-06 22:26:52,032 - HorizonDay3Validator - INFO - 📦 Testing core module imports...
+2025-10-06 22:26:52,032 - HorizonDay3Validator - INFO - ✅ Core modules imported successfully
+2025-10-06 22:26:52,032 - HorizonDay3Validator - INFO - 🌐 Testing web module imports...
+2025-10-06 22:26:52,154 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:26:52,783 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:26:52,783 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:26:52,783 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:26:52,783 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:26:52,783 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:26:52,789 - HorizonDay3Validator - INFO - ✅ Web modules imported successfully
+2025-10-06 22:26:52,789 - HorizonDay3Validator - INFO - 🤖 Testing MCP module imports...
+2025-10-06 22:26:52,791 - HorizonDay3Validator - ERROR - ❌ MCP module import failed: cannot import name 'create_mcp_server' from 'mcp' (/Users/harshithpulusu/Documents/Hobby Projects/Horizon/mcp/__init__.py)
+2025-10-06 22:28:31,945 - HorizonDay3Validator - INFO - 🔍 Starting Day 3 Validation...
+2025-10-06 22:28:31,946 - HorizonDay3Validator - INFO - 📦 Testing core module imports...
+2025-10-06 22:28:31,946 - HorizonDay3Validator - INFO - ✅ Core modules imported successfully
+2025-10-06 22:28:31,947 - HorizonDay3Validator - INFO - 🌐 Testing web module imports...
+2025-10-06 22:28:32,073 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:28:32,753 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:28:32,753 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:28:32,753 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:28:32,754 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:28:32,754 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:28:32,764 - HorizonDay3Validator - INFO - ✅ Web modules imported successfully
+2025-10-06 22:28:32,765 - HorizonDay3Validator - INFO - 🤖 Testing MCP module imports...
+2025-10-06 22:28:32,785 - HorizonDay3Validator - ERROR - ❌ MCP module import failed: cannot import name 'create_mcp_server' from 'mcp' (/Users/harshithpulusu/Documents/Hobby Projects/Horizon/mcp/__init__.py)
+2025-10-06 22:28:49,779 - HorizonDay3Validator - INFO - 🔍 Starting Day 3 Validation...
+2025-10-06 22:28:49,780 - HorizonDay3Validator - INFO - 📦 Testing core module imports...
+2025-10-06 22:28:49,780 - HorizonDay3Validator - INFO - ✅ Core modules imported successfully
+2025-10-06 22:28:49,780 - HorizonDay3Validator - INFO - 🌐 Testing web module imports...
+2025-10-06 22:28:49,857 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:28:50,403 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:28:50,403 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:28:50,404 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:28:50,404 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:28:50,405 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:28:50,414 - HorizonDay3Validator - INFO - ✅ Web modules imported successfully
+2025-10-06 22:28:50,414 - HorizonDay3Validator - INFO - 🤖 Testing MCP module imports...
+2025-10-06 22:28:50,423 - HorizonDay3Validator - ERROR - ❌ MCP module import failed: cannot import name 'create_mcp_server' from 'mcp' (/Users/harshithpulusu/Documents/Hobby Projects/Horizon/mcp/__init__.py)
+2025-10-06 22:34:30,199 - HorizonDay3Validator - INFO - 🔍 Starting Day 3 Validation...
+2025-10-06 22:34:30,200 - HorizonDay3Validator - INFO - 📦 Testing core module imports...
+2025-10-06 22:34:30,200 - HorizonDay3Validator - INFO - ✅ Core modules imported successfully
+2025-10-06 22:34:30,201 - HorizonDay3Validator - INFO - 🌐 Testing web module imports...
+2025-10-06 22:34:30,451 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:34:31,309 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:34:31,309 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:34:31,309 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:34:31,310 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:34:31,310 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:34:31,314 - HorizonDay3Validator - INFO - ✅ Web modules imported successfully
+2025-10-06 22:34:31,314 - HorizonDay3Validator - INFO - 🤖 Testing MCP module imports...
+2025-10-06 22:34:31,327 - HorizonDay3Validator - ERROR - ❌ MCP module import failed: name 'CallToolResult' is not defined
+2025-10-06 22:35:45,624 - HorizonDay3Validator - INFO - 🔍 Starting Day 3 Validation...
+2025-10-06 22:35:45,624 - HorizonDay3Validator - INFO - 📦 Testing core module imports...
+2025-10-06 22:35:45,624 - HorizonDay3Validator - INFO - ✅ Core modules imported successfully
+2025-10-06 22:35:45,624 - HorizonDay3Validator - INFO - 🌐 Testing web module imports...
+2025-10-06 22:35:45,745 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:35:46,487 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:35:46,488 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:35:46,488 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:35:46,488 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:35:46,488 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:35:46,494 - HorizonDay3Validator - INFO - ✅ Web modules imported successfully
+2025-10-06 22:35:46,494 - HorizonDay3Validator - INFO - 🤖 Testing MCP module imports...
+2025-10-06 22:35:46,503 - HorizonDay3Validator - INFO - ✅ MCP modules imported successfully
+2025-10-06 22:35:46,503 - HorizonDay3Validator - INFO - 📜 Testing scripts module imports...
+2025-10-06 22:35:46,517 - HorizonDay3Validator - INFO - ✅ Scripts modules imported successfully
+2025-10-06 22:35:46,518 - HorizonDay3Validator - INFO - 🌐 Testing Flask app creation...
+2025-10-06 22:35:46,519 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:35:46,527 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:35:46,527 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:35:46,527 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:35:46,527 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:35:46,527 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:35:46,531 - HorizonDay3Validator - INFO - ✅ Flask app created with 11 routes
+2025-10-06 22:35:46,532 - HorizonDay3Validator - INFO - 🤖 Testing MCP server creation...
+2025-10-06 22:35:46,532 - HorizonMCP - INFO - 🤖 Initializing Horizon MCP Server...
+2025-10-06 22:35:46,532 - HorizonMCP - INFO - ✅ Core systems initialized
+2025-10-06 22:35:46,532 - HorizonMCP - INFO - 🚀 MCP Server ready: 8 tools, 3 resources, 1 prompts
+2025-10-06 22:35:46,532 - HorizonDay3Validator - INFO - ✅ MCP server created with 8 tools, 3 resources, 1 prompts
+2025-10-06 22:35:46,532 - HorizonDay3Validator - INFO - ⚙️ Testing configuration...
+2025-10-06 22:35:46,533 - HorizonDay3Validator - INFO - ✅ Configuration valid: 3 APIs, 9 directories
+2025-10-06 22:35:46,533 - HorizonDay3Validator - INFO - 📁 Testing file structure...
+2025-10-06 22:35:46,534 - HorizonDay3Validator - INFO - ✅ All 14 required files exist
+2025-10-06 22:35:46,534 - HorizonDay3Validator - INFO - 🔄 Testing shared core usage...
+2025-10-06 22:35:46,535 - HorizonWeb - INFO - � Initializing core systems...
+2025-10-06 22:35:46,537 - HorizonWeb - INFO - 🤖 AI Engine status: Ready
+2025-10-06 22:35:46,537 - HorizonWeb - INFO - 🎭 Loaded 13 personalities
+2025-10-06 22:35:46,537 - HorizonWeb - INFO - 🧠 Memory system initialized
+2025-10-06 22:35:46,537 - HorizonWeb - INFO - 🎨 Media engine: 1 generators available
+2025-10-06 22:35:46,537 - HorizonWeb - INFO - ✅ Core systems initialized successfully
+2025-10-06 22:35:46,542 - HorizonDay3Validator - INFO - ✅ Both web and MCP interfaces use shared core
+2025-10-06 22:35:46,542 - HorizonDay3Validator - INFO - 📂 Testing directory structure...
+2025-10-06 22:35:46,542 - HorizonDay3Validator - INFO - ✅ All 11 required directories exist
+2025-10-06 22:35:46,542 - HorizonDay3Validator - INFO - 🎉 Day 3 validation completed successfully!
