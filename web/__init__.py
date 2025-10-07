@@ -17,3 +17,17 @@ Modules:
 
 __version__ = "1.0.0"
 __author__ = "Horizon AI Team"
+
+# Web module imports (to be created)
+try:
+    from .app import create_app, app
+    from .routes import register_routes
+    
+    __all__ = [
+        'create_app',
+        'app', 
+        'register_routes'
+    ]
+except ImportError:
+    # Modules not yet created
+    __all__ = []
