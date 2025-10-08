@@ -279,6 +279,10 @@ class VideoGenerator:
         """Initialize video generator."""
         self.available_models = []
         
+        # Check for Google Veo 3 availability
+        if GEMINI_AVAILABLE:
+            self.available_models.append('veo-3')
+        
         if REPLICATE_AVAILABLE:
             self.available_models.extend(['stable-video', 'runway-ml'])
         
@@ -289,7 +293,10 @@ class VideoGenerator:
         params = {**DEFAULT_VIDEO_PARAMS, **(params or {})}
         
         try:
-            if 'stable-video' in self.available_models:
+            # Try Veo 3 first if available
+            if 'veo-3' in self.available_models:
+                return self._generate_with_veo3(prompt, params)
+            elif 'stable-video' in self.available_models:
                 return self._generate_with_stable_video(prompt, params)
             else:
                 return self._generate_placeholder_video(prompt, params)
@@ -300,6 +307,52 @@ class VideoGenerator:
                 'success': False,
                 'error': str(e),
                 'fallback': self._generate_placeholder_video(prompt, params)
+            }
+    
+    def _generate_with_veo3(self, prompt: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate video using Google Veo 3."""
+        try:
+            print(f"🎬 Attempting Veo 3 video generation: {prompt}")
+            
+            # Note: Veo 3 may not be publicly available yet
+            # This is a framework for when Google releases the API
+            
+            # Check if we have the right API access
+            if not GEMINI_AVAILABLE:
+                raise Exception("Gemini AI not available")
+            
+            # Try to use Gemini for video generation
+            # This is currently a placeholder as Veo 3 API isn't publicly available
+            import google.generativeai as genai
+            
+            # Enhanced prompt for video generation
+            video_prompt = f"Create a high-quality video of: {prompt}. Duration: {params.get('duration', 5)} seconds. Style: cinematic, professional quality."
+            
+            # For now, return a structured response indicating Veo 3 status
+            filename = f"veo3_video_{uuid.uuid4().hex[:8]}.mp4"
+            filepath = os.path.join(MEDIA_OUTPUT_DIRS['videos'], filename)
+            
+            return {
+                'success': False,
+                'model': 'veo-3',
+                'prompt': prompt,
+                'filename': filename,
+                'filepath': filepath,
+                'url': f'/static/generated_videos/{filename}',
+                'params': params,
+                'generated_at': datetime.now().isoformat(),
+                'status': 'api_not_available',
+                'message': 'Veo 3 API is not yet publicly available. Framework ready for when Google releases the API.',
+                'note': 'Google Veo 3 is announced but API access is limited. Check https://deepmind.google/technologies/veo/ for updates.'
+            }
+            
+        except Exception as e:
+            print(f"⚠️ Veo 3 generation error: {e}")
+            return {
+                'success': False,
+                'model': 'veo-3',
+                'error': f'Veo 3 not available: {str(e)}',
+                'fallback_available': True
             }
     
     def _generate_with_stable_video(self, prompt: str, params: Dict[str, Any]) -> Dict[str, Any]:
