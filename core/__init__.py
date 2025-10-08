@@ -38,16 +38,21 @@ from .database import (
 # Import media generator components
 from .media_generator import (
     MediaEngine, ImageGenerator, VideoGenerator, AudioGenerator, ModelGenerator,
-    get_media_engine, get_image_generator, get_video_generator, 
-    get_audio_generator, get_model_generator,
-    generate_image, generate_video, generate_audio, generate_3d_model
+    EnhancedMediaEngine, LogoGenerator, Enhanced3DModelGenerator,
+    get_media_engine, get_enhanced_media_engine, get_logo_generator, get_enhanced_3d_generator,
+    get_image_generator, get_video_generator, get_audio_generator, get_model_generator,
+    generate_image, generate_video, generate_audio, generate_3d_model, generate_logo_design
 )
 
 # Import memory system components
 from .memory_system import (
     MemorySystem, UserMemory, ContextManager, LearningEngine,
+    DatabaseMemorySystem, EnhancedMemorySystem,
     get_memory_system, get_context_manager, get_learning_engine, get_user_memory,
-    store_user_memory, get_user_context, learn_from_interaction, get_personalized_response
+    get_enhanced_memory_system, get_database_memory_system,
+    store_user_memory, get_user_context, learn_from_interaction, get_personalized_response,
+    save_user_memory, retrieve_user_memory, save_conversation, 
+    build_conversation_context, extract_learning_patterns, get_memory_stats
 )
 
 # Import utility components
@@ -76,14 +81,19 @@ __all__ = [
     
     # Media Generation
     'MediaEngine', 'ImageGenerator', 'VideoGenerator', 'AudioGenerator', 'ModelGenerator',
-    'get_media_engine', 'get_image_generator', 'get_video_generator', 
-    'get_audio_generator', 'get_model_generator',
-    'generate_image', 'generate_video', 'generate_audio', 'generate_3d_model',
+    'EnhancedMediaEngine', 'LogoGenerator', 'Enhanced3DModelGenerator',
+    'get_media_engine', 'get_enhanced_media_engine', 'get_logo_generator', 'get_enhanced_3d_generator',
+    'get_image_generator', 'get_video_generator', 'get_audio_generator', 'get_model_generator',
+    'generate_image', 'generate_video', 'generate_audio', 'generate_3d_model', 'generate_logo_design',
     
     # Memory System
     'MemorySystem', 'UserMemory', 'ContextManager', 'LearningEngine',
+    'DatabaseMemorySystem', 'EnhancedMemorySystem',
     'get_memory_system', 'get_context_manager', 'get_learning_engine', 'get_user_memory',
+    'get_enhanced_memory_system', 'get_database_memory_system',
     'store_user_memory', 'get_user_context', 'learn_from_interaction', 'get_personalized_response',
+    'save_user_memory', 'retrieve_user_memory', 'save_conversation', 
+    'build_conversation_context', 'extract_learning_patterns', 'get_memory_stats',
     
     # Utilities
     'CoreLogger', 'ConfigValidator', 'InputSanitizer', 'ResponseFormatter', 
