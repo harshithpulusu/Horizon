@@ -2593,13 +2593,97 @@
         </div>
     </div>
     
-    <script src="/static/enhanced_ai.js"></script>
+    <script src="/static/enhanced_ai.js?v=20251008-1326"></script>
     <script src="/static/professional-ui.js"></script>
     <script src="/static/interactive-background.js"></script>
     <script src="/static/voice-enhancements.js"></script>
     <script src="/static/memory-learning.js"></script>
     <script src="/static/contextual-intelligence.js"></script>
     <script src="/static/personality-blending.js"></script>
+    
+    <!-- Debug script for send button -->
+    <script>
+        console.log('🔧 Debug script loaded');
+        
+        // Backup send button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 DOM loaded, setting up backup send button');
+            
+            const sendBtn = document.getElementById('sendMessage');
+            const input = document.getElementById('voiceInput');
+            
+            if (sendBtn && input) {
+                console.log('🔧 Found send button and input field');
+                
+                // Add a direct click handler as backup
+                sendBtn.addEventListener('click', function(e) {
+                    console.log('🔧 Send button clicked!');
+                    const message = input.value.trim();
+                    if (message) {
+                        console.log('🔧 Sending message:', message);
+                        
+                        // Add message to chat manually if main system fails
+                        const messagesContainer = document.getElementById('messages');
+                        if (messagesContainer) {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'message user';
+                            messageDiv.innerHTML = `
+                                <div class="message-header">
+                                    <strong>You</strong>
+                                    <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                                </div>
+                                <div class="message-content">${message}</div>
+                            `;
+                            messagesContainer.appendChild(messageDiv);
+                            input.value = '';
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            
+                            // Try to send to server
+                            fetch('/api/process', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ 
+                                    input: message,
+                                    personality: 'friendly',
+                                    user_id: 'debug-user'
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('🔧 Server response:', data);
+                                const aiMessageDiv = document.createElement('div');
+                                aiMessageDiv.className = 'message ai';
+                                aiMessageDiv.innerHTML = `
+                                    <div class="message-header">
+                                        <strong>Horizon AI</strong>
+                                        <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                                    </div>
+                                    <div class="message-content">${data.response || 'Error: No response'}</div>
+                                `;
+                                messagesContainer.appendChild(aiMessageDiv);
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            })
+                            .catch(error => {
+                                console.error('🔧 Error:', error);
+                            });
+                        }
+                    }
+                });
+                
+                // Also handle Enter key
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        console.log('🔧 Enter key pressed');
+                        sendBtn.click();
+                    }
+                });
+            } else {
+                console.error('🔧 Could not find send button or input field');
+            }
+        });
+    </script>
     <script>
         // Model Management JavaScript
         let modelStats = { trained: 0, training: 0 };

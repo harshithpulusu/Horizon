@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon AI Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .message-input:focus {
+            border-color: #667eea;
+        }
+        
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            color: #667eea;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🌟 Horizon AI</h1>
+            <p>Your Enhanced AI Assistant with Veo 3 Support</p>
+        </div>
+        
+        <div class="messages" id="messages">
+            <div class="message ai-message">
+                <div class="message-sender">Horizon AI</div>
+                <div>Hello! I'm your enhanced AI assistant. I can help with various tasks including:</div>
+                <br>
+                <div>🎥 <strong>Video Generation:</strong></div>
+                <div>• "create a veo3 video of sunset" (Google Veo 3)</div>
+                <div>• "make a video of cats playing" (DALL-E)</div>
+                <div>• "create cinematic video of robot dancing" (Runway)</div>
+                <br>
+                <div>💬 <strong>General Chat:</strong> Ask me anything!</div>
+                <br>
+                <div>What would you like to do today?</div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <div class="status" id="status">Ready to chat! 🚀</div>
+            <form class="input-form" id="chatForm">
+                <input 
+                    type="text" 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    value="create a veo3 video of beautiful sunset over ocean"
+                >
+                <button type="submit" class="send-button" id="sendButton">
+                    Send 🚀
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const form = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesContainer = document.getElementById('messages');
+        const statusDiv = document.getElementById('status');
+        
+        // Add message to chat
+        function addMessage(sender, content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = sender;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = content;
+            
+            messageDiv.appendChild(senderDiv);
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Update status
+        function setStatus(message) {
+            statusDiv.textContent = message;
+        }
+        
+        // Send message function
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage('You', message, true);
+            messageInput.value = '';
+            
+            // Disable send button and show loading
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+            setStatus('Processing your request... 🤖');
+            
+            try {
+                console.log('🚀 Sending to API:', message);
+                
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: message,
+                        personality: 'friendly',
+                        user_id: 'user_' + Date.now()
+                    })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Response received:', data);
+                    
+                    const aiResponse = data.response || 'Sorry, I didn\'t receive a proper response.';
+                    addMessage('Horizon AI', aiResponse);
+                    setStatus('Ready for your next message! 🚀');
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Error response:', errorText);
+                    addMessage('System', `Error ${response.status}: ${errorText}`, false);
+                    setStatus('Error occurred. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('💥 Network error:', error);
+                addMessage('System', `Connection error: ${error.message}`, false);
+                setStatus('Connection error. Please check your network.');
+            } finally {
+                // Re-enable send button
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send 🚀';
+            }
+        }
+        
+        // Event listeners
+        form.addEventListener('submit', sendMessage);
+        
+        // Focus input on load
+        messageInput.focus();
+        
+        console.log('💬 Simple chat interface loaded and ready!');
+        setStatus('Ready to chat! 🚀');
+    </script>
+</body>
+</html>

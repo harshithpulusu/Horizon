@@ -14172,6 +14172,10 @@ def home():
 def test():
     return "Server is working!"
 
+@app.route('/chat')
+def simple_chat():
+    return render_template('simple_chat.html')
+
 @app.route('/api/health')
 def health_check():
     return jsonify({

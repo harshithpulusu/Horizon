@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon AI Test Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .chat-container {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .user {
+            background: #4a5568;
+            text-align: right;
+        }
+        
+        .ai {
+            background: #2d3748;
+            text-align: left;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #2a2a2a;
+            color: white;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #3182ce;
+        }
+        
+        .status {
+            margin: 10px 0;
+            font-style: italic;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌟 Horizon AI Test Chat</h1>
+    <div class="status" id="status">Ready to chat!</div>
+    
+    <div class="chat-container" id="messages">
+        <div class="message ai">
+            <strong>Horizon AI:</strong> Hello! I'm ready to help. Try asking me to generate a video with Veo 3!
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <input type="text" id="messageInput" placeholder="Type your message here..." value="create a veo3 video of sunset">
+        <button id="sendButton">Send</button>
+    </div>
+    
+    <script>
+        console.log('🔧 Test chat page loaded');
+        
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesContainer = document.getElementById('messages');
+        const statusDiv = document.getElementById('status');
+        
+        function addMessage(sender, message, className = '') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function setStatus(message) {
+            statusDiv.textContent = message;
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            console.log('🔧 Sending message:', message);
+            addMessage('You', message, 'user');
+            messageInput.value = '';
+            setStatus('Sending...');
+            
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: message,
+                        personality: 'friendly',
+                        user_id: 'test-user'
+                    })
+                });
+                
+                console.log('🔧 Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔧 Response data:', data);
+                    addMessage('Horizon AI', data.response || 'No response received', 'ai');
+                    setStatus('Ready to chat!');
+                } else {
+                    const errorText = await response.text();
+                    console.error('🔧 Error response:', errorText);
+                    addMessage('System', `Error: ${response.status} - ${errorText}`, 'ai');
+                    setStatus('Error occurred');
+                }
+            } catch (error) {
+                console.error('🔧 Network error:', error);
+                addMessage('System', `Network error: ${error.message}`, 'ai');
+                setStatus('Network error');
+            }
+        }
+        
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        console.log('🔧 Test chat ready!');
+    </script>
+</body>
+</html>

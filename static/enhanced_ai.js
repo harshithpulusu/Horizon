@@ -2358,3 +2358,10 @@ function closeToast(button) {
     toast.classList.add('hide');
     setTimeout(() => toast.remove(), 300);
 }
+
+// Initialize the Enhanced AI Voice Assistant when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🤖 Initializing Enhanced AI Voice Assistant...');
+    window.voiceAssistant = new EnhancedAIVoiceAssistant();
+    console.log('✅ Enhanced AI Voice Assistant initialized successfully!');
+});
