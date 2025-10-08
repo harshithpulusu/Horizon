@@ -76,6 +76,20 @@ except ImportError:
     GEMINI_AVAILABLE = False
     print("⚠️ Google Gemini AI not available")
 
+# Enhanced Media Generation System with Veo 3 support
+try:
+    from core.media_generator import EnhancedMediaEngine
+    ENHANCED_MEDIA_AVAILABLE = True
+    print("🎬 Enhanced Media Engine with Veo 3 support loaded successfully")
+    
+    # Initialize the enhanced media engine
+    enhanced_media_engine = EnhancedMediaEngine()
+    
+except ImportError as e:
+    ENHANCED_MEDIA_AVAILABLE = False
+    enhanced_media_engine = None
+    print(f"⚠️ Enhanced Media Engine not available: {e}")
+
 # Google Imagen (Vertex AI) imports
 try:
     from google.cloud import aiplatform
@@ -12213,28 +12227,34 @@ def transcribe_audio(audio_file_path):
 # ===============================================
 
 def generate_text_video(text_prompt, duration=5, fps=30, quality="high", method="auto"):
-    """Enhanced video generation with hybrid DALL-E + Runway ML support"""
+    """Enhanced video generation with Veo 3, Runway ML, and DALL-E support"""
     
-    # Check if Runway ML is available
+    # Check available video generation methods
+    veo3_available = ENHANCED_MEDIA_AVAILABLE and GEMINI_AVAILABLE
     runway_available = bool(Config.RUNWAY_API_KEY)
     
     # Determine best method
     if method == "auto":
-        chosen_method = determine_best_video_method(text_prompt, runway_available)
+        chosen_method = determine_best_video_method(text_prompt, veo3_available, runway_available)
     else:
         chosen_method = method
     
-    # Validate method availability
-    if chosen_method == 'runway' and not runway_available:
-        print("⚠️ Runway ML not available, falling back to DALL-E")
-        chosen_method = 'dalle'
+    # Validate method availability and fallback if needed
+    if chosen_method == 'veo3' and not veo3_available:
+        print("⚠️ Veo 3 not available, falling back to Runway ML")
+        chosen_method = 'runway' if runway_available else 'dalle'
+    elif chosen_method == 'runway' and not runway_available:
+        print("⚠️ Runway ML not available, falling back to Veo 3" if veo3_available else "⚠️ Runway ML not available, falling back to DALL-E")
+        chosen_method = 'veo3' if veo3_available else 'dalle'
     
     print(f"🎬 Generating video using {chosen_method.upper()} method...")
     print(f"   📝 Prompt: {text_prompt}")
     print(f"   ⚙️ Quality: {quality}")
     
     # Generate video based on chosen method
-    if chosen_method == 'runway' and runway_available:
+    if chosen_method == 'veo3' and veo3_available:
+        return generate_veo3_video(text_prompt, duration, quality)
+    elif chosen_method == 'runway' and runway_available:
         return generate_runway_video(text_prompt, duration, quality)
     else:
         # Call existing DALL-E function and ensure we return a tuple
@@ -12245,10 +12265,10 @@ def generate_text_video(text_prompt, duration=5, fps=30, quality="high", method=
             # If it returns just a filename, create tuple
             return (result, None) if result else (None, "Failed to generate video")
 
-def determine_best_video_method(prompt, runway_available):
-    """Intelligently choose between DALL-E and Runway based on prompt"""
+def determine_best_video_method(prompt, veo3_available=False, runway_available=False):
+    """Intelligently choose between Veo 3, DALL-E, and Runway based on prompt"""
     
-    if not runway_available:
+    if not veo3_available and not runway_available:
         return 'dalle'
     
     # Analyze prompt for cinematic keywords
@@ -12258,11 +12278,25 @@ def determine_best_video_method(prompt, runway_available):
         'hollywood', 'epic', 'scene', 'sequence', 'camera', 'shot'
     ]
     
+    # Keywords that benefit from Veo 3's advanced capabilities
+    veo3_keywords = [
+        'high quality', 'photorealistic', 'ultra realistic', 'masterpiece',
+        'detailed', 'complex scene', 'advanced', 'premium', 'best quality',
+        'google', 'veo', 'state of the art', 'cutting edge'
+    ]
+    
     prompt_lower = prompt.lower()
     
-    # Check for cinematic keywords
+    # Check for Veo 3 preference keywords
+    if veo3_available and any(keyword in prompt_lower for keyword in veo3_keywords):
+        return 'veo3'
+    
+    # Check for cinematic keywords - prefer Veo 3 if available, then Runway
     if any(keyword in prompt_lower for keyword in cinematic_keywords):
-        return 'runway'
+        if veo3_available:
+            return 'veo3'
+        elif runway_available:
+            return 'runway'
     
     # Check for complex scenes that benefit from true video
     complex_keywords = [
@@ -12272,10 +12306,60 @@ def determine_best_video_method(prompt, runway_available):
     ]
     
     if any(keyword in prompt_lower for keyword in complex_keywords):
-        return 'runway'
+        if veo3_available:
+            return 'veo3'
+        elif runway_available:
+            return 'runway'
     
-    # Default to DALL-E for static or simple scenes
-    return 'dalle'
+    # Default preference: Veo 3 > Runway > DALL-E
+    if veo3_available:
+        return 'veo3'
+    elif runway_available:
+        return 'runway'
+    else:
+        return 'dalle'
+
+def generate_veo3_video(prompt, duration=5, quality="high"):
+    """Generate video using Google Veo 3 for state-of-the-art quality"""
+    
+    try:
+        if not ENHANCED_MEDIA_AVAILABLE or not enhanced_media_engine:
+            return None, "Enhanced Media Engine not available"
+        
+        print(f"🎬 Veo 3: Creating state-of-the-art video...")
+        print(f"📝 Prompt: {prompt}")
+        print(f"⚙️ Quality: {quality}")
+        
+        # Map quality levels to parameters
+        quality_params = {
+            "quick": {"duration": min(duration, 3), "fps": 24, "quality": "standard"},
+            "standard": {"duration": min(duration, 5), "fps": 24, "quality": "high"},
+            "high": {"duration": min(duration, 7), "fps": 24, "quality": "high"},
+            "ultra": {"duration": min(duration, 10), "fps": 30, "quality": "ultra"}
+        }
+        
+        params = quality_params.get(quality, quality_params["standard"])
+        
+        # Generate video using enhanced media engine
+        result = enhanced_media_engine.generate_video(
+            prompt=prompt,
+            duration=params["duration"],
+            fps=params["fps"],
+            quality=params["quality"]
+        )
+        
+        if result and result.get('success'):
+            filename = os.path.basename(result['filepath'])
+            print(f"✅ Veo 3 video generated: {filename}")
+            return filename, None
+        else:
+            error_msg = result.get('message', 'Unknown error') if result else 'Generation failed'
+            print(f"❌ Veo 3 generation failed: {error_msg}")
+            return None, error_msg
+            
+    except Exception as e:
+        print(f"❌ Veo 3 error: {e}")
+        return None, f"Veo 3 generation error: {str(e)}"
 
 def generate_runway_video(prompt, duration=5, quality="high"):
     """Generate video using Runway ML for cinematic quality"""
@@ -12858,7 +12942,7 @@ def generate_animated_gif(text_prompt, duration=3, fps=15, quality="high"):
         return None, f"Error generating GIF: {str(e)}"
 
 def handle_video_generation(text):
-    """Enhanced video generation with hybrid DALL-E + Runway ML support"""
+    """Enhanced video generation with Veo 3, Runway ML, and DALL-E support"""
     
     # Extract quality level from text
     quality = "quick"  # Default to quick for faster processing
@@ -12873,7 +12957,9 @@ def handle_video_generation(text):
     
     # Extract generation method preference
     method = "auto"  # Default to automatic method selection
-    if any(word in text.lower() for word in ["cinematic", "movie", "film", "realistic", "professional", "runway"]):
+    if any(word in text.lower() for word in ["veo", "veo3", "google", "state of the art", "cutting edge"]):
+        method = "veo3"
+    elif any(word in text.lower() for word in ["cinematic", "movie", "film", "realistic", "professional", "runway"]):
         method = "runway"
     elif any(word in text.lower() for word in ["dalle", "animated", "slideshow", "quick", "cheap"]):
         method = "dalle"
@@ -12888,7 +12974,7 @@ def handle_video_generation(text):
         r'create.*video\s*(.+)',
         r'make.*video\s*(.+)',
         r'(?:video|movie|film).*[:\-]\s*(.+)',
-        r'(?:cinematic|runway|dalle).*(?:video|shot).*(?:of|about)\s*(.+)'
+        r'(?:cinematic|runway|dalle|veo|veo3|google).*(?:video|shot).*(?:of|about)\s*(.+)'
     ]
     
     prompt = None
@@ -12899,8 +12985,15 @@ def handle_video_generation(text):
             break
     
     if not prompt:
+        veo3_status = "🌟 **Google Veo 3** (State-of-the-Art AI):" if ENHANCED_MEDIA_AVAILABLE and GEMINI_AVAILABLE else ""
+        veo3_examples = """- 'create a veo3 video of futuristic city'
+- 'make a google video about nature'""" if ENHANCED_MEDIA_AVAILABLE and GEMINI_AVAILABLE else ""
+        
         return f"""🎥 I can generate videos using multiple methods:
         
+{veo3_status}
+{veo3_examples}
+
 🎨 **DALL-E Animated** (Fast & Affordable):
 - 'create a video of cats playing'
 - 'make a quick video about sunset'
@@ -12913,7 +13006,7 @@ Just describe what you'd like me to create!"""
     
     # Clean up prompt
     prompt = prompt.replace("high quality", "").replace("ultra quality", "").replace("quick", "").strip()
-    prompt = prompt.replace("cinematic", "").replace("runway", "").replace("dalle", "").strip()
+    prompt = prompt.replace("cinematic", "").replace("runway", "").replace("dalle", "").replace("veo3", "").replace("veo", "").replace("google", "").strip()
     
     print(f"🎥 Generating {quality} quality video with {method} method: {prompt}")
     
@@ -12925,15 +13018,32 @@ Just describe what you'd like me to create!"""
             return f"🎥 I encountered an issue generating the video: {error}"
         
         if video_filename:
-            # Determine if it's a Runway or DALL-E video for appropriate messaging
+            # Determine video generation method for appropriate messaging
+            is_veo3 = video_filename.startswith('veo3_') or video_filename.startswith('enhanced_video_')
             is_runway = video_filename.startswith('runway_')
-            method_name = "Runway ML Cinematic" if is_runway else "DALL-E Animated"
+            
+            if is_veo3:
+                method_name = "Google Veo 3 AI"
+                method_icon = "🌟"
+            elif is_runway:
+                method_name = "Runway ML Cinematic"
+                method_icon = "🎬"
+            else:
+                method_name = "DALL-E Animated"
+                method_icon = "🎨"
             
             # Create full URL for the video
             full_video_url = f"http://192.168.1.206:8080/static/generated_videos/{video_filename}"
             
-            # Enhanced quality descriptions for hybrid system
-            if is_runway:
+            # Enhanced quality descriptions for all methods
+            if is_veo3:
+                quality_desc = {
+                    "quick": "Veo 3 Quick (1280×720, 3s) 🌟 State-of-the-art AI",
+                    "standard": "Veo 3 Standard (1280×720, 5s) 🌟 Advanced AI quality",
+                    "high": "Veo 3 High (1280×720, 7s) 🌟 Premium AI generation",
+                    "ultra": "Veo 3 Ultra (1280×720, 10s) 🌟 Masterpiece AI level"
+                }
+            elif is_runway:
                 quality_desc = {
                     "quick": "Runway Quick (16:9, 3s) 🎬 Cinematic quality",
                     "standard": "Runway Standard (16:9, 5s) 🎬 Professional grade",

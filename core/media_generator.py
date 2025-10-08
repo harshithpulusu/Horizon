@@ -130,8 +130,11 @@ class MediaEngine:
         if OPENAI_AVAILABLE or IMAGEN_AVAILABLE:
             self.generators['image'] = ImageGenerator()
         
-        if REPLICATE_AVAILABLE:
+        # Initialize video generator if Gemini (for Veo 3) or Replicate is available
+        if GEMINI_AVAILABLE or REPLICATE_AVAILABLE:
             self.generators['video'] = VideoGenerator()
+        
+        if REPLICATE_AVAILABLE:
             self.generators['audio'] = AudioGenerator()
             self.generators['model'] = ModelGenerator()
         
