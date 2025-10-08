@@ -1,0 +1,15 @@
+[Unit]
+Description=Horizon MCP Agent
+After=network.target
+
+[Service]
+Type=simple
+User=horizon
+WorkingDirectory=/Users/harshithpulusu/Documents/Hobby Projects/Horizon
+Environment=PYTHONPATH=/Users/harshithpulusu/Documents/Hobby Projects/Horizon
+ExecStart=/usr/local/bin/python3 -m scripts.start_mcp
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

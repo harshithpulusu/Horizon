@@ -1,0 +1,59 @@
+{
+  "deployment": {
+    "mode": "production",
+    "log_level": "INFO",
+    "max_workers": 4,
+    "timeout": 30,
+    "rate_limit": {
+      "requests_per_minute": 60,
+      "burst_limit": 10
+    }
+  },
+  "mcp": {
+    "protocol_version": "2025-06-18",
+    "stdio_mode": true,
+    "max_message_size": 1048576,
+    "heartbeat_interval": 30
+  },
+  "memory": {
+    "database_path": "production_memory.db",
+    "cleanup_interval_hours": 24,
+    "max_memory_age_days": 365,
+    "context_window_size": 20
+  },
+  "media": {
+    "output_directory": "production_media",
+    "max_file_size_mb": 50,
+    "supported_formats": {
+      "images": [
+        "png",
+        "jpg",
+        "webp"
+      ],
+      "videos": [
+        "mp4",
+        "webm"
+      ],
+      "audio": [
+        "mp3",
+        "wav"
+      ],
+      "models": [
+        "obj",
+        "glb"
+      ]
+    }
+  },
+  "security": {
+    "input_validation": true,
+    "rate_limiting": true,
+    "content_filtering": true,
+    "audit_logging": true
+  },
+  "monitoring": {
+    "metrics_enabled": true,
+    "health_checks": true,
+    "performance_logging": true,
+    "error_tracking": true
+  }
+}

@@ -485,7 +485,15 @@ class DatabaseMemorySystem(MemorySystem):
                 )
             ''')
             
-            # Conversation context table
+            # Check if conversation_context table exists and has correct schema
+            cursor.execute("PRAGMA table_info(conversation_context)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'user_identifier' not in columns:
+                # Drop and recreate table with correct schema
+                cursor.execute('DROP TABLE IF EXISTS conversation_context')
+            
+            # Conversation context table with correct schema
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS conversation_context (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -938,3 +946,25 @@ def extract_learning_patterns(user_input: str, ai_response: str, intent: str, co
 def get_memory_stats(user_id: str = None) -> Dict[str, Any]:
     """Get memory statistics."""
     return get_enhanced_memory_system().get_memory_stats(user_id)
+
+# Backward compatibility function
+def store_user_memory(user_id: str, memory_type: str, content: str,
+                     context: str = None, importance_score: float = None) -> str:
+    """Store user memory (backward compatibility)."""
+    # Convert to key-value format for database storage
+    key = f"content_{len(content)}"  # Simple key generation
+    importance = importance_score if importance_score is not None else 0.5
+    success = save_user_memory(user_id, memory_type, key, content, importance)
+    return key if success else None
+
+def get_user_context(user_id: str, limit: int = 5) -> str:
+    """Get user conversation context (backward compatibility)."""
+    return get_context_manager().get_conversation_context(user_id, limit)
+
+def learn_from_interaction(user_id: str, interaction_data: Dict[str, Any]):
+    """Learn from user interaction (backward compatibility)."""
+    return get_learning_engine().learn_from_interaction(user_id, interaction_data)
+
+def get_personalized_response(user_id: str) -> Dict[str, Any]:
+    """Get personalized response hints (backward compatibility)."""
+    return get_learning_engine().get_personalized_response_hints(user_id)

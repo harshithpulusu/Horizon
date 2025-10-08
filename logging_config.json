@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "detailed": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    },
+    "simple": {
+      "format": "%(levelname)s - %(message)s"
+    }
+  },
+  "handlers": {
+    "file": {
+      "class": "logging.FileHandler",
+      "filename": "logs/horizon_agent_20251007.log",
+      "formatter": "detailed",
+      "level": "INFO"
+    },
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "simple",
+      "level": "INFO"
+    }
+  },
+  "loggers": {
+    "HorizonMCP": {
+      "handlers": [
+        "file",
+        "console"
+      ],
+      "level": "INFO",
+      "propagate": false
+    }
+  }
+}
