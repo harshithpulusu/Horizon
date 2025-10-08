@@ -20,6 +20,7 @@ Functions:
 import os
 import json
 import uuid
+import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from collections import defaultdict

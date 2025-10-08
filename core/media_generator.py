@@ -22,6 +22,7 @@ import os
 import json
 import uuid
 import random
+import requests
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 from config import Config
@@ -497,19 +498,305 @@ def get_model_generator() -> Optional[ModelGenerator]:
     engine = get_media_engine()
     return engine.generators.get('model')
 
+# Enhanced specialized generators extracted from app.py
+class LogoGenerator:
+    """Professional logo and brand design generation."""
+    
+    def __init__(self):
+        """Initialize logo generator."""
+        self.industry_prompts = {
+            'technology': 'tech, digital, innovation, modern, circuit patterns, gear icons',
+            'healthcare': 'medical, health, care, cross symbol, healing, wellness, trust',
+            'finance': 'banking, money, security, stability, professional, trust, growth',
+            'restaurant': 'food, dining, chef hat, fork and knife, culinary, appetite',
+            'fashion': 'style, elegance, clothing, trendy, chic, sophisticated',
+            'education': 'learning, books, graduation cap, knowledge, growth, development',
+            'automotive': 'cars, speed, movement, wheels, engineering, power',
+            'beauty': 'elegance, style, cosmetics, wellness, luxury, refined',
+            'sports': 'athletic, fitness, energy, movement, strength, competition',
+            'travel': 'adventure, exploration, journey, compass, globe, destinations'
+        }
+        print("🏷️ Logo Generator initialized")
+    
+    def generate_logo(self, brand_name: str, industry: str, style: str = "modern") -> Dict[str, Any]:
+        """Generate professional logo design."""
+        try:
+            # Enhanced logo prompt with industry-specific elements
+            logo_prompt = f"professional logo design for {brand_name}, {industry} industry, {style} style"
+            
+            # Add industry-specific elements
+            if industry in self.industry_prompts:
+                logo_prompt += f", {self.industry_prompts[industry]}"
+            
+            # Style-specific enhancements
+            style_prompts = {
+                "modern": "clean lines, minimalist, contemporary design, geometric shapes, sans-serif typography",
+                "vintage": "retro aesthetic, classic typography, timeless design, aged textures, serif fonts",
+                "creative": "artistic flair, unique concept, innovative design, abstract elements, creative typography",
+                "corporate": "professional appearance, trustworthy, business-oriented, clean, authoritative",
+                "playful": "fun, colorful, friendly, approachable, rounded shapes, vibrant colors",
+                "elegant": "sophisticated, luxury, refined, premium, elegant typography, subtle colors"
+            }
+            
+            if style.lower() in style_prompts:
+                logo_prompt += f", {style_prompts[style.lower()]}"
+            
+            logo_prompt += ", vector style, high contrast, suitable for business use, scalable, memorable branding"
+            
+            # Generate using image generator
+            image_gen = get_image_generator()
+            if image_gen:
+                result = image_gen.generate(logo_prompt)
+                result['logo_type'] = 'professional'
+                result['brand_name'] = brand_name
+                result['industry'] = industry
+                result['style'] = style
+                return result
+            else:
+                return {
+                    'success': False,
+                    'error': 'Image generator not available for logo generation'
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Logo generation failed: {str(e)}'
+            }
+
+
+class Enhanced3DModelGenerator:
+    """Enhanced 3D model generation with multiple API support."""
+    
+    def __init__(self):
+        """Initialize 3D model generator."""
+        self.available_apis = []
+        
+        # Check for API availability
+        if hasattr(Config, 'TRIPO_API_KEY') and Config.TRIPO_API_KEY:
+            self.available_apis.append('tripo')
+        if hasattr(Config, 'MESHY_API_KEY') and Config.MESHY_API_KEY:
+            self.available_apis.append('meshy')
+            
+        print(f"🗿 Enhanced 3D Model Generator initialized with APIs: {self.available_apis}")
+    
+    def generate_3d_model(self, prompt: str, style: str = "realistic") -> Dict[str, Any]:
+        """Generate 3D model from text description."""
+        try:
+            # Enhanced 3D model prompt
+            model_prompt = f"3D model of {prompt}, {style} style"
+            
+            style_enhancements = {
+                "realistic": "high detail, photorealistic textures, professional quality",
+                "lowpoly": "low polygon count, game-ready, clean geometry",
+                "stylized": "artistic style, creative design, unique aesthetic"
+            }
+            
+            if style.lower() in style_enhancements:
+                model_prompt += f", {style_enhancements[style.lower()]}"
+            
+            # Try available APIs
+            if 'tripo' in self.available_apis:
+                return self._generate_with_tripo(model_prompt, style)
+            elif 'meshy' in self.available_apis:
+                return self._generate_with_meshy(model_prompt, style)
+            else:
+                return self._generate_placeholder_3d_model(prompt, style)
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'3D model generation failed: {str(e)}'
+            }
+    
+    def _generate_with_tripo(self, prompt: str, style: str) -> Dict[str, Any]:
+        """Generate using Tripo API."""
+        try:
+            headers = {
+                "Authorization": f"Bearer {Config.TRIPO_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "prompt": prompt,
+                "style": style,
+                "quality": "high"
+            }
+            
+            response = requests.post(
+                "https://api.tripo3d.ai/v1/text-to-3d",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if "model_url" in result:
+                    # Download and save model
+                    model_response = requests.get(result["model_url"], timeout=60)
+                    
+                    if model_response.status_code == 200:
+                        filename = f"tripo_model_{uuid.uuid4().hex[:8]}.obj"
+                        filepath = os.path.join(MEDIA_OUTPUT_DIRS['models'], filename)
+                        
+                        with open(filepath, 'wb') as f:
+                            f.write(model_response.content)
+                        
+                        return {
+                            'success': True,
+                            'model': 'tripo',
+                            'filename': filename,
+                            'filepath': filepath,
+                            'url': f'/static/generated_3d_models/{filename}',
+                            'prompt': prompt,
+                            'style': style,
+                            'generated_at': datetime.now().isoformat()
+                        }
+            
+            return {'success': False, 'error': 'Tripo API request failed'}
+            
+        except Exception as e:
+            return {'success': False, 'error': f'Tripo API error: {str(e)}'}
+    
+    def _generate_with_meshy(self, prompt: str, style: str) -> Dict[str, Any]:
+        """Generate using Meshy API."""
+        try:
+            headers = {
+                "Authorization": f"Bearer {Config.MESHY_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "text": prompt,
+                "mode": "text-to-3d",
+                "art_style": style
+            }
+            
+            response = requests.post(
+                "https://api.meshy.ai/v1/text-to-3d",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return {
+                    'success': True,
+                    'model': 'meshy',
+                    'status': 'processing',
+                    'task_id': result.get('task_id'),
+                    'message': '3D model generation started - check back in a few minutes',
+                    'prompt': prompt,
+                    'style': style,
+                    'generated_at': datetime.now().isoformat()
+                }
+            
+            return {'success': False, 'error': 'Meshy API request failed'}
+            
+        except Exception as e:
+            return {'success': False, 'error': f'Meshy API error: {str(e)}'}
+    
+    def _generate_placeholder_3d_model(self, prompt: str, style: str) -> Dict[str, Any]:
+        """Generate placeholder 3D model info."""
+        filename = f"placeholder_3d_{uuid.uuid4().hex[:8]}.obj"
+        filepath = os.path.join(MEDIA_OUTPUT_DIRS['models'], filename)
+        
+        return {
+            'success': True,
+            'model': 'placeholder',
+            'filename': filename,
+            'filepath': filepath,
+            'url': f'/static/generated_3d_models/{filename}',
+            'prompt': prompt,
+            'style': style,
+            'generated_at': datetime.now().isoformat(),
+            'note': '3D model generation requires API configuration (Tripo or Meshy)'
+        }
+
+
+# Enhanced MediaEngine with new generators
+class EnhancedMediaEngine(MediaEngine):
+    """Enhanced media engine with specialized generators."""
+    
+    def __init__(self):
+        """Initialize enhanced media engine."""
+        super().__init__()
+        
+        # Add specialized generators
+        self.logo_generator = LogoGenerator()
+        self.enhanced_3d_generator = Enhanced3DModelGenerator()
+        
+        print("🚀 Enhanced Media Engine initialized with specialized generators")
+    
+    def generate_logo(self, brand_name: str, industry: str, style: str = "modern") -> Dict[str, Any]:
+        """Generate professional logo design."""
+        return self.logo_generator.generate_logo(brand_name, industry, style)
+    
+    def generate_enhanced_3d_model(self, prompt: str, style: str = "realistic") -> Dict[str, Any]:
+        """Generate enhanced 3D model."""
+        return self.enhanced_3d_generator.generate_3d_model(prompt, style)
+    
+    def get_generation_capabilities(self) -> Dict[str, List[str]]:
+        """Get available generation capabilities."""
+        return {
+            'image_generation': self.get_available_generators(),
+            'logo_generation': ['professional', 'creative', 'corporate'],
+            '3d_generation': self.enhanced_3d_generator.available_apis,
+            'media_formats': {
+                'images': ['png', 'jpg', 'webp'],
+                'videos': ['mp4', 'webm', 'gif'],
+                'audio': ['mp3', 'wav', 'ogg'],
+                'models': ['obj', 'glb', 'fbx']
+            }
+        }
+
+
+# Global enhanced instances
+enhanced_media_engine = None
+logo_generator = None
+enhanced_3d_generator = None
+
+def get_enhanced_media_engine() -> EnhancedMediaEngine:
+    """Get the enhanced media engine instance."""
+    global enhanced_media_engine
+    if enhanced_media_engine is None:
+        enhanced_media_engine = EnhancedMediaEngine()
+    return enhanced_media_engine
+
+def get_logo_generator() -> LogoGenerator:
+    """Get the logo generator instance."""
+    global logo_generator
+    if logo_generator is None:
+        logo_generator = LogoGenerator()
+    return logo_generator
+
+def get_enhanced_3d_generator() -> Enhanced3DModelGenerator:
+    """Get the enhanced 3D generator instance."""
+    global enhanced_3d_generator
+    if enhanced_3d_generator is None:
+        enhanced_3d_generator = Enhanced3DModelGenerator()
+    return enhanced_3d_generator
+
 # Convenience functions for backward compatibility
 def generate_image(prompt: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generate an image from text prompt."""
-    return get_media_engine().generate_media('image', prompt, params)
+    return get_enhanced_media_engine().generate_media('image', prompt, params)
 
 def generate_video(prompt: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generate a video from text prompt."""
-    return get_media_engine().generate_media('video', prompt, params)
+    return get_enhanced_media_engine().generate_media('video', prompt, params)
 
 def generate_audio(prompt: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generate audio from text prompt."""
-    return get_media_engine().generate_media('audio', prompt, params)
+    return get_enhanced_media_engine().generate_media('audio', prompt, params)
 
 def generate_3d_model(prompt: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generate a 3D model from text prompt."""
-    return get_media_engine().generate_media('model', prompt, params)
+    return get_enhanced_media_engine().generate_enhanced_3d_model(prompt, params.get('style', 'realistic') if params else 'realistic')
+
+def generate_logo_design(brand_name: str, industry: str, style: str = "modern") -> Dict[str, Any]:
+    """Generate professional logo design."""
+    return get_enhanced_media_engine().generate_logo(brand_name, industry, style)
