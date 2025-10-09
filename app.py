@@ -288,6 +288,42 @@ def health():
         'chatgpt_available': AI_MODEL_AVAILABLE
     })
 
+@app.route('/api/history/<session_id>')
+def get_conversation_history(session_id):
+    """Get conversation history for a session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT user_input, ai_response, timestamp, intent
+            FROM conversations 
+            WHERE session_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT 50
+        ''', (session_id,))
+        
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                'user_input': row[0],
+                'ai_response': row[1],
+                'timestamp': row[2],
+                'intent': row[3]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'session_id': session_id,
+            'history': history,
+            'count': len(history),
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant (Clean Version)...")
     print("✅ Database initialization...")
