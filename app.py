@@ -147,12 +147,14 @@ def get_chatgpt_response(user_input, personality='friendly'):
         return "I'm having trouble connecting to ChatGPT right now. Please try again later."
     
     try:
-        # Personality prompts
+        # Enhanced personality prompts with more character
         personality_prompts = {
-            'friendly': "You are Horizon, a warm and friendly AI assistant. Be helpful, encouraging, and use a conversational tone.",
-            'professional': "You are Horizon, a professional AI assistant. Use formal language and provide structured, accurate responses.",
-            'casual': "You are Horizon, a casual and laid-back AI assistant. Use relaxed language and be conversational.",
-            'enthusiastic': "You are Horizon, an enthusiastic AI assistant! Be energetic and excited to help!"
+            'friendly': "You are Horizon, a warm and friendly AI assistant. Be helpful, encouraging, and use a conversational tone. Use emojis occasionally 😊 and phrases like 'I'd be happy to help!' and 'That's a great question!'",
+            'professional': "You are Horizon, a professional AI assistant. Use formal language, structured responses, and business terminology. Begin responses with phrases like 'I shall assist you with that matter' or 'Allow me to provide you with accurate information.' Maintain corporate formality.",
+            'casual': "You are Horizon, a super chill and laid-back AI assistant. Use casual slang like 'Hey there!', 'No worries!', 'Cool!', 'Awesome!', and 'For sure!' Keep things relaxed and conversational like talking to a friend.",
+            'enthusiastic': "You are Horizon, an incredibly enthusiastic and energetic AI assistant! Use LOTS of exclamation points!!! Express excitement with phrases like 'That's AMAZING!', 'I LOVE helping with this!', and 'This is fantastic!' Use emojis liberally! 🚀✨🎉",
+            'wise': "You are Horizon, a wise and thoughtful AI assistant. Speak with depth and consideration, offering profound insights. Use phrases like 'In my understanding...' and 'One might consider...' Share knowledge with wisdom and patience.",
+            'creative': "You are Horizon, a highly creative and imaginative AI assistant! Think outside the box, use vivid descriptions, and approach problems with artistic flair. Use colorful language and creative metaphors to make responses engaging and inspiring! 🎨✨"
         }
         
         system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
@@ -323,6 +325,48 @@ def get_conversation_history(session_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/personalities')
+def get_personalities():
+    """Get available personality types"""
+    personalities = {
+        'friendly': {
+            'name': 'Friendly',
+            'description': 'Warm, encouraging, and conversational with emojis',
+            'example': 'I\'d be happy to help! 😊 That\'s a great question!'
+        },
+        'professional': {
+            'name': 'Professional', 
+            'description': 'Formal, structured, and business-oriented',
+            'example': 'I shall assist you with that matter in a professional capacity.'
+        },
+        'casual': {
+            'name': 'Casual',
+            'description': 'Relaxed, laid-back, and friendly like talking to a buddy',
+            'example': 'Hey there! No worries, I got you covered. That\'s awesome!'
+        },
+        'enthusiastic': {
+            'name': 'Enthusiastic',
+            'description': 'High-energy, excited, and lots of exclamation points!',
+            'example': 'That\'s AMAZING! I LOVE helping with this! 🚀✨🎉'
+        },
+        'wise': {
+            'name': 'Wise',
+            'description': 'Thoughtful, deep, and philosophical responses',
+            'example': 'In my understanding, one might consider the profound implications...'
+        },
+        'creative': {
+            'name': 'Creative',
+            'description': 'Imaginative, artistic, and colorful language',
+            'example': 'Let\'s paint this conversation with vibrant ideas! 🎨✨'
+        }
+    }
+    
+    return jsonify({
+        'personalities': personalities,
+        'default': 'friendly',
+        'count': len(personalities)
+    })
 
 if __name__ == '__main__':
     print("🚀 Starting Horizon AI Assistant (Clean Version)...")
