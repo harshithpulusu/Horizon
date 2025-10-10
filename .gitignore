@@ -31,3 +31,4 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+ai_memory.db
