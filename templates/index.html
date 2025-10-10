@@ -2828,6 +2828,86 @@
     <script>
         console.log('🔧 Debug script loaded');
         
+        // Typing indicator functions
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            const messagesContainer = document.getElementById('messages');
+            indicator.style.display = 'block';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'none';
+        }
+        
+        // Copy message functionality
+        function copyMessage(button) {
+            const messageContent = button.closest('.message').querySelector('.message-content').textContent;
+            navigator.clipboard.writeText(messageContent).then(() => {
+                const feedback = button.querySelector('.copy-feedback');
+                feedback.classList.add('show');
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy message:', err);
+                alert('Failed to copy message');
+            });
+        }
+        
+        // Share message functionality
+        function shareMessage(button) {
+            const messageContent = button.closest('.message').querySelector('.message-content').textContent;
+            const timestamp = button.closest('.message').querySelector('.timestamp').textContent;
+            const shareText = `Horizon AI (${timestamp}): ${messageContent}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Horizon AI Response',
+                    text: shareText
+                }).catch(err => console.log('Error sharing:', err));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Message copied to clipboard for sharing!');
+                }).catch(err => {
+                    console.error('Failed to copy for sharing:', err);
+                    alert('Failed to copy message for sharing');
+                });
+            }
+        }
+        
+        // Enhanced message creation with action buttons
+        function createMessageElement(type, content, sender = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const senderName = sender || (type === 'user' ? 'You' : 'Horizon AI');
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <strong>${senderName}</strong>
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                <div class="message-content">${content}</div>
+                ${type === 'ai' ? `
+                    <div class="message-actions">
+                        <button class="message-btn copy" onclick="copyMessage(this)" title="Copy message">
+                            📋
+                            <div class="copy-feedback">Copied!</div>
+                        </button>
+                        <button class="message-btn share" onclick="shareMessage(this)" title="Share message">
+                            🔗
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+            
+            return messageDiv;
+        }
+        
         // Backup send button functionality
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔧 DOM loaded, setting up backup send button');
@@ -2848,18 +2928,13 @@
                         // Add message to chat manually if main system fails
                         const messagesContainer = document.getElementById('messages');
                         if (messagesContainer) {
-                            const messageDiv = document.createElement('div');
-                            messageDiv.className = 'message user';
-                            messageDiv.innerHTML = `
-                                <div class="message-header">
-                                    <strong>You</strong>
-                                    <span class="timestamp">${new Date().toLocaleTimeString()}</span>
-                                </div>
-                                <div class="message-content">${message}</div>
-                            `;
+                            const messageDiv = createMessageElement('user', message);
                             messagesContainer.appendChild(messageDiv);
                             input.value = '';
                             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            
+                            // Show typing indicator
+                            showTypingIndicator();
                             
                             // Try to send to server
                             fetch('/api/process', {
@@ -2876,20 +2951,17 @@
                             .then(response => response.json())
                             .then(data => {
                                 console.log('🔧 Server response:', data);
-                                const aiMessageDiv = document.createElement('div');
-                                aiMessageDiv.className = 'message ai';
-                                aiMessageDiv.innerHTML = `
-                                    <div class="message-header">
-                                        <strong>Horizon AI</strong>
-                                        <span class="timestamp">${new Date().toLocaleTimeString()}</span>
-                                    </div>
-                                    <div class="message-content">${data.response || 'Error: No response'}</div>
-                                `;
+                                hideTypingIndicator();
+                                const aiMessageDiv = createMessageElement('ai', data.response || 'Error: No response');
                                 messagesContainer.appendChild(aiMessageDiv);
                                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
                             })
                             .catch(error => {
                                 console.error('🔧 Error:', error);
+                                hideTypingIndicator();
+                                const errorDiv = createMessageElement('error', 'Sorry, there was an error processing your request.');
+                                messagesContainer.appendChild(errorDiv);
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
                             });
                         }
                     }
@@ -3177,6 +3249,87 @@
                 openModal('marketplaceModal');
                 loadMarketplace();
             });
+        });
+        
+        // Typing indicator functions
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            const messagesContainer = document.getElementById('messages');
+            indicator.style.display = 'block';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'none';
+        }
+        
+        // Copy message functionality
+        function copyMessage(button) {
+            const messageContent = button.closest('.message').querySelector('.message-content').textContent;
+            navigator.clipboard.writeText(messageContent).then(() => {
+                const feedback = button.querySelector('.copy-feedback');
+                feedback.classList.add('show');
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy message:', err);
+                alert('Failed to copy message');
+            });
+        }
+        
+        // Share message functionality
+        function shareMessage(button) {
+            const messageContent = button.closest('.message').querySelector('.message-content').textContent;
+            const timestamp = button.closest('.message').querySelector('.timestamp').textContent;
+            const shareText = `Horizon AI (${timestamp}): ${messageContent}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Horizon AI Response',
+                    text: shareText
+                }).catch(err => console.log('Error sharing:', err));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Message copied to clipboard for sharing!');
+                }).catch(err => {
+                    console.error('Failed to copy for sharing:', err);
+                    alert('Failed to copy message for sharing');
+                });
+            }
+        }
+        
+        // Enhanced message creation with action buttons
+        function createMessageElement(type, content, sender = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const senderName = sender || (type === 'user' ? 'You' : 'Horizon AI');
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <strong>${senderName}</strong>
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                <div class="message-content">${content}</div>
+                ${type === 'ai' ? `
+                    <div class="message-actions">
+                        <button class="message-btn copy" onclick="copyMessage(this)" title="Copy message">
+                            📋
+                            <div class="copy-feedback">Copied!</div>
+                        </button>
+                        <button class="message-btn share" onclick="shareMessage(this)" title="Share message">
+                            🔗
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+            
+            return messageDiv;
+        }
             
             // Prompt Engineering Lab buttons
             document.getElementById('promptLabBtn').addEventListener('click', () => {
