@@ -493,11 +493,11 @@
         
         .sidebar-section {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            padding: 20px;
             border-radius: 16px;
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
+            overflow: hidden;
         }
         
         .sidebar-section h3 {
@@ -505,11 +505,49 @@
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
+            margin-bottom: 0;
+            padding: 20px;
             font-size: 1.1em;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            user-select: none;
+        }
+        
+        .sidebar-section h3:hover {
+            background: linear-gradient(45deg, #45b7d1, #667eea);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .sidebar-section h3::after {
+            content: '▼';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+        
+        .sidebar-section.collapsed h3::after {
+            transform: translateY(-50%) rotate(-90deg);
+        }
+        
+        .sidebar-content {
+            padding: 0 20px 20px 20px;
+            max-height: 500px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        
+        .sidebar-section.collapsed .sidebar-content {
+            max-height: 0;
+            padding: 0 20px;
         }
         
         .timer-item, .reminder-item {
