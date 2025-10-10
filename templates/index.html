@@ -550,6 +550,75 @@
             opacity: 0.7;
         }
         
+        .message-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+        
+        .message-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .message-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .message-btn.copy:hover {
+            background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+            color: #000000;
+        }
+        
+        .message-btn.share:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #ffffff;
+        }
+        
+        .copy-feedback {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4ecdc4;
+            color: #000000;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        
+        .copy-feedback.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+        
         .timestamp {
             font-size: 0.75em;
             opacity: 0.8;
@@ -1851,6 +1920,26 @@
                     </div>
                     <div class="message-content">
                         🌟 Hello! I'm <span class="glow">Horizon</span>, your advanced AI assistant with a sleek new look! I can help you with timers, reminders, calculations, jokes, and much more! Try saying "What can you do?" or click the microphone to start talking.
+                    </div>
+                    <div class="message-actions">
+                        <button class="message-btn copy" onclick="copyMessage(this)" title="Copy message">
+                            📋
+                            <div class="copy-feedback">Copied!</div>
+                        </button>
+                        <button class="message-btn share" onclick="shareMessage(this)" title="Share message">
+                            🔗
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-text">
+                        <span>Horizon is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
                     </div>
                 </div>
             </div>
