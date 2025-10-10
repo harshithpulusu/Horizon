@@ -1795,265 +1795,293 @@
         <div class="sidebar">
             <div class="sidebar-section">
                 <h3>⏲️ Active Timers</h3>
-                <div id="activeTimers">
-                    <p>No active timers</p>
+                <div class="sidebar-content">
+                    <div id="activeTimers">
+                        <p>No active timers</p>
+                    </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>📝 Active Reminders</h3>
-                <div id="activeReminders">
-                    <p>No active reminders</p>
+                <div class="sidebar-content">
+                    <div id="activeReminders">
+                        <p>No active reminders</p>
+                    </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🎯 Quick Commands</h3>
-                <div class="quick-commands">
-                    <div class="quick-command-buttons">
-                        <button class="quick-cmd-btn" data-command="What time is it?">🕐 "What time is it?"</button>
-                        <button class="quick-cmd-btn" data-command="Set timer for 5 minutes">⏱️ "Set timer for 5 minutes"</button>
-                        <button class="quick-cmd-btn" data-command="Set timer for 10 minutes">⏰ "Set timer for 10 minutes"</button>
-                        <button class="quick-cmd-btn" data-command="Remind me to call mom">📅 "Remind me to call mom"</button>
-                        <button class="quick-cmd-btn" data-command="Calculate 25 times 4">🧮 "Calculate 25 times 4"</button>
-                        <button class="quick-cmd-btn" data-command="Tell me a joke">😄 "Tell me a joke"</button>
-                        <button class="quick-cmd-btn" data-command="What's today's date?">📆 "What's today's date?"</button>
+                <div class="sidebar-content">
+                    <div class="quick-commands">
+                        <div class="quick-command-buttons">
+                            <button class="quick-cmd-btn" data-command="What time is it?">🕐 "What time is it?"</button>
+                            <button class="quick-cmd-btn" data-command="Set timer for 5 minutes">⏱️ "Set timer for 5 minutes"</button>
+                            <button class="quick-cmd-btn" data-command="Set timer for 10 minutes">⏰ "Set timer for 10 minutes"</button>
+                            <button class="quick-cmd-btn" data-command="Remind me to call mom">📅 "Remind me to call mom"</button>
+                            <button class="quick-cmd-btn" data-command="Calculate 25 times 4">🧮 "Calculate 25 times 4"</button>
+                            <button class="quick-cmd-btn" data-command="Tell me a joke">😄 "Tell me a joke"</button>
+                            <button class="quick-cmd-btn" data-command="What's today's date?">📆 "What's today's date?"</button>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🧠 AI Models</h3>
-                <div class="model-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Trained Models:</span>
-                            <span id="trainedModelsCount">0</span>
+                <div class="sidebar-content">
+                    <div class="model-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Trained Models:</span>
+                                <span id="trainedModelsCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Training:</span>
+                                <span id="trainingModelsCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Training:</span>
-                            <span id="trainingModelsCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="trainModelBtn">🚀 Train Model</button>
+                            <button class="btn-model" id="viewModelsBtn">📊 My Models</button>
+                            <button class="btn-model" id="marketplaceBtn">🏪 Marketplace</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="trainModelBtn">🚀 Train Model</button>
-                        <button class="btn-model" id="viewModelsBtn">📊 My Models</button>
-                        <button class="btn-model" id="marketplaceBtn">🏪 Marketplace</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🧪 Prompt Lab</h3>
-                <div class="prompt-lab-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Templates:</span>
-                            <span id="promptTemplatesCount">0</span>
+                <div class="sidebar-content">
+                    <div class="prompt-lab-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Templates:</span>
+                                <span id="promptTemplatesCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Experiments:</span>
+                                <span id="promptExperimentsCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Experiments:</span>
-                            <span id="promptExperimentsCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="promptLabBtn">🧪 Open Lab</button>
+                            <button class="btn-model" id="promptTemplatesBtn">📝 Templates</button>
+                            <button class="btn-model" id="promptAnalyticsBtn">📊 Analytics</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="promptLabBtn">🧪 Open Lab</button>
-                        <button class="btn-model" id="promptTemplatesBtn">📝 Templates</button>
-                        <button class="btn-model" id="promptAnalyticsBtn">📊 Analytics</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>📊 Analytics</h3>
-                <div class="analytics-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Today's Requests:</span>
-                            <span id="todayRequestsCount">0</span>
+                <div class="sidebar-content">
+                    <div class="analytics-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Today's Requests:</span>
+                                <span id="todayRequestsCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Success Rate:</span>
+                                <span id="successRatePercent">0%</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Success Rate:</span>
-                            <span id="successRatePercent">0%</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="analyticsOverviewBtn">📈 Overview</button>
+                            <button class="btn-model" id="usageStatsBtn">📊 Usage Stats</button>
+                            <button class="btn-model" id="performanceBtn">⚡ Performance</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="analyticsOverviewBtn">📈 Overview</button>
-                        <button class="btn-model" id="usageStatsBtn">📊 Usage Stats</button>
-                        <button class="btn-model" id="performanceBtn">⚡ Performance</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>📄 Research Papers</h3>
-                <div class="research-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Papers:</span>
-                            <span id="researchPapersCount">0</span>
+                <div class="sidebar-content">
+                    <div class="research-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Papers:</span>
+                                <span id="researchPapersCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Citations:</span>
+                                <span id="totalCitationsCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Citations:</span>
-                            <span id="totalCitationsCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="createPaperBtn">📝 New Paper</button>
+                            <button class="btn-model" id="myPapersBtn">📚 My Papers</button>
+                            <button class="btn-model" id="researchTemplatesBtn">📋 Templates</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="createPaperBtn">📝 New Paper</button>
-                        <button class="btn-model" id="myPapersBtn">📚 My Papers</button>
-                        <button class="btn-model" id="researchTemplatesBtn">📋 Templates</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🧪 Simulations</h3>
-                <div class="simulation-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Simulations:</span>
-                            <span id="simulationsCount">0</span>
+                <div class="sidebar-content">
+                    <div class="simulation-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Simulations:</span>
+                                <span id="simulationsCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Experiments:</span>
+                                <span id="experimentsCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Experiments:</span>
-                            <span id="experimentsCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="createSimulationBtn">⚛️ New Simulation</button>
+                            <button class="btn-model" id="mySimulationsBtn">🔬 My Simulations</button>
+                            <button class="btn-model" id="simulationTemplatesBtn">🧬 Templates</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="createSimulationBtn">⚛️ New Simulation</button>
-                        <button class="btn-model" id="mySimulationsBtn">🔬 My Simulations</button>
-                        <button class="btn-model" id="simulationTemplatesBtn">🧬 Templates</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>📚 Educational Curriculum</h3>
-                <div class="curriculum-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Curriculums:</span>
-                            <span id="curriculumsCount">0</span>
+                <div class="sidebar-content">
+                    <div class="curriculum-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Curriculums:</span>
+                                <span id="curriculumsCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Progress:</span>
+                                <span id="curriculumProgress">0%</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Progress:</span>
-                            <span id="curriculumProgress">0%</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="createCurriculumBtn">📋 New Curriculum</button>
+                            <button class="btn-model" id="myCurriculumsBtn">📖 My Curriculums</button>
+                            <button class="btn-model" id="browseCurriculumsBtn">🌐 Browse Library</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="createCurriculumBtn">📋 New Curriculum</button>
-                        <button class="btn-model" id="myCurriculumsBtn">📖 My Curriculums</button>
-                        <button class="btn-model" id="browseCurriculumsBtn">🌐 Browse Library</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🗣️ Language Learning</h3>
-                <div class="language-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Languages:</span>
-                            <span id="languagesCount">0</span>
+                <div class="sidebar-content">
+                    <div class="language-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Languages:</span>
+                                <span id="languagesCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Fluency:</span>
+                                <span id="averageFluency">A1</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Fluency:</span>
-                            <span id="averageFluency">A1</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="practiceConversationBtn">💬 Practice Conversation</button>
+                            <button class="btn-model" id="vocabularyBuilderBtn">📝 Vocabulary Builder</button>
+                            <button class="btn-model" id="languageProgressBtn">📊 My Progress</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="practiceConversationBtn">💬 Practice Conversation</button>
-                        <button class="btn-model" id="vocabularyBuilderBtn">📝 Vocabulary Builder</button>
-                        <button class="btn-model" id="languageProgressBtn">📊 My Progress</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🤖 AI Swarm Collaboration</h3>
-                <div class="swarm-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Active Swarms:</span>
-                            <span id="activeSwarmCount">0</span>
+                <div class="sidebar-content">
+                    <div class="swarm-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Active Swarms:</span>
+                                <span id="activeSwarmCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Completed:</span>
+                                <span id="completedSwarmCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Completed:</span>
-                            <span id="completedSwarmCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="createSwarmBtn">🚀 Create Swarm</button>
+                            <button class="btn-model" id="mySwarmSessionsBtn">📊 My Sessions</button>
+                            <button class="btn-model" id="swarmAnalyticsBtn">📈 Analytics</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="createSwarmBtn">🚀 Create Swarm</button>
-                        <button class="btn-model" id="mySwarmSessionsBtn">📊 My Sessions</button>
-                        <button class="btn-model" id="swarmAnalyticsBtn">📈 Analytics</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>👥 Human-AI Co-creation</h3>
-                <div class="cocreation-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Active Projects:</span>
-                            <span id="activeCoCreationCount">0</span>
+                <div class="sidebar-content">
+                    <div class="cocreation-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Active Projects:</span>
+                                <span id="activeCoCreationCount">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Collaborations:</span>
+                                <span id="totalCollaborationsCount">0</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Collaborations:</span>
-                            <span id="totalCollaborationsCount">0</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="createCoCreationBtn">✨ Start Co-creation</button>
+                            <button class="btn-model" id="myCoCreationBtn">📝 My Projects</button>
+                            <button class="btn-model" id="joinCollaborationBtn">🤝 Join Session</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="createCoCreationBtn">✨ Start Co-creation</button>
-                        <button class="btn-model" id="myCoCreationBtn">📝 My Projects</button>
-                        <button class="btn-model" id="joinCollaborationBtn">🤝 Join Session</button>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🎭 AI Personality Ecosystem</h3>
-                <div class="personality-management">
-                    <div class="current-personality">
-                        <div class="personality-card active">
-                            <div class="personality-avatar">🤖</div>
-                            <div class="personality-info">
-                                <div class="personality-name">Friendly Assistant</div>
-                                <div class="personality-type">General Helper</div>
+                <div class="sidebar-content">
+                    <div class="personality-management">
+                        <div class="current-personality">
+                            <div class="personality-card active">
+                                <div class="personality-avatar">🤖</div>
+                                <div class="personality-info">
+                                    <div class="personality-name">Friendly Assistant</div>
+                                    <div class="personality-type">General Helper</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="switchPersonalityBtn">🎭 Switch Personality</button>
-                        <button class="btn-model" id="personalityLibraryBtn">📚 Personality Library</button>
-                        <button class="btn-model" id="createPersonalityBtn">⚡ Create Custom</button>
+                        <div class="model-actions">
+                            <button class="btn-model" id="switchPersonalityBtn">🎭 Switch Personality</button>
+                            <button class="btn-model" id="personalityLibraryBtn">📚 Personality Library</button>
+                            <button class="btn-model" id="createPersonalityBtn">⚡ Create Custom</button>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div class="sidebar-section">
                 <h3>🌐 Cross-Platform Sync</h3>
-                <div class="sync-management">
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <span>Devices:</span>
-                            <span id="connectedDevicesCount">1</span>
+                <div class="sidebar-content">
+                    <div class="sync-management">
+                        <div class="model-stats">
+                            <div class="stat-row">
+                                <span>Devices:</span>
+                                <span id="connectedDevicesCount">1</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Last Sync:</span>
+                                <span id="lastSyncTime">Just now</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Last Sync:</span>
-                            <span id="lastSyncTime">Just now</span>
+                        <div class="sync-status">
+                            <div class="sync-indicator">
+                                <div class="sync-dot active"></div>
+                                <span>Synced</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="sync-status">
-                        <div class="sync-indicator">
-                            <div class="sync-dot active"></div>
-                            <span>Synced</span>
+                        <div class="model-actions">
+                            <button class="btn-model" id="deviceManagerBtn">📱 Device Manager</button>
+                            <button class="btn-model" id="syncNowBtn">🔄 Sync Now</button>
+                            <button class="btn-model" id="continueOnDeviceBtn">📲 Continue on Device</button>
                         </div>
-                    </div>
-                    <div class="model-actions">
-                        <button class="btn-model" id="deviceManagerBtn">📱 Device Manager</button>
-                        <button class="btn-model" id="syncNowBtn">🔄 Sync Now</button>
-                        <button class="btn-model" id="continueOnDeviceBtn">📲 Continue on Device</button>
                     </div>
                 </div>
             </div>
