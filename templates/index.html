@@ -2828,6 +2828,28 @@
     <script>
         console.log('🔧 Debug script loaded');
         
+        // Global function to manually test dropdown functionality
+        window.testDropdowns = function() {
+            console.log('🔧 Testing dropdowns manually...');
+            const sections = document.querySelectorAll('.sidebar-section');
+            console.log('🔧 Found sections:', sections.length);
+            sections.forEach((section, i) => {
+                const header = section.querySelector('h3');
+                if (header) {
+                    console.log(`🔧 Section ${i}: ${header.textContent.trim()}`);
+                }
+            });
+        };
+        
+        // Manual dropdown toggle function
+        window.toggleSection = function(index) {
+            const sections = document.querySelectorAll('.sidebar-section');
+            if (sections[index]) {
+                sections[index].classList.toggle('collapsed');
+                console.log('🔧 Toggled section', index);
+            }
+        };
+        
         // Typing indicator functions
         function showTypingIndicator() {
             const indicator = document.getElementById('typingIndicator');
