@@ -3210,20 +3210,37 @@
         
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Setting up sidebar dropdown functionality');
+            
             // Sidebar dropdown functionality
             const sidebarSections = document.querySelectorAll('.sidebar-section');
+            console.log('🔧 Found', sidebarSections.length, 'sidebar sections');
             
-            sidebarSections.forEach(section => {
+            sidebarSections.forEach((section, index) => {
                 const header = section.querySelector('h3');
                 if (header) {
-                    header.addEventListener('click', function() {
+                    console.log('🔧 Setting up dropdown for section', index, ':', header.textContent.trim());
+                    
+                    // Add click event listener
+                    header.addEventListener('click', function(e) {
+                        console.log('🔧 Dropdown clicked:', header.textContent.trim());
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Toggle collapsed class
                         section.classList.toggle('collapsed');
+                        console.log('🔧 Section is now', section.classList.contains('collapsed') ? 'collapsed' : 'expanded');
                         
                         // Save collapsed state in localStorage
                         const sectionTitle = header.textContent.trim();
                         const isCollapsed = section.classList.contains('collapsed');
                         localStorage.setItem(`sidebar_${sectionTitle}`, isCollapsed);
                     });
+                    
+                    // Make header clickable with cursor pointer
+                    header.style.cursor = 'pointer';
+                } else {
+                    console.log('🔧 No header found for section', index);
                 }
             });
             
@@ -3232,8 +3249,8 @@
                 const header = section.querySelector('h3');
                 if (header) {
                     const sectionTitle = header.textContent.trim();
-                    const isCollapsed = localStorage.getItem(`sidebar_${sectionTitle}`) === 'true';
-                    if (isCollapsed) {
+                    const savedState = localStorage.getItem(`sidebar_${sectionTitle}`);
+                    if (savedState === 'true') {
                         section.classList.add('collapsed');
                     }
                 }
