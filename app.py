@@ -73,7 +73,10 @@ def recognize_intent(text):
         return 'date'
     elif any(op in text_lower for op in ['+', '-', '*', '/', 'calculate', 'math']):
         return 'math'
-    elif 'generate' in text_lower and 'image' in text_lower:
+    elif any(phrase in text_lower for phrase in [
+        'generate image', 'create image', 'make image', 'generate picture', 'create picture', 
+        'make picture', 'draw', 'create an image', 'generate an image', 'make an image'
+    ]):
         return 'image_generation'
     else:
         return 'general'
