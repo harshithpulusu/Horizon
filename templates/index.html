@@ -1950,7 +1950,13 @@
         </div>
         
         <div class="sidebar">
-            <div class="sidebar-section collapsed">
+            <!-- Dropdown control buttons -->
+            <div style="padding: 10px 20px; display: flex; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+                <button onclick="unlockAllSections()" style="flex: 1; background: #4ecdc4; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Unlock All</button>
+                <button onclick="fixDropdowns()" style="flex: 1; background: #ff6b6b; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Fix Dropdowns</button>
+            </div>
+            
+            <div class="sidebar-section">
                 <h3>⏲️ Active Timers</h3>
                 <div class="sidebar-content">
                     <div id="activeTimers">
@@ -1959,7 +1965,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>📝 Active Reminders</h3>
                 <div class="sidebar-content">
                     <div id="activeReminders">
@@ -1985,7 +1991,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🧠 AI Models</h3>
                 <div class="sidebar-content">
                     <div class="model-management">
@@ -2008,7 +2014,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🧪 Prompt Lab</h3>
                 <div class="sidebar-content">
                     <div class="prompt-lab-management">
@@ -2031,7 +2037,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>📊 Analytics</h3>
                 <div class="sidebar-content">
                     <div class="analytics-management">
@@ -2054,7 +2060,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>📄 Research Papers</h3>
                 <div class="sidebar-content">
                     <div class="research-management">
@@ -2077,7 +2083,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🧪 Simulations</h3>
                 <div class="sidebar-content">
                     <div class="simulation-management">
@@ -2100,7 +2106,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>📚 Educational Curriculum</h3>
                 <div class="sidebar-content">
                     <div class="curriculum-management">
@@ -2123,7 +2129,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🗣️ Language Learning</h3>
                 <div class="sidebar-content">
                     <div class="language-management">
@@ -2146,7 +2152,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🤖 AI Swarm Collaboration</h3>
                 <div class="sidebar-content">
                     <div class="swarm-management">
@@ -2169,7 +2175,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>👥 Human-AI Co-creation</h3>
                 <div class="sidebar-content">
                     <div class="cocreation-management">
@@ -2192,7 +2198,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🎭 AI Personality Ecosystem</h3>
                 <div class="sidebar-content">
                     <div class="personality-management">
@@ -2214,7 +2220,7 @@
                 </div>
             </div>
             
-            <div class="sidebar-section collapsed">
+            <div class="sidebar-section">
                 <h3>🌐 Cross-Platform Sync</h3>
                 <div class="sidebar-content">
                     <div class="sync-management">
@@ -2850,6 +2856,22 @@
             }
         };
         
+        // Function to test all dropdowns
+        window.testAllDropdowns = function() {
+            console.log('🔧 Testing all dropdowns...');
+            const sections = document.querySelectorAll('.sidebar-section');
+            sections.forEach((section, i) => {
+                console.log(`Testing section ${i}...`);
+                section.classList.toggle('collapsed');
+            });
+        };
+        
+        // Emergency dropdown fix function
+        window.fixDropdowns = function() {
+            console.log('🔧 EMERGENCY DROPDOWN FIX');
+            setupDropdowns();
+        };
+        
         // Typing indicator functions
         function showTypingIndicator() {
             const indicator = document.getElementById('typingIndicator');
@@ -3230,53 +3252,186 @@
             }
         }
         
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 Setting up sidebar dropdown functionality');
+        // NUCLEAR DROPDOWN FIX - Force them to work no matter what
+        function nuclearDropdownFix() {
+            console.log('� NUCLEAR DROPDOWN FIX - FORCING ALL DROPDOWNS TO WORK');
             
-            // Sidebar dropdown functionality
-            const sidebarSections = document.querySelectorAll('.sidebar-section');
-            console.log('🔧 Found', sidebarSections.length, 'sidebar sections');
+            // Inject powerful CSS that overrides everything
+            const style = document.createElement('style');
+            style.id = 'nuclear-dropdown-fix';
+            style.innerHTML = `
+                /* FORCE DROPDOWN FUNCTIONALITY */
+                .sidebar-section .sidebar-content {
+                    display: block !important;
+                    max-height: none !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                    padding: 16px 20px 20px 20px !important;
+                    opacity: 1 !important;
+                    transition: all 0.3s ease !important;
+                }
+                
+                .sidebar-section.force-hidden .sidebar-content {
+                    display: none !important;
+                }
+                
+                .sidebar-section h3 {
+                    cursor: pointer !important;
+                    user-select: none !important;
+                    background: rgba(255, 255, 255, 0.02) !important;
+                    padding: 12px 20px !important;
+                    margin: 0 !important;
+                    border-radius: 8px !important;
+                    transition: all 0.2s ease !important;
+                }
+                
+                .sidebar-section h3:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    transform: translateX(2px) !important;
+                }
+                
+                .sidebar-section h3::after {
+                    content: "▼" !important;
+                    float: right !important;
+                    transition: transform 0.3s ease !important;
+                }
+                
+                .sidebar-section.force-hidden h3::after {
+                    transform: rotate(-90deg) !important;
+                }
+            `;
+            document.head.appendChild(style);
             
-            sidebarSections.forEach((section, index) => {
+            // Get all sections and completely rebuild their functionality
+            const sections = document.querySelectorAll('.sidebar-section');
+            console.log('� Found', sections.length, 'sections to nuke and rebuild');
+            
+            sections.forEach((section, index) => {
                 const header = section.querySelector('h3');
                 if (header) {
-                    console.log('🔧 Setting up dropdown for section', index, ':', header.textContent.trim());
+                    console.log(`� Nuking section ${index}: ${header.textContent.trim()}`);
                     
-                    // Add click event listener
-                    header.addEventListener('click', function(e) {
-                        console.log('🔧 Dropdown clicked:', header.textContent.trim());
+                    // Remove all classes
+                    section.className = 'sidebar-section';
+                    
+                    // Clone header to remove all event listeners
+                    const newHeader = header.cloneNode(true);
+                    header.parentNode.replaceChild(newHeader, header);
+                    
+                    // Add our nuclear click handler
+                    newHeader.onclick = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // Toggle collapsed class
-                        section.classList.toggle('collapsed');
-                        console.log('🔧 Section is now', section.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                        console.log(`� NUCLEAR CLICK: ${newHeader.textContent.trim()}`);
                         
-                        // Save collapsed state in localStorage
-                        const sectionTitle = header.textContent.trim();
-                        const isCollapsed = section.classList.contains('collapsed');
-                        localStorage.setItem(`sidebar_${sectionTitle}`, isCollapsed);
-                    });
+                        // Use force-hidden class instead of collapsed
+                        if (section.classList.contains('force-hidden')) {
+                            section.classList.remove('force-hidden');
+                            console.log('� FORCE SHOW');
+                        } else {
+                            section.classList.add('force-hidden');
+                            console.log('� FORCE HIDE');
+                        }
+                        
+                        return false;
+                    };
                     
-                    // Make header clickable with cursor pointer
-                    header.style.cursor = 'pointer';
-                } else {
-                    console.log('🔧 No header found for section', index);
+                    // Make it super obvious it's clickable
+                    newHeader.style.cursor = 'pointer';
+                    newHeader.title = `Click to toggle ${newHeader.textContent.trim()}`;
                 }
             });
             
-            // Restore collapsed states from localStorage
-            sidebarSections.forEach(section => {
-                const header = section.querySelector('h3');
-                if (header) {
-                    const sectionTitle = header.textContent.trim();
-                    const savedState = localStorage.getItem(`sidebar_${sectionTitle}`);
-                    if (savedState === 'true') {
-                        section.classList.add('collapsed');
+            console.log('� NUCLEAR FIX COMPLETE - ALL DROPDOWNS SHOULD NOW WORK');
+        }
+        
+        // SIMPLE WORKING DROPDOWN TOGGLE - Override nuclear fix
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Setting up simple working toggle functionality');
+            
+            // Wait a bit for nuclear fix to complete, then override it
+            setTimeout(function() {
+                const sections = document.querySelectorAll('.sidebar-section');
+                console.log('✅ Found', sections.length, 'sections to make toggleable');
+                
+                sections.forEach((section, index) => {
+                    const header = section.querySelector('h3');
+                    if (header) {
+                        console.log('✅ Setting up toggle for:', header.textContent.trim());
+                        
+                        // Remove all existing click handlers by cloning
+                        const newHeader = header.cloneNode(true);
+                        header.parentNode.replaceChild(newHeader, header);
+                        
+                        // Add simple click handler
+                        newHeader.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const content = section.querySelector('.sidebar-content');
+                            if (content) {
+                                if (content.style.display === 'none') {
+                                    content.style.display = 'block';
+                                    console.log('✅ Expanded:', newHeader.textContent.trim());
+                                } else {
+                                    content.style.display = 'none';
+                                    console.log('✅ Collapsed:', newHeader.textContent.trim());
+                                }
+                            }
+                        });
+                        
+                        // Make it clickable
+                        newHeader.style.cursor = 'pointer';
+                        newHeader.style.userSelect = 'none';
+                        newHeader.title = 'Click to toggle';
                     }
-                }
+                });
+                
+                console.log('✅ Toggle functionality setup complete');
+            }, 1500); // Wait for nuclear fix to finish
+        });
+        
+        // Update helper functions
+        window.unlockAllSections = function() {
+            console.log('✅ Showing all sections');
+            const sections = document.querySelectorAll('.sidebar-section .sidebar-content');
+            sections.forEach(content => {
+                content.style.display = 'block';
             });
+        };
+        
+        window.lockAllSections = function() {
+            console.log('✅ Hiding all sections');
+            const sections = document.querySelectorAll('.sidebar-section .sidebar-content');
+            sections.forEach(content => {
+                content.style.display = 'none';
+            });
+        };
+        
+        // Update button functions for nuclear approach
+        window.fixDropdowns = function() {
+            console.log('� EMERGENCY NUCLEAR FIX TRIGGERED');
+            nuclearDropdownFix();
+        };
+        
+        window.unlockAllSections = function() {
+            console.log('� NUCLEAR UNLOCK ALL');
+            const sections = document.querySelectorAll('.sidebar-section');
+            sections.forEach((section, i) => {
+                section.classList.remove('force-hidden', 'collapsed');
+                console.log(`� Nuclear unlocked section ${i}`);
+            });
+        };
+        
+        window.lockAllSections = function() {
+            console.log('� NUCLEAR LOCK ALL');
+            const sections = document.querySelectorAll('.sidebar-section');
+            sections.forEach((section, i) => {
+                section.classList.add('force-hidden');
+                console.log(`� Nuclear locked section ${i}`);
+            });
+        };
             
             // Model management buttons
             document.getElementById('trainModelBtn').addEventListener('click', () => openModal('trainModelModal'));
