@@ -121,9 +121,17 @@ def handle_image_generation(user_input):
         return "🎨 I'd love to generate images for you! However, I need an OpenAI API key to access DALL-E. Please check your configuration."
     
     try:
-        # Extract image description
-        prompt = user_input.replace('generate', '').replace('create', '').replace('make', '').replace('image', '').replace('picture', '').strip()
-        if not prompt:
+        # Extract image description more thoroughly
+        text_lower = user_input.lower()
+        prompt = user_input
+        
+        # Remove trigger words to extract the actual description
+        for word in ['generate', 'create', 'make', 'draw', 'image', 'picture', 'an', 'a', 'of']:
+            prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+        
+        prompt = re.sub(r'\s+', ' ', prompt).strip()  # Clean up extra spaces
+        
+        if not prompt or len(prompt) < 3:
             prompt = "a beautiful landscape"
         
         print(f"🎨 Generating image with DALL-E: {prompt}")
@@ -138,7 +146,7 @@ def handle_image_generation(user_input):
         )
         
         image_url = response.data[0].url
-        return f"🎨 Image generated successfully! Here's your image: {image_url}"
+        return f"🎨 I've created your image! Here it is: <img src='{image_url}' alt='{prompt}' style='max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;' /><br>📝 Prompt: {prompt}"
         
     except Exception as e:
         print(f"Image generation error: {e}")
