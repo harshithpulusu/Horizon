@@ -2029,50 +2029,46 @@
 </head>
 <body>
     <div class="container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <h1>Horizon AI</h1>
+        </div>
+        
+        <!-- Main Chat Interface -->
         <div class="main-chat">
-            <div class="header">
-                <h1>🌟 Horizon AI Assistant</h1>
-                <p>Your Advanced Voice-Activated AI Companion</p>
-            </div>
-            
-            <div class="status-bar">
-                <div class="status-indicator" id="statusIndicator">Ready</div>
-                <div class="stats">
-                    <div class="stat-item">
-                        <div class="value" id="conversationCount">0</div>
-                        <div class="label">Conversations</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="value" id="confidenceScore">87%</div>
-                        <div class="label">Confidence</div>
+            <div class="chat-messages-container">
+                <div class="messages" id="chatMessages">
+                    <!-- Welcome message -->
+                    <div class="message ai">
+                        <div class="message-avatar">H</div>
+                        <div class="message-content-wrapper">
+                            <div class="message-content">
+                                Welcome to Horizon! I'm your advanced AI assistant with enhanced intelligence capabilities. I can help you with complex tasks, creative projects, and provide intelligent insights. How can I assist you today?
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="control-panel">
-                <div class="controls">
-                    <button class="btn btn-primary" id="startListening">
-                        🎤 Start Listening
-                    </button>
-                    <button class="btn btn-danger" id="stopListening" disabled>
-                        ⏹️ Stop Listening
-                    </button>
-                    <button class="btn btn-secondary" id="testMicBtn">
-                        🎙️ Test Microphone
-                    </button>
-                    <button class="btn btn-secondary" id="helpBtn">
-                        ❓ Help
-                    </button>
-                    <button class="btn btn-warning" id="clearConversationBtn" title="Start a new conversation session">
-                        🗑️ Clear Conversation
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <div class="input-container">
+                    <textarea 
+                        id="userInput" 
+                        placeholder="Message Horizon AI..."
+                        rows="1"
+                    ></textarea>
+                    <button type="button" id="sendButton" class="send-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
                     </button>
                 </div>
-                
-                <div class="personality-selector">
-                    <label for="personalitySelect">AI Personality:</label>
-                    <select id="personalitySelect">
-                        <option value="friendly" selected>😊 Friendly</option>
-                        <option value="professional">👔 Professional</option>
+            </div>
+        </div>
+    </div>
                         <option value="enthusiastic">🚀 Enthusiastic</option>
                         <option value="witty">😏 Witty</option>
                         <option value="sarcastic">😎 Sarcastic</option>
