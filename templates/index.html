@@ -460,6 +460,74 @@
     </div>
 
     <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>🌟 Horizon Controls</h3>
+                <button class="sidebar-toggle" id="sidebarToggle">←</button>
+            </div>
+            
+            <!-- Active Timers Section -->
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <span class="section-icon">⏱️</span>
+                    <span class="section-title">ACTIVE TIMERS</span>
+                </div>
+                <div class="section-content" id="activeTimers">
+                    <div class="empty-state">No active timers</div>
+                </div>
+            </div>
+            
+            <!-- Active Reminders Section -->
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <span class="section-icon">🔔</span>
+                    <span class="section-title">ACTIVE REMINDERS</span>
+                </div>
+                <div class="section-content" id="activeReminders">
+                    <div class="empty-state">No active reminders</div>
+                </div>
+            </div>
+            
+            <!-- Quick Commands Section -->
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <span class="section-icon">⚡</span>
+                    <span class="section-title">QUICK COMMANDS</span>
+                </div>
+                <div class="section-content quick-commands-list">
+                    <button class="sidebar-command" onclick="sendQuickCommand('What time is it?')">
+                        <span class="command-icon">🕐</span>
+                        <span class="command-text">"What time is it?"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand('Set timer for 5 minutes')">
+                        <span class="command-icon">⏰</span>
+                        <span class="command-text">"Set timer for 5 minutes"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand('Set timer for 10 minutes')">
+                        <span class="command-icon">⏰</span>
+                        <span class="command-text">"Set timer for 10 minutes"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand('Remind me to call mom')">
+                        <span class="command-icon">📞</span>
+                        <span class="command-text">"Remind me to call mom"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand('Calculate 25 times 4')">
+                        <span class="command-icon">🧮</span>
+                        <span class="command-text">"Calculate 25 times 4"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand('Tell me a joke')">
+                        <span class="command-icon">😄</span>
+                        <span class="command-text">"Tell me a joke"</span>
+                    </button>
+                    <button class="sidebar-command" onclick="sendQuickCommand(&quot;What's today's date?&quot;)">
+                        <span class="command-icon">📅</span>
+                        <span class="command-text">"What's today's date?"</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="main-chat">
             <!-- Header -->
             <div class="header">

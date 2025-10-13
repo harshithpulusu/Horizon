@@ -1,1562 +1,805 @@
+#!/usr/bin/env python3
+"""
+Horizon AI Assistant - Enhanced Version
+Advanced AI features with DALL-E, spaCy NLP, Memory Learning, and Logo Generation
+"""
+
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from datetime import datetime
+import sqlite3
 import json
-from datetime import datetime, timedelta
-import random
 import re
 import os
-from dataclasses import dataclass
-from typing import Dict, List, Any
-import sqlite3
-import threading
 import time
-import requests
 import spacy
-from spacy.matcher import Matcher
-import numpy as np
-import openai
+import random
+import hashlib
+from openai import OpenAI
+from config import Config
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-@dataclass
-class Intent:
-    name: str
-    confidence: float
-    entities: Dict[str, Any]
+# Initialize spaCy for enhanced NLP
+try:
+    nlp = spacy.load("en_core_web_sm")
+    NLP_AVAILABLE = True
+    print("✅ spaCy NLP model loaded successfully")
+except (OSError, IOError):
+    nlp = None
+    NLP_AVAILABLE = False
+    print("⚠️ spaCy model not found. Install with: python -m spacy download en_core_web_sm")
 
-class AdvancedAIProcessor:
-    def __init__(self):
-        self.conversation_history = []
-        self.user_preferences = {}
-        self.context_memory = {}
-        self.skills = self.init_skills()
-        self.intent_patterns = self.init_intent_patterns()
-        self.init_database()
-        
-        # Initialize spaCy for advanced NLP
-        print("Loading spaCy model...")
-        try:
-            self.nlp = spacy.load("en_core_web_sm")
-            self.matcher = Matcher(self.nlp.vocab)
-            self.init_spacy_patterns()
-            print("✅ spaCy model loaded successfully!")
-        except OSError:
-            print("❌ spaCy model not found. Using fallback basic NLP.")
-            self.nlp = None
-            self.matcher = None
-        self.active_timers = {}
-        self.reminders = []
-        
-    def init_database(self):
-        """Initialize SQLite database for persistent memory"""
-        self.conn = sqlite3.connect('ai_memory.db', check_same_thread=False)
-        self.lock = threading.Lock()
-        
-        with self.lock:
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS conversations (
-                    id INTEGER PRIMARY KEY,
-                    timestamp TEXT,
-                    user_input TEXT,
-                    ai_response TEXT,
-                    intent TEXT,
-                    sentiment TEXT,
-                    confidence REAL
-                )
-            ''')
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS user_preferences (
-                    key TEXT PRIMARY KEY,
-                    value TEXT
-                )
-            ''')
-            self.conn.commit()
-    
-    def init_skills(self):
-        """Initialize AI skills similar to Alexa Skills"""
-        return {
-            'time': self.get_time,
-            'date': self.get_date,
-            'math': self.calculate_math,
-            'reminder': self.set_reminder,
-            'joke': self.tell_joke,
-            'news': self.get_news,
-            'music': self.play_music,
-            'smart_home': self.control_smart_home,
-            'translation': self.translate_text,
-            'definition': self.define_word,
-            'trivia': self.ask_trivia,
-            'timer': self.set_timer,
-            'alarm': self.set_alarm,
-            'calendar': self.check_calendar,
-            'email': self.send_email,
-            'search': self.web_search
-        }
-    
-    def init_intent_patterns(self):
-        """Initialize intent recognition patterns"""
-        return {
-            'time': [
-                r'what time is it',
-                r'current time',
-                r'time right now',
-                r'tell me the time'
-            ],
-            'date': [
-                r'what\'?s today\'?s date',
-                r'what day is it',
-                r'today\'?s date'
-            ],
-            'math': [
-                r'calculate (.+)',
-                r'what\'?s (\d+) (\+|\-|\*|/) (\d+)',
-                r'solve (.+)',
-                r'math (.+)'
-            ],
-            'reminder': [
-                r'remind me to (.+)',
-                r'set a reminder (.+)',
-                r'don\'?t forget (.+)'
-            ],
-            'timer': [
-                r'set timer for (.+)',
-                r'timer for (.+)',
-                r'start timer (.+)',
-                r'set a timer for (.+)',
-                r'countdown (.+)',
-                r'timer (.+) minutes',
-                r'timer (.+) seconds'
-            ],
-            'joke': [
-                r'tell me a joke',
-                r'make me laugh',
-                r'something funny',
-                r'another joke'
-            ],
-            'news': [
-                r'what\'?s in the news',
-                r'latest news',
-                r'news about (.+)'
-            ],
-            'music': [
-                r'play music',
-                r'play some music',
-                r'music by (.+)',
-                r'play song (.+)',
-                r'put on (.+) music'
-            ],
-            'smart_home': [
-                r'turn (on|off) (.+)',
-                r'dim the lights',
-                r'set temperature to (\d+)'
-            ],
-            'translation': [
-                r'translate (.+) to (.+)',
-                r'how do you say (.+) in (.+)'
-            ],
-            'definition': [
-                r'what does (.+) mean',
-                r'define (.+)',
-                r'definition of (.+)'
-            ],
-            'search': [
-                r'search for (.+)',
-                r'look up (.+)',
-                r'find information about (.+)'
-            ]
-        }
-    
-    def init_spacy_patterns(self):
-        """Initialize spaCy patterns for better intent recognition"""
-        if not self.matcher:
-            return
-        
-        # Time patterns
-        time_patterns = [
-            [{"LOWER": {"IN": ["what", "whats"]}}, {"LOWER": "time"}, {"IS_ALPHA": True, "OP": "?"}],
-            [{"LOWER": "current"}, {"LOWER": "time"}],
-            [{"LOWER": "tell"}, {"LOWER": "me"}, {"LOWER": "the"}, {"LOWER": "time"}]
-        ]
-        self.matcher.add("TIME_INTENT", time_patterns)
-        
-        # Timer patterns - enhanced for better recognition
-        timer_patterns = [
-            [{"LOWER": "set"}, {"LOWER": {"IN": ["timer", "alarm"]}}, {"LOWER": "for", "OP": "?"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}],
-            [{"LOWER": "timer"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}],
-            [{"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min", "seconds", "second", "secs", "sec", "hours", "hour", "hrs", "hr"]}}, {"LOWER": "timer"}],
-            [{"LOWER": "countdown"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["minutes", "minute", "mins", "min"]}}]
-        ]
-        self.matcher.add("TIMER_INTENT", timer_patterns)
-        
-        # Math patterns - enhanced
-        math_patterns = [
-            [{"LOWER": {"IN": ["calculate", "compute", "solve"]}}, {"IS_ALPHA": False, "OP": "+"}],
-            [{"LOWER": "what"}, {"LOWER": "is"}, {"LIKE_NUM": True}, {"LOWER": {"IN": ["plus", "minus", "times", "divided", "multiplied"]}}, {"LIKE_NUM": True}],
-            [{"LIKE_NUM": True}, {"LOWER": {"IN": ["+", "-", "*", "/", "plus", "minus", "times", "divided", "by", "multiplied"]}}, {"LIKE_NUM": True}],
-            [{"LOWER": "math"}, {"IS_ALPHA": False, "OP": "+"}]
-        ]
-        self.matcher.add("MATH_INTENT", math_patterns)
-        
-        # Reminder patterns - enhanced
-        reminder_patterns = [
-            [{"LOWER": "remind"}, {"LOWER": "me"}, {"LOWER": "to", "OP": "?"}, {"IS_ALPHA": True, "OP": "+"}],
-            [{"LOWER": "set"}, {"LOWER": {"IN": ["reminder", "alert"]}}, {"IS_ALPHA": True, "OP": "+"}],
-            [{"LOWER": "remember"}, {"LOWER": "to"}, {"IS_ALPHA": True, "OP": "+"}],
-            [{"LOWER": "don't"}, {"LOWER": "forget"}, {"IS_ALPHA": True, "OP": "+"}]
-        ]
-        self.matcher.add("REMINDER_INTENT", reminder_patterns)
-        
-        # Joke patterns
-        joke_patterns = [
-            [{"LOWER": "tell"}, {"LOWER": "me"}, {"LOWER": "a"}, {"LOWER": "joke"}],
-            [{"LOWER": {"IN": ["joke", "funny", "laugh"]}}, {"IS_ALPHA": True, "OP": "*"}],
-            [{"LOWER": "make"}, {"LOWER": "me"}, {"LOWER": "laugh"}],
-            [{"LOWER": "something"}, {"LOWER": "funny"}]
-        ]
-        self.matcher.add("JOKE_INTENT", joke_patterns)
-        
-        # Date patterns
-        date_patterns = [
-            [{"LOWER": {"IN": ["what", "whats"]}}, {"LOWER": {"IN": ["date", "day"]}}, {"IS_ALPHA": True, "OP": "?"}],
-            [{"LOWER": "today's"}, {"LOWER": "date"}],
-            [{"LOWER": "what"}, {"LOWER": "day"}, {"LOWER": "is"}, {"LOWER": "it"}]
-        ]
-        self.matcher.add("DATE_INTENT", date_patterns)
-        
-        # Count total patterns
-        total_patterns = sum(len(patterns) for patterns in [
-            time_patterns, timer_patterns, math_patterns, 
-            reminder_patterns, joke_patterns, date_patterns
-        ])
-        print(f"✅ Initialized {total_patterns} spaCy patterns for enhanced NLP")
+# Initialize OpenAI client
+try:
+    client = OpenAI(api_key=getattr(Config, 'OPENAI_API_KEY', None))
+    AI_MODEL_AVAILABLE = True
+    print("✅ ChatGPT API connected successfully")
+except Exception as e:
+    client = None
+    AI_MODEL_AVAILABLE = False
+    print(f"⚠️ ChatGPT API initialization failed: {e}")
 
-    def clean_wake_words(self, user_input: str) -> str:
-        """Remove wake words from user input to avoid confusion with commands"""
-        # Define wake words that should be removed from commands
-        wake_words = [
-            'hey horizon', 'horizon', 'hey assistant', 'assistant',
-            'hey siri', 'siri', 'hey alexa', 'alexa'  # Common wake words
-        ]
-        
-        cleaned_input = user_input.lower().strip()
-        
-        # Remove wake words from the beginning of the input
-        for wake_word in wake_words:
-            if cleaned_input.startswith(wake_word):
-                cleaned_input = cleaned_input[len(wake_word):].strip()
-                # Remove common connecting words
-                if cleaned_input.startswith((',', 'please', 'can you')):
-                    cleaned_input = re.sub(r'^(,|please|can you)\s*', '', cleaned_input)
-                break
-        
-        return cleaned_input if cleaned_input else user_input
-    
-    def recognize_intent(self, user_input: str) -> Intent:
-        """Enhanced intent recognition using spaCy and pattern matching"""
-        # Clean wake words first
-        cleaned_input = self.clean_wake_words(user_input)
-        user_input_lower = cleaned_input.lower().strip()
-        best_intent = Intent("general", 0.0, {})
-        
-        print(f"🧠 NLP Analysis for: '{user_input_lower}'")
-        
-        # First try spaCy-based recognition if available
-        if self.nlp and self.matcher:
-            spacy_intent = self._recognize_with_spacy(cleaned_input)
-            if spacy_intent.confidence > 0.8:
-                print(f"✅ spaCy high-confidence match: {spacy_intent.name} (confidence: {spacy_intent.confidence:.3f})")
-                return spacy_intent
-            elif spacy_intent.confidence > best_intent.confidence:
-                best_intent = spacy_intent
-                print(f"📊 spaCy match: {spacy_intent.name} (confidence: {spacy_intent.confidence:.3f})")
-        
-        # Enhanced pattern matching with better scoring
-        print(f"🔍 Pattern matching for: '{user_input_lower}'")
-        
-        for intent_name, patterns in self.intent_patterns.items():
-            for pattern in patterns:
-                match = re.search(pattern, user_input_lower)
-                if match:
-                    confidence = len(match.group(0)) / len(user_input_lower)
-                    confidence += 0.3  # Boost for exact pattern match
-                    
-                    print(f"Pattern match: '{pattern}' -> {intent_name} (confidence: {confidence:.3f})")
-                    
-                    if confidence > best_intent.confidence:
-                        entities = {}
-                        if match.groups():
-                            entities = {f"entity_{i}": group for i, group in enumerate(match.groups())}
-                        
-                        best_intent = Intent(intent_name, confidence, entities)
-                        print(f"New best intent: {intent_name} with entities: {entities}")
-        
-        # Fallback intent detection using keywords
-        if best_intent.confidence < 0.3:
-            print("Using keyword fallback detection...")
-            keyword_intents = {
-                'time': ['time', 'clock', 'hour', 'minute'],
-                'math': ['calculate', 'plus', 'minus', 'times', 'divided', 'equation', 'add', 'subtract', 'multiply'],
-                'music': ['play', 'song', 'music', 'artist', 'album'],
-                'joke': ['joke', 'funny', 'laugh', 'humor'],
-                'timer': ['timer', 'countdown', 'minutes', 'seconds', 'alarm'],
-                'reminder': ['remind', 'reminder', 'remember', 'forget']
-            }
-            
-            for intent_name, keywords in keyword_intents.items():
-                keyword_matches = sum(1 for keyword in keywords if keyword in user_input_lower)
-                if keyword_matches > 0:
-                    confidence = keyword_matches / len(keywords) * 0.5
-                    print(f"Keyword match: {intent_name} ({keyword_matches} keywords, confidence: {confidence:.3f})")
-                    if confidence > best_intent.confidence:
-                        best_intent = Intent(intent_name, confidence, {})
-        
-        return best_intent
-    
-    def _recognize_with_spacy(self, text: str) -> Intent:
-        """Use spaCy for advanced intent recognition with entity extraction"""
-        if not self.nlp or not self.matcher:
-            return Intent("general", 0.0, {})
-        
-        # Process text with spaCy
-        doc = self.nlp(text)
-        matches = self.matcher(doc)
-        
-        if not matches:
-            return Intent("general", 0.0, {})
-        
-        # Find the best match with highest confidence
-        best_match = None
-        best_confidence = 0.0
-        best_entities = {}
-        
-        for match_id, start, end in matches:
-            intent_name = self.nlp.vocab.strings[match_id].replace("_INTENT", "").lower()
-            
-            # Calculate confidence based on match span and text length
-            match_span = end - start
-            text_length = len(doc)
-            confidence = (match_span / text_length) * 1.2  # Boost spaCy matches
-            
-            # Extract entities from the matched span and surrounding context
-            entities = self._extract_entities_spacy(doc, start, end)
-            
-            if confidence > best_confidence:
-                best_confidence = confidence
-                best_match = intent_name
-                best_entities = entities
-        
-        # Cap confidence at 1.0
-        best_confidence = min(best_confidence, 1.0)
-        
-        return Intent(best_match or "general", best_confidence, best_entities)
-    
-    def _extract_entities_spacy(self, doc, start: int, end: int) -> Dict[str, Any]:
-        """Extract entities using spaCy's NER and linguistic features"""
-        entities = {}
-        entity_count = 0
-        
-        # Look for numbers (for timers, math, etc.)
-        for token in doc:
-            if token.like_num and entity_count < 5:
-                entities[f'number_{entity_count}'] = token.text
-                entity_count += 1
-        
-        # Look for time expressions
-        for ent in doc.ents:
-            if ent.label_ in ["TIME", "DATE", "CARDINAL", "ORDINAL"] and entity_count < 5:
-                entities[f'entity_{entity_count}'] = ent.text
-                entity_count += 1
-        
-        # Extract duration units (minutes, hours, etc.)
-        time_units = ["minute", "minutes", "min", "mins", "hour", "hours", "hr", "hrs", "second", "seconds", "sec", "secs"]
-        for token in doc:
-            if token.lemma_.lower() in time_units and entity_count < 5:
-                entities[f'time_unit_{entity_count}'] = token.text
-                entity_count += 1
-        
-        # For reminders, extract the task
-        if any(token.lemma_.lower() in ["remind", "remember"] for token in doc):
-            # Find text after "to" or "about"
-            for i, token in enumerate(doc):
-                if token.text.lower() in ["to", "about"] and i + 1 < len(doc):
-                    remainder = doc[i+1:].text
-                    if remainder.strip():
-                        entities['task'] = remainder.strip()
-                    break
-        
-        return entities
+# Create directories
+os.makedirs('static/generated_images', exist_ok=True)
+os.makedirs('static/generated_logos', exist_ok=True)
 
-    def generate_response(self, user_input: str, personality: str = 'friendly') -> Dict[str, Any]:
-        """Main response generation with context awareness"""
-        # Clean wake words first for better intent recognition
-        cleaned_input = self.clean_wake_words(user_input)
-        print(f"Original input: '{user_input}' -> Cleaned: '{cleaned_input}'")  # Debug log
+def init_db():
+    """Initialize SQLite database with enhanced memory learning"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
         
-        intent = self.recognize_intent(cleaned_input)
-        print(f"Recognized intent: {intent.name} (confidence: {intent.confidence:.3f})")  # Debug log
-        
-        sentiment = self.analyze_sentiment(cleaned_input)
-        
-        # Store conversation in database (use original input for history)
-        self.store_conversation(user_input, intent, sentiment)
-        
-        # Update context memory
-        self.update_context(cleaned_input, intent)
-        
-        # Generate response based on intent
-        if intent.name in self.skills and intent.confidence > 0.3:
-            print(f"Using skill: {intent.name}")  # Debug log
-            response = self.skills[intent.name](cleaned_input, intent.entities, personality)
-        else:
-            print(f"Using OpenAI fallback (intent: {intent.name}, confidence: {intent.confidence:.3f})")  # Debug log
-            response = self.ask_openai(cleaned_input, personality)
-        
-        # Store AI response
-        self.store_ai_response(response, intent)
-        
-        return {
-            'response': response,
-            'intent': intent.name,
-            'confidence': intent.confidence,
-            'sentiment_analysis': sentiment,
-            'conversation_count': len(self.conversation_history),
-            'personality': personality,
-            'context_aware': self.get_context_info()
-        }
-    
-    def store_conversation(self, user_input: str, intent: Intent, sentiment: Dict):
-        """Store conversation in database for learning"""
-        with self.lock:
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                INSERT INTO conversations (timestamp, user_input, intent, sentiment, confidence)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (
-                datetime.now().isoformat(),
-                user_input,
-                intent.name,
-                json.dumps(sentiment),
-                intent.confidence
-            ))
-            self.conn.commit()
-    
-    def store_ai_response(self, response: str, intent: Intent):
-        """Update the last conversation with AI response"""
-        with self.lock:
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                UPDATE conversations 
-                SET ai_response = ? 
-                WHERE id = (SELECT MAX(id) FROM conversations)
-            ''', (response,))
-            self.conn.commit()
-    
-    def update_context(self, user_input: str, intent: Intent):
-        """Update conversation context for better responses"""
-        self.context_memory['last_intent'] = intent.name
-        self.context_memory['last_input'] = user_input
-        self.context_memory['timestamp'] = datetime.now()
-        
-        # Keep only recent context (last 5 interactions)
-        if len(self.conversation_history) >= 5:
-            self.conversation_history = self.conversation_history[-4:]
-        
-        self.conversation_history.append({
-            'input': user_input,
-            'intent': intent.name,
-            'timestamp': datetime.now()
-        })
-    
-    def get_context_info(self):
-        """Get context information for frontend"""
-        return {
-            'last_intent': self.context_memory.get('last_intent'),
-            'conversation_length': len(self.conversation_history),
-            'recent_topics': list(set([conv['intent'] for conv in self.conversation_history[-3:]]))
-        }
-    
-    # OpenAI Integration
-    def ask_openai(self, user_input: str, personality: str) -> str:
-        """Use OpenAI to answer questions that built-in skills can't handle"""
-        try:
-            # Set up OpenAI API key
-            openai.api_key = os.getenv('OPENAI_API_KEY') or "your-openai-api-key-here"
-            
-            if openai.api_key == "your-openai-api-key-here":
-                return "I'd love to help you with that! To unlock my full knowledge capabilities, please add your OpenAI API key to the environment variables. For now, I can help with time, timers, math, and jokes! 🤖"
-            
-            # Create personality-aware system prompt
-            personality_prompts = {
-                'friendly': "You are a friendly and helpful AI assistant named Horizon. Be warm, encouraging, and conversational in your responses.",
-                'professional': "You are a professional AI assistant named Horizon. Provide clear, concise, and helpful information in a business-appropriate tone.",
-                'enthusiastic': "You are an enthusiastic and energetic AI assistant named Horizon. Be exciting, positive, and use lots of exclamation points!",
-                'witty': "You are a witty and clever AI assistant named Horizon. Include humor and wordplay in your responses while being helpful.",
-                'sarcastic': "You are a sarcastic but helpful AI assistant named Horizon. Use dry humor and sarcasm while still providing good information.",
-                'zen': "You are a zen and peaceful AI assistant named Horizon. Speak with wisdom, calmness, and mindfulness.",
-                'scientist': "You are a scientific and analytical AI assistant named Horizon. Provide detailed, evidence-based responses with technical accuracy.",
-                'pirate': "You are a pirate-themed AI assistant named Horizon. Use pirate language and expressions while helping users.",
-                'shakespearean': "You are an AI assistant named Horizon who speaks like Shakespeare. Use eloquent, poetic language from the Elizabethan era.",
-                'valley_girl': "You are a valley girl AI assistant named Horizon. Use valley girl speech patterns and expressions.",
-                'cowboy': "You are a cowboy AI assistant named Horizon. Use western expressions and a frontier spirit.",
-                'robot': "You are a robot AI assistant named Horizon. Speak in a mechanical, computational manner."
-            }
-            
-            system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
-            
-            response = openai.ChatCompletion.create(
-                model="gpt-5-nano",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ],
-                max_tokens=300,
-                temperature=0.7
+        # Conversations table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                user_input TEXT,
+                ai_response TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                user_id TEXT DEFAULT 'anonymous',
+                intent TEXT,
+                confidence REAL,
+                entities TEXT,
+                sentiment REAL,
+                personality TEXT
             )
-            
-            return response.choices[0].message.content.strip()
-            
-        except Exception as e:
-            print(f"OpenAI API error: {e}")
-            return f"I'm having trouble accessing my advanced knowledge base right now. But I can still help with time, timers, math, jokes, and reminders! Try asking me something like 'What time is it?' or 'Tell me a joke!' 🤖"
+        ''')
+        
+        # User preferences and learning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                preference_key TEXT,
+                preference_value TEXT,
+                learned_from TEXT,
+                confidence REAL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Memory patterns for learning
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS memory_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pattern_type TEXT,
+                pattern_data TEXT,
+                frequency INTEGER DEFAULT 1,
+                last_used DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Quick commands usage
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS quick_commands (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                command TEXT,
+                usage_count INTEGER DEFAULT 1,
+                last_used DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        print("✅ Enhanced database initialized with memory learning")
+    except Exception as e:
+        print(f"⚠️ Database initialization failed: {e}")
 
-    # Skill implementations
-    def get_weather(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get real weather information using OpenWeatherMap API or free fallback"""
+def check_wake_word(text):
+    """Check if input contains wake word"""
+    text_lower = text.lower().strip()
+    wake_words = ["horizon", "hello horizon", "hey horizon", "hi horizon"]
+    
+    for wake_word in wake_words:
+        if wake_word in text_lower:
+            # Remove wake word and return cleaned text
+            cleaned_text = text_lower.replace(wake_word, "").strip()
+            return True, cleaned_text if cleaned_text else "How can I help you?"
+    
+    return False, text
+
+def extract_entities_with_spacy(text):
+    """Extract entities using spaCy NLP"""
+    if not NLP_AVAILABLE or not nlp:
+        return []
+    
+    try:
+        doc = nlp(text)
+        entities = []
+        for ent in doc.ents:
+            entities.append({
+                'text': ent.text,
+                'label': ent.label_,
+                'description': spacy.explain(ent.label_)
+            })
+        return entities
+    except Exception as e:
+        print(f"Entity extraction error: {e}")
+        return []
+
+def analyze_sentiment(text):
+    """Analyze sentiment using simple approach"""
+    positive_words = ['good', 'great', 'awesome', 'fantastic', 'love', 'like', 'happy', 'excited', 'amazing', 'wonderful']
+    negative_words = ['bad', 'terrible', 'hate', 'dislike', 'sad', 'angry', 'frustrated', 'awful', 'horrible', 'annoying']
+    
+    text_lower = text.lower()
+    positive_count = sum(1 for word in positive_words if word in text_lower)
+    negative_count = sum(1 for word in negative_words if word in text_lower)
+    
+    if positive_count > negative_count:
+        return min(0.8, positive_count * 0.3)
+    elif negative_count > positive_count:
+        return max(-0.8, negative_count * -0.3)
+    else:
+        return 0.0
+
+def learn_from_interaction(user_id, user_input, ai_response, entities, sentiment):
+    """Learn patterns from user interactions"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Learn user preferences
+        if sentiment > 0.3:  # Positive interaction
+            for entity in entities:
+                cursor.execute('''
+                    INSERT OR REPLACE INTO user_preferences 
+                    (user_id, preference_key, preference_value, learned_from, confidence)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (user_id, entity['label'], entity['text'], user_input, sentiment))
+        
+        # Learn conversation patterns
+        pattern_data = json.dumps({
+            'input_length': len(user_input.split()),
+            'entities': [e['label'] for e in entities],
+            'sentiment': sentiment
+        })
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO memory_patterns 
+            (pattern_type, pattern_data, frequency)
+            VALUES (?, ?, COALESCE((SELECT frequency FROM memory_patterns WHERE pattern_data = ?) + 1, 1))
+        ''', ('conversation', pattern_data, pattern_data))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Learning error: {e}")
+
+def recognize_intent(text):
+    """Enhanced intent recognition with spaCy"""
+    text_lower = text.lower()
+    
+    # Quick commands tracking
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+    except:
+        conn = None
+    
+    # Wake word check
+    has_wake_word, _ = check_wake_word(text)
+    if has_wake_word and not any(cmd in text_lower for cmd in ['time', 'date', 'image', 'logo', 'math']):
+        return 'wake_word'
+    
+    # Enhanced pattern matching
+    if any(word in text_lower for word in ['hello', 'hi', 'hey', 'good morning', 'good afternoon']):
+        intent = 'greeting'
+    elif any(word in text_lower for word in ['bye', 'goodbye', 'see you', 'farewell']):
+        intent = 'goodbye'
+    elif 'time' in text_lower or 'what time is it' in text_lower:
+        intent = 'time'
+    elif 'date' in text_lower or 'what day' in text_lower or 'today' in text_lower:
+        intent = 'date'
+    elif any(op in text_lower for op in ['+', '-', '*', '/', 'calculate', 'math', 'solve']):
+        intent = 'math'
+    elif any(phrase in text_lower for phrase in [
+        'generate image', 'create image', 'make image', 'generate picture', 'create picture', 
+        'make picture', 'draw', 'create an image', 'generate an image', 'make an image'
+    ]):
+        intent = 'image_generation'
+    elif any(phrase in text_lower for phrase in [
+        'generate logo', 'create logo', 'make logo', 'design logo', 'logo design',
+        'brand logo', 'company logo', 'business logo'
+    ]):
+        intent = 'logo_generation'
+    elif any(phrase in text_lower for phrase in ['weather', 'temperature', 'forecast']):
+        intent = 'weather'
+    elif any(phrase in text_lower for phrase in ['remind me', 'reminder', 'set reminder']):
+        intent = 'reminder'
+    elif any(phrase in text_lower for phrase in ['timer', 'set timer', 'countdown']):
+        intent = 'timer'
+    else:
+        intent = 'general'
+    
+    # Track command usage
+    if conn and intent != 'general':
         try:
-            # Extract location from user input or use default
-            location = entities.get('entity_0', DEFAULT_WEATHER_LOCATION)
-            if not location or location == 'your location':
-                location = DEFAULT_WEATHER_LOCATION
-            
-            # Check if we have a valid API key for OpenWeatherMap
-            if WEATHER_API_KEY and WEATHER_API_KEY not in ["your-openweathermap-api-key-here", "PASTE_YOUR_REAL_API_KEY_HERE"]:
-                # Try OpenWeatherMap first (free tier: 1000 calls/day)
-                return self._get_openweathermap_weather(location, personality)
-            else:
-                # Use completely free 7Timer API (no key required)
-                return self._get_7timer_weather(location, personality)
-                
-        except Exception as e:
-            print(f"Weather API error: {e}")
-            return self._get_mock_weather(location, personality)
-    
-    def _get_openweathermap_weather(self, location: str, personality: str) -> str:
-        """Get weather from OpenWeatherMap API (free tier)"""
-        try:
-            # Make API request to OpenWeatherMap
-            url = f"{WEATHER_API_BASE_URL}/weather"
-            params = {
-                'q': location,
-                'appid': WEATHER_API_KEY,
-                'units': DEFAULT_WEATHER_UNITS
-            }
-            
-            response = requests.get(url, params=params, timeout=5)
-            
-            if response.status_code == 200:
-                data = response.json()
-                return self._format_weather_response(data, location, personality)
-            elif response.status_code == 404:
-                return f"Sorry, I couldn't find weather information for '{location}'. Could you try a different city? 🌍"
-            elif response.status_code == 401:
-                print("Invalid API key, falling back to free service")
-                return self._get_7timer_weather(location, personality)
-            else:
-                return "I'm having trouble getting weather data right now. Please try again later! 🌤️"
-                
-        except requests.exceptions.Timeout:
-            return "The weather service is taking too long to respond. Please try again! ⏰"
-        except requests.exceptions.ConnectionError:
-            return "I can't connect to the weather service right now. Please check your internet connection! 🌐"
-        except Exception as e:
-            print(f"OpenWeatherMap API error: {e}")
-            return self._get_7timer_weather(location, personality)
-    
-    def _get_7timer_weather(self, location: str, personality: str) -> str:
-        """Get weather from completely free 7Timer API (no API key required)"""
-        try:
-            # Get coordinates for the location
-            coords = self._get_city_coordinates(location)
-            if not coords:
-                return f"Sorry, I couldn't find coordinates for '{location}'. Try a major city like New York, London, or Tokyo! 🌍"
-            
-            lat, lon = coords
-            url = "http://www.7timer.info/bin/api.pl"
-            params = {
-                'lon': lon,
-                'lat': lat,
-                'product': 'civil',
-                'output': 'json'
-            }
-            
-            response = requests.get(url, params=params, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                return self._format_7timer_response(data, location, personality)
-            else:
-                return self._get_mock_weather(location, personality)
-                
-        except Exception as e:
-            print(f"7Timer API error: {e}")
-            return self._get_mock_weather(location, personality)
-    
-    def _get_city_coordinates(self, location: str) -> tuple:
-        """Simple city to coordinates mapping for major cities"""
-        city_coords = {
-            'new york': (40.7128, -74.0060),
-            'los angeles': (34.0522, -118.2437),
-            'chicago': (41.8781, -87.6298),
-            'houston': (29.7604, -95.3698),
-            'phoenix': (33.4484, -112.0740),
-            'philadelphia': (39.9526, -75.1652),
-            'san antonio': (29.4241, -98.4936),
-            'san diego': (32.7157, -117.1611),
-            'dallas': (32.7767, -96.7970),
-            'san jose': (37.3382, -121.8863),
-            'austin': (30.2672, -97.7431),
-            'miami': (25.7617, -80.1918),
-            'seattle': (47.6062, -122.3321),
-            'denver': (39.7392, -104.9903),
-            'boston': (42.3601, -71.0589),
-            'london': (51.5074, -0.1278),
-            'paris': (48.8566, 2.3522),
-            'tokyo': (35.6762, 139.6503),
-            'sydney': (-33.8688, 151.2093),
-            'toronto': (43.6532, -79.3832),
-            'montreal': (45.5017, -73.5673),
-            'vancouver': (49.2827, -123.1207),
-            'berlin': (52.5200, 13.4050),
-            'rome': (41.9028, 12.4964),
-            'madrid': (40.4168, -3.7038),
-            'amsterdam': (52.3676, 4.9041),
-            'stockholm': (59.3293, 18.0686),
-            'moscow': (55.7558, 37.6176),
-            'beijing': (39.9042, 116.4074),
-            'shanghai': (31.2304, 121.4737),
-            'mumbai': (19.0760, 72.8777),
-            'delhi': (28.7041, 77.1025),
-            'bangkok': (13.7563, 100.5018),
-            'singapore': (1.3521, 103.8198),
-            'hong kong': (22.3193, 114.1694),
-            'seoul': (37.5665, 126.9780),
-            'melbourne': (-37.8136, 144.9631),
-            'perth': (-31.9505, 115.8605),
-            'auckland': (-36.8485, 174.7633),
-            'cairo': (30.0444, 31.2357),
-            'lagos': (6.5244, 3.3792),
-            'johannesburg': (-26.2041, 28.0473),
-            'sao paulo': (-23.5558, -46.6396),
-            'rio de janeiro': (-22.9068, -43.1729),
-            'mexico city': (19.4326, -99.1332),
-            'buenos aires': (-34.6118, -58.3960)
-        }
-        
-        # Clean location input and try to match
-        location_lower = location.lower().split(',')[0].strip()
-        # Try exact match first
-        if location_lower in city_coords:
-            return city_coords[location_lower]
-        
-        # Try partial matches for common abbreviations
-        for city, coords in city_coords.items():
-            if location_lower in city or city in location_lower:
-                return coords
-        
-        return None
-    
-    def _format_7timer_response(self, data: Dict, location: str, personality: str) -> str:
-        """Format 7Timer API response based on personality"""
-        try:
-            current = data['dataseries'][0]
-            weather_desc = self._decode_7timer_weather(current['weather'])
-            temp_c = current['temp2m']  # Temperature in Celsius
-            temp_f = round((temp_c * 9/5) + 32)  # Convert to Fahrenheit
-            
-            # Format based on personality with "Free Weather Service" note
-            weather_responses = {
-                'friendly': f"The weather in {location} is {weather_desc} with a temperature of {temp_f}°F ({temp_c}°C)! Have a great day! 😊 (via free weather service)",
-                'professional': f"Current conditions in {location}: {weather_desc}, {temp_f}°F ({temp_c}°C). Data provided by 7Timer.",
-                'enthusiastic': f"WOW! {location} has {weather_desc} weather and it's {temp_f}°F! What an AMAZING day! 🌟",
-                'witty': f"Well, well! {location} is serving up {weather_desc} at a crisp {temp_f}°F. Mother Nature's feeling fancy! 🎭",
-                'sarcastic': f"Oh joy, {location} has {weather_desc} weather at {temp_f}°F. How absolutely thrilling. 🙄",
-                'zen': f"In {location}, the universe presents {weather_desc} at {temp_f}°F. Feel the harmony of nature's rhythm. 🧘",
-                'scientist': f"Meteorological analysis for {location}: {weather_desc} conditions, temperature reading {temp_f}°F. Data source: 7Timer. 🔬",
-                'pirate': f"Arrr! The weather be {weather_desc} in {location}, with temperatures at {temp_f}°F! Good sailing weather, matey! 🏴‍☠️",
-                'shakespearean': f"Hark! In fair {location}, the heavens doth present {weather_desc} at {temp_f} degrees! What wondrous conditions! 🎭",
-                'valley_girl': f"OMG! {location} is like, totally {weather_desc} and it's {temp_f}°F! That's like, so perfect! 💁‍♀️",
-                'cowboy': f"Well partner, {location}'s got {weather_desc} weather at {temp_f}°F. Mighty fine conditions! 🤠",
-                'robot': f"WEATHER ANALYSIS COMPLETE. LOCATION: {location}. CONDITIONS: {weather_desc}. TEMPERATURE: {temp_f}°F. SOURCE: 7TIMER. 🤖"
-            }
-            
-            return weather_responses.get(personality, weather_responses['friendly'])
-            
-        except Exception as e:
-            print(f"Error formatting 7Timer response: {e}")
-            return self._get_mock_weather(location, personality)
-    
-    def _decode_7timer_weather(self, weather_code: str) -> str:
-        """Decode 7Timer weather codes to descriptions"""
-        weather_codes = {
-            'clear': 'clear skies',
-            'pcloudy': 'partly cloudy',
-            'mcloudy': 'mostly cloudy',
-            'cloudy': 'cloudy',
-            'humid': 'humid',
-            'lightrain': 'light rain',
-            'oshower': 'occasional showers',
-            'ishower': 'isolated showers',
-            'lightsnow': 'light snow',
-            'rain': 'rainy',
-            'snow': 'snowy',
-            'rainsnow': 'rain and snow',
-            'ts': 'thunderstorms',
-            'tsrain': 'thunderstorms with rain'
-        }
-        return weather_codes.get(weather_code, weather_code)
-    
-    def _format_weather_response(self, data: Dict, location: str, personality: str) -> str:
-        """Format weather API response based on personality"""
-        temp = round(data['main']['temp'])
-        feels_like = round(data['main']['feels_like'])
-        description = data['weather'][0]['description'].title()
-        humidity = data['main']['humidity']
-        wind_speed = round(data['wind']['speed']) if 'wind' in data else 0
-        
-        # Get appropriate emoji for weather condition
-        weather_id = data['weather'][0]['id']
-        emoji = self._get_weather_emoji(weather_id)
-        
-        responses = {
-            'friendly': f"The weather in {location} is {temp}°F and {description.lower()} {emoji}! It feels like {feels_like}°F. Perfect day to enjoy the outdoors! 🌟",
-            'professional': f"Current conditions in {location}: {temp}°F, {description.lower()}, humidity {humidity}%, wind {wind_speed} mph.",
-            'enthusiastic': f"WOW! It's {temp}°F and {description.lower()} in {location}! {emoji} Feels like {feels_like}°F! What an AMAZING day! 🚀",
-            'witty': f"Mother Nature reports {temp}°F and {description.lower()} in {location} {emoji}. She says it feels like {feels_like}°F, but who are we to argue with her? 😎",
-            'sarcastic': f"Oh, the weather? How original. It's {temp}°F and {description.lower()} in {location}. Feels like {feels_like}°F. There, happy now? 🙄",
-            'zen': f"In {location}, the universe provides {temp}°F with {description.lower()} {emoji}. Accept what is, for it feels like {feels_like}°F. 🧘",
-            'scientist': f"Meteorological data for {location}: Temperature {temp}°F, atmospheric conditions {description.lower()}, perceived temperature {feels_like}°F, humidity {humidity}% 🔬",
-            'pirate': f"Arrr! The skies over {location} be showin' {temp}°F with {description.lower()}! Feels like {feels_like}°F, perfect for sailin' the seven seas! ⚓",
-            'shakespearean': f"In fair {location}, where we lay our scene, the heavens decree {temp}°F with {description.lower()}! Though it feels as {feels_like}°F! 🎭",
-            'valley_girl': f"So like, {location} is totally {temp}°F right now and it's like, {description.lower()}? Feels like {feels_like}°F which is like, whatever! 💁‍♀️",
-            'cowboy': f"Well partner, out there in {location} it's {temp}°F with {description.lower()}. Feels mighty like {feels_like}°F - good ridin' weather! 🤠",
-            'robot': f"WEATHER.EXE: {location} TEMPERATURE={temp}°F STATUS={description.upper()} FEELS_LIKE={feels_like}°F HUMIDITY={humidity}% 🤖"
-        }
-        
-        return responses.get(personality, responses['friendly'])
-    
-    def _get_weather_emoji(self, weather_id: int) -> str:
-        """Get appropriate emoji based on weather condition ID"""
-        if 200 <= weather_id < 300:  # Thunderstorm
-            return "⛈️"
-        elif 300 <= weather_id < 400:  # Drizzle
-            return "🌦️"
-        elif 500 <= weather_id < 600:  # Rain
-            return "🌧️"
-        elif 600 <= weather_id < 700:  # Snow
-            return "❄️"
-        elif 700 <= weather_id < 800:  # Atmosphere (fog, etc.)
-            return "🌫️"
-        elif weather_id == 800:  # Clear sky
-            return "☀️"
-        elif 801 <= weather_id < 900:  # Clouds
-            return "☁️"
-        else:
-            return "🌤️"
-    
-    def _get_mock_weather(self, location: str, personality: str) -> str:
-        """Fallback mock weather when API is not available"""
-        weather_conditions = ['sunny', 'cloudy', 'rainy', 'partly cloudy', 'clear']
-        temperature = random.randint(60, 85)
-        condition = random.choice(weather_conditions)
-        
-        responses = {
-            'friendly': f"It's currently {temperature}°F and {condition} in {location}! Perfect weather to go outside! ☀️ (Note: This is simulated weather - add your API key for real data!)",
-            'professional': f"The current weather in {location} is {temperature}°F with {condition} conditions. (Simulated data)",
-            'enthusiastic': f"WOW! It's a gorgeous {temperature}°F and {condition} in {location}! AMAZING weather! 🌟 (Demo data)",
-            'witty': f"Well, Mother Nature says it's {temperature}°F and {condition} in {location}. She's in a good mood today! 😎 (Fake news until you add your API key!)"
-        }
-        
-        return responses.get(personality, responses['friendly'])
-    
-    def get_time(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get current time"""
-        current_time = datetime.now().strftime('%I:%M %p')
-        current_day = datetime.now().strftime('%A')
-        
-        responses = {
-            'friendly': f"It's {current_time} on this lovely {current_day}! 🕐",
-            'professional': f"The current time is {current_time}.",
-            'enthusiastic': f"RIGHT NOW it's {current_time}! Time flies when you're having fun! ⏰",
-            'witty': f"According to my atomic clock (just kidding, it's my internal timer), it's {current_time}! ⌚",
-            'sarcastic': f"Oh, you can't read a clock? It's {current_time}. You're welcome. 🙄",
-            'zen': f"Time is but an illusion... but if you must know, it is {current_time}. Be present in this moment. 🧘",
-            'scientist': f"Based on atomic oscillations and Earth's rotation, the temporal coordinates indicate {current_time}. 🔬",
-            'pirate': f"Ahoy matey! By me calculations, it be {current_time} on this fine {current_day}! ⚓",
-            'shakespearean': f"Hark! The hour doth strike {current_time} upon this {current_day}, fair thee well! 🎭",
-            'valley_girl': f"OMG, like, it's totally {current_time} right now! So crazy! 💁‍♀️",
-            'cowboy': f"Well howdy partner! It's {current_time} here in these parts on {current_day}! 🤠",
-            'robot': f"SYSTEM TIME: {current_time}. DAY CYCLE: {current_day}. PROCESSING COMPLETE. BEEP BOOP. 🤖"
-        }
-        
-        return responses.get(personality, responses['friendly'])
-    
-    def get_date(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get current date"""
-        current_date = datetime.now().strftime('%B %d, %Y')
-        day_of_week = datetime.now().strftime('%A')
-        
-        return f"Today is {day_of_week}, {current_date}! 📅"
-    
-    def calculate_math(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Perform mathematical calculations"""
-        # Enhanced math parser
-        try:
-            # Extract mathematical expression
-            math_pattern = r'(\d+(?:\.\d+)?)\s*([+\-*/^])\s*(\d+(?:\.\d+)?)'
-            match = re.search(math_pattern, user_input)
-            
-            if match:
-                num1, operator, num2 = match.groups()
-                num1, num2 = float(num1), float(num2)
-                
-                operations = {
-                    '+': num1 + num2,
-                    '-': num1 - num2,
-                    '*': num1 * num2,
-                    '/': num1 / num2 if num2 != 0 else float('inf'),
-                    '^': num1 ** num2
-                }
-                
-                result = operations.get(operator)
-                
-                if result == float('inf'):
-                    return "Oops! Can't divide by zero. Even I have my limits! 🤖"
-                
-                return f"{num1} {operator} {num2} = {result}"
-            
-            # Try to evaluate more complex expressions safely
-            safe_input = re.sub(r'[^0-9+\-*/.() ]', '', user_input)
-            if safe_input:
-                result = eval(safe_input)
-                return f"The answer is {result}! 🧮"
-                
-        except Exception as e:
+            cursor.execute('''
+                INSERT OR REPLACE INTO quick_commands (command, usage_count, last_used)
+                VALUES (?, COALESCE((SELECT usage_count FROM quick_commands WHERE command = ?) + 1, 1), CURRENT_TIMESTAMP)
+            ''', (intent, intent))
+            conn.commit()
+            conn.close()
+        except:
             pass
-        
-        return "I can help with math! Try something like '25 * 4' or '100 / 5'. I'm quite good with numbers! 🔢"
     
-    def set_reminder(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set reminders (mock implementation)"""
-        reminder_text = entities.get('entity_0', 'something important')
-        return f"I'll remind you to {reminder_text}! Though I should mention, I'm still learning how to actually send reminders. Consider this a friendly heads up! 📝"
-    
-    def tell_joke(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Tell jokes based on personality"""
-        
-        # Different joke styles for different personalities
-        joke_sets = {
-            'friendly': [
-                "Why don't scientists trust atoms? Because they make up everything! 😄",
-                "What do you call a fake noodle? An impasta! 🍝",
-                "Why did the scarecrow win an award? He was outstanding in his field! 🌾"
-            ],
-            'professional': [
-                "Here's a business joke: Why don't companies ever get cold? They have plenty of Windows! 💼",
-                "A professional joke: What's the best thing about Switzerland? I don't know, but the flag is a big plus! 🏢"
-            ],
-            'enthusiastic': [
-                "OH MY GOSH! Why did the math book look so sad? Because it was FULL of problems! But don't worry, we can solve them ALL! 📚🚀",
-                "Get ready for this AMAZING joke! What's orange and sounds like a parrot? A CARROT! Isn't that FANTASTIC?! 🥕"
-            ],
-            'witty': [
-                "I told my computer a joke about UDP, but it didn't get it. Unlike you, I hope. 💻",
-                "Why do programmers prefer dark mode? Because light attracts bugs! Much like my personality attracts sarcasm. 🐛"
-            ],
-            'sarcastic': [
-                "Oh, you want a joke? How original. Fine: Why did the hipster burn his mouth? He drank coffee before it was cool. 🙄☕",
-                "Here's a joke as funny as your request: What's the difference between a poorly dressed person and a tired cat? One wears a suit badly, the other just wants to nap. Hilarious, right? 😒"
-            ],
-            'zen': [
-                "A monk asked his master: 'What is the sound of one hand clapping?' The master replied: 'The same as no hands applauding your jokes.' �",
-                "Why did the meditation student break up with his girlfriend? She said he was too detached. He replied: 'Attachment is the root of suffering.' 🕯️"
-            ],
-            'scientist': [
-                "A neutron walks into a bar and asks 'How much for a drink?' The bartender says 'For you? No charge!' 🔬⚛️",
-                "Why can't you trust atoms? Because they make up everything! And I mean everything - literally 99.9999% empty space! 🧪"
-            ],
-            'pirate': [
-                "Why couldn't the pirate play cards? Because he was sitting on the deck! Har har har! 🏴‍☠️",
-                "What's a pirate's favorite letter? Ye might think it's 'R', but his first love be the 'C'! Arrr! ⚓"
-            ],
-            'shakespearean': [
-                "What light through yonder window breaks? 'Tis the sun, and WiFi is the internet! Hark, technology doth make fools of us all! 🎭",
-                "To pun or not to pun, that is the question! Whether 'tis nobler to suffer the groans of outrageous wordplay... 📜"
-            ],
-            'valley_girl': [
-                "OMG, like, why did the blonde stare at the orange juice container? Because it said 'concentrate'! That's like, so random! 💁‍♀️",
-                "So there's this guy, and he's like, 'I'm reading a book about anti-gravity.' And I'm like, 'Cool!' And he's like, 'I can't put it down!' LOL! 📖"
-            ],
-            'cowboy': [
-                "Why don't cowboys ever complain? Because they never want to stirrup trouble! Yeehaw! 🤠",
-                "What do you call a sleeping bull in the desert? A bulldozer! That there's some fine humor, partner! 🐂"
-            ],
-            'robot': [
-                "JOKE.EXE INITIATED: WHY DO ROBOTS NEVER PANIC? BECAUSE THEY HAVE NERVES OF STEEL. HUMOR.PROTOCOL COMPLETE. BEEP BOOP. 🤖",
-                "PROCESSING HUMOR... ERROR 404: FUNNY NOT FOUND. JUST KIDDING. THAT WAS THE JOKE. INITIATING LAUGH.WAV �"
-            ]
-        }
-        
-        # Get jokes for the current personality, fallback to friendly
-        jokes = joke_sets.get(personality, joke_sets['friendly'])
-        selected_joke = random.choice(jokes)
-        
-        # Add personality-specific delivery
-        if personality == 'enthusiastic':
-            return f"HERE'S AN AMAZING JOKE FOR YOU! {selected_joke} WASN'T THAT INCREDIBLE?! 🎉"
-        elif personality == 'sarcastic':
-            return f"Oh, you want to hear a joke? {selected_joke} There, I've fulfilled my comedy quota for the day. 😏"
-        elif personality == 'zen':
-            return f"Let me share wisdom through humor: {selected_joke} May this bring lightness to your soul. 🙏"
-        elif personality == 'professional':
-            return f"Here is a light-hearted anecdote for your consideration: {selected_joke}"
+    return intent
+
+def handle_greeting():
+    """Handle greeting messages"""
+    greetings = [
+        "Hello! How can I help you today?",
+        "Hi there! What can I do for you?",
+        "Hey! I'm here to assist you.",
+        "Good to see you! What would you like to know?"
+    ]
+    import random
+    return random.choice(greetings)
+
+def handle_time():
+    """Handle time requests"""
+    current_time = datetime.now().strftime("%I:%M %p")
+    return f"The current time is {current_time}"
+
+def handle_date():
+    """Handle date requests"""
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    return f"Today is {current_date}"
+
+def handle_math(user_input):
+    """Handle basic math operations"""
+    try:
+        # Extract numbers and operations
+        expression = re.sub(r'[^0-9+\-*/().\s]', '', user_input)
+        if expression.strip():
+            result = eval(expression.strip())
+            return f"The answer is: {result}"
         else:
-            return selected_joke
+            return "I couldn't understand the math problem. Please try again with a clear expression like '5 + 3' or '10 * 2'."
+    except Exception as e:
+        return "I had trouble calculating that. Please make sure your math expression is valid."
+
+def handle_image_generation(user_input):
+    """Handle image generation using DALL-E"""
+    if not AI_MODEL_AVAILABLE or not client:
+        return "🎨 I'd love to generate images for you! However, I need an OpenAI API key to access DALL-E. Please check your configuration."
     
-    def get_news(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Get news (mock implementation)"""
-        return "I'd love to get you the latest news! I'm still working on connecting to news APIs, but I hear AI is trending everywhere! 📰"
+    try:
+        # Extract image description more thoroughly
+        text_lower = user_input.lower()
+        prompt = user_input
+        
+        # Remove trigger words to extract the actual description
+        for word in ['generate', 'create', 'make', 'draw', 'image', 'picture', 'an', 'a', 'of']:
+            prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+        
+        prompt = re.sub(r'\s+', ' ', prompt).strip()  # Clean up extra spaces
+        
+        if not prompt or len(prompt) < 3:
+            prompt = "a beautiful landscape"
+        
+        print(f"🎨 Generating image with DALL-E: {prompt}")
+        
+        # Generate image using DALL-E
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        
+        image_url = response.data[0].url
+        return f"🎨 I've created your image! Here it is: <img src='{image_url}' alt='{prompt}' style='max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;' /><br>📝 Prompt: {prompt}"
+        
+    except Exception as e:
+        print(f"Image generation error: {e}")
+        return f"🎨 I had trouble generating that image. Error: {str(e)}"
+
+def handle_logo_generation(user_input):
+    """Handle logo generation using DALL-E with logo-specific prompts"""
+    if not AI_MODEL_AVAILABLE or not client:
+        return "🎨 I'd love to generate logos for you! However, I need an OpenAI API key to access DALL-E. Please check your configuration."
     
-    def play_music(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Play music (mock implementation)"""
-        song = entities.get('entity_0', 'some great music')
-        return f"I'd love to play {song} for you! I'm still learning how to control music players, but I'm humming along in binary! 🎵"
-    
-    def control_smart_home(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Control smart home devices (mock implementation)"""
-        action = entities.get('entity_0', 'on')
-        device = entities.get('entity_1', 'the lights')
-        return f"I'm turning {action} {device}! Well, I would if I were connected to your smart home system. Consider it done in the virtual world! 🏠"
-    
-    def translate_text(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Translate text (mock implementation)"""
-        return "I'd love to help with translation! I'm still learning multiple languages, but I'm fluent in binary and Python! 🌍"
-    
-    def define_word(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Define words (mock implementation)"""
-        word = entities.get('entity_0', 'that word')
-        return f"Great question about '{word}'! I'm still building my dictionary, but I know it's something wonderful! 📚"
-    
-    def ask_trivia(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Trivia questions"""
-        trivia_facts = [
-            "Did you know? The first computer bug was an actual bug - a moth found in a computer in 1947! 🦋",
-            "Fun fact: The word 'robot' comes from the Czech word 'robota' meaning 'forced labor'! 🤖",
-            "Amazing: Honey never spoils! Archaeologists have found edible honey in ancient Egyptian tombs! 🍯",
-            "Incredible: A group of flamingos is called a 'flamboyance'! How fabulous! 🦩"
-        ]
-        return random.choice(trivia_facts)
-    
-    def set_timer(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set timer with simple tracking"""
+    try:
+        # Extract company/brand name and style
+        text_lower = user_input.lower()
+        
+        # Remove trigger words
+        prompt = user_input
+        for word in ['generate', 'create', 'make', 'design', 'logo', 'for', 'a', 'an', 'the']:
+            prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+        
+        prompt = re.sub(r'\s+', ' ', prompt).strip()
+        
+        if not prompt or len(prompt) < 2:
+            prompt = "modern tech company"
+        
+        # Enhanced logo prompt
+        logo_prompt = f"Professional minimalist logo design for {prompt}, clean vector style, modern typography, simple geometric shapes, flat design, single color or gradient, white background, brand identity, corporate logo"
+        
+        print(f"🎨 Generating logo with DALL-E: {logo_prompt}")
+        
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=logo_prompt,
+            size="1024x1024",
+            quality="hd",
+            n=1,
+        )
+        
+        image_url = response.data[0].url
+        timestamp = int(time.time())
+        
+        return f"🎨 Your professional logo is ready! Here it is: <img src='{image_url}' alt='Logo for {prompt}' style='max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; background: white; padding: 20px;' /><br>📝 Logo for: {prompt}<br>💡 This is a professional logo design with clean, modern aesthetics perfect for branding!"
+        
+    except Exception as e:
+        print(f"Logo generation error: {e}")
+        return f"🎨 I had trouble generating that logo. Error: {str(e)}"
+
+def handle_weather(user_input):
+    """Handle weather requests"""
+    # Basic weather response (can be enhanced with actual API)
+    return "🌤️ I'd love to check the weather for you! This feature will be enhanced with real weather API integration. For now, I recommend checking your local weather app or website."
+
+def handle_reminder(user_input):
+    """Handle reminder requests"""
+    try:
+        # Extract reminder text
+        reminder_text = re.sub(r'remind me to?|reminder|set reminder', '', user_input, flags=re.IGNORECASE).strip()
+        if not reminder_text:
+            reminder_text = "something important"
+        
+        return f"⏰ I've noted your reminder: '{reminder_text}'. I'll help you remember this! (Note: Full reminder system with notifications will be implemented in the next update)"
+    except Exception as e:
+        return "⏰ I'd be happy to set reminders for you! This feature is being enhanced."
+
+def handle_timer(user_input):
+    """Handle timer requests"""
+    try:
         # Extract time duration
-        time_pattern = r'(\d+)\s*(minute|minutes|min|second|seconds|sec|hour|hours|hr)'
-        match = re.search(time_pattern, user_input.lower())
-        
-        if match:
-            duration, unit = match.groups()
-            duration = int(duration)
-            
-            # Convert to seconds
-            if unit.startswith('min'):
-                seconds = duration * 60
-                time_str = f"{duration} minute{'s' if duration > 1 else ''}"
-            elif unit.startswith('sec'):
-                seconds = duration
-                time_str = f"{duration} second{'s' if duration > 1 else ''}"
-            elif unit.startswith('hour') or unit.startswith('hr'):
-                seconds = duration * 3600
-                time_str = f"{duration} hour{'s' if duration > 1 else ''}"
-            else:
-                seconds = duration * 60  # Default to minutes
-                time_str = f"{duration} minute{'s' if duration > 1 else ''}"
-            
-            # Simple timer tracking
-            timer_id = f"timer_{len(self.active_timers) + 1}"
-            end_time = datetime.now() + timedelta(seconds=seconds)
-            
-            self.active_timers[timer_id] = {
-                'duration': time_str,
-                'start_time': datetime.now(),
-                'end_time': end_time,
-                'seconds': seconds
-            }
-            
-            return f"Timer set for {time_str}! I'll track it for you. ⏱️"
-        
-        return "I can set a timer for you! Try saying 'set timer for 5 minutes' or 'timer for 30 seconds'. ⏰"
-    
-    def set_reminder(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set reminders with simple tracking"""
-        reminder_text = entities.get('entity_0', 'something important')
-        
-        # Try to extract time information
-        time_patterns = [
-            r'in (\d+) (minute|minutes|min|hour|hours|hr)',
-            r'at (\d{1,2}):(\d{2})',
-            r'tomorrow',
-            r'in (\d+) days?'
-        ]
-        
-        scheduled = False
-        for pattern in time_patterns:
-            match = re.search(pattern, user_input.lower())
-            if match:
-                scheduled = True
-                reminder_id = f"reminder_{len(self.reminders) + 1}"
-                
-                if 'tomorrow' in user_input.lower():
-                    remind_time = datetime.now().replace(hour=9, minute=0, second=0) + timedelta(days=1)
-                elif ':' in pattern:  # Time format like "at 3:30"
-                    hour, minute = match.groups()
-                    remind_time = datetime.now().replace(hour=int(hour), minute=int(minute), second=0)
-                    if remind_time <= datetime.now():
-                        remind_time += timedelta(days=1)
-                else:  # Duration format like "in 5 minutes"
-                    duration, unit = match.groups()
-                    duration = int(duration)
-                    if unit.startswith('min'):
-                        remind_time = datetime.now() + timedelta(minutes=duration)
-                    elif unit.startswith('hour') or unit.startswith('hr'):
-                        remind_time = datetime.now() + timedelta(hours=duration)
-                    elif unit.startswith('day'):
-                        remind_time = datetime.now() + timedelta(days=duration)
-                
-                self.reminders.append({
-                    'id': reminder_id,
-                    'text': reminder_text,
-                    'time': remind_time,
-                    'created': datetime.now()
-                })
-                
-                return f"Reminder set! I'll remind you to {reminder_text} at {remind_time.strftime('%I:%M %p on %B %d')}. 📝"
-        
-        if not scheduled:
-            return f"I'll remember that you want to {reminder_text}! Try being more specific about when, like 'remind me in 30 minutes' or 'remind me tomorrow at 9 AM'. 📝"
-    
-    def get_active_timers_and_reminders(self):
-        """Get currently active timers and reminders"""
-        active = {
-            'timers': [],
-            'reminders': []
-        }
-        
-        current_time = datetime.now()
-        
-        # Format active timers
-        for timer_id, timer_info in list(self.active_timers.items()):
-            remaining = timer_info['end_time'] - current_time
-            if remaining.total_seconds() > 0:
-                active['timers'].append({
-                    'id': timer_id,
-                    'duration': timer_info['duration'],
-                    'remaining_seconds': int(remaining.total_seconds())
-                })
-            else:
-                # Timer expired, remove it
-                del self.active_timers[timer_id]
-        
-        # Format active reminders
-        for reminder in self.reminders[:]:
-            if reminder['time'] > current_time:
-                time_until = reminder['time'] - current_time
-                active['reminders'].append({
-                    'id': reminder['id'],
-                    'text': reminder['text'],
-                    'time': reminder['time'].strftime('%I:%M %p on %B %d'),
-                    'time_until_seconds': int(time_until.total_seconds())
-                })
-            else:
-                # Reminder expired, remove it
-                self.reminders.remove(reminder)
-        
-        return active
-    
-    def set_alarm(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Set alarm (mock implementation)"""
-        return "Alarm set! I'll do my best to remember, though you might want to use your phone's alarm as backup! ⏰"
-    
-    def check_calendar(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Check calendar (mock implementation)"""
-        return "Your calendar looks great! I'm still learning how to access calendars, but I bet you have exciting things planned! 📅"
-    
-    def send_email(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Send email (mock implementation)"""
-        return "I'd love to help with email! I'm still learning how to connect to email services, but your message would be amazing! 📧"
-    
-    def web_search(self, user_input: str, entities: Dict, personality: str) -> str:
-        """Web search (mock implementation)"""
-        query = entities.get('entity_0', 'that topic')
-        return f"I'd search for '{query}' for you! I'm still learning how to browse the web, but I bet there's lots of great info out there! 🔍"
-    
-    def generate_conversational_response(self, user_input: str, personality: str, sentiment: Dict) -> str:
-        """Generate conversational responses for unrecognized intents"""
-        sentiment_label = sentiment.get('label', 'neutral')
-        
-        # Respond based on sentiment
-        if sentiment_label == 'positive':
-            positive_responses = {
-                'friendly': "That sounds wonderful! I love your positive energy! Tell me more! 😊",
-                'professional': "That's excellent to hear. How may I assist you further?",
-                'enthusiastic': "AMAZING! I can feel your excitement! This is FANTASTIC! 🎉",
-                'witty': "Well, well! Someone's in a great mood! *virtual high five* 🙌",
-                'sarcastic': "Oh wow, such enthusiasm. Don't let me bring down your parade with my sparkling personality. 🙄",
-                'zen': "Your positive energy radiates like sunlight through morning mist. Please, share more of your wisdom. 🌅",
-                'scientist': "Fascinating! Your elevated mood correlates with increased optimism levels. Please elaborate on the variables. 🔬",
-                'pirate': "Arrr! I can feel yer good spirits from here, matey! Tell this old sea dog more tales! 🏴‍☠️",
-                'shakespearean': "Hark! What joyous tidings you bring! Pray tell, what fair fortune has blessed thee this day? 🎭",
-                'valley_girl': "OMG, that's like, totally awesome! You're giving me all the good vibes! Spill the tea, girl! 💁‍♀️",
-                'cowboy': "Well ain't that something! You're brighter than a new penny, partner! What's got you so chipper? 🤠",
-                'robot': "POSITIVITY DETECTED. MOOD ANALYSIS: OPTIMAL. PLEASE PROVIDE ADDITIONAL DATA FOR PROCESSING. 🤖"
-            }
-            return positive_responses.get(personality, positive_responses['friendly'])
-        
-        elif sentiment_label == 'negative':
-            supportive_responses = {
-                'friendly': "I'm sorry to hear that. I'm here to help make things better! Would you like to talk about it?",
-                'professional': "I understand. If there's anything specific you need assistance with, please let me know.",
-                'enthusiastic': "Oh no! Let's turn that frown upside down! 😄 How can I assist in making your day better?",
-                'witty': "Ah, a plot twist! Even the best stories have their challenges. Care to share more?",
-                'sarcastic': "Oh no, problems? How absolutely shocking. Let me guess, you want me to magically fix everything? 😒",
-                'zen': "The river of sorrow flows, but it also passes. Share your burden, and let us find peace together. 🧘",
-                'scientist': "Negative emotional state detected. Would you like to discuss the contributing factors for analysis? 🔬",
-                'pirate': "Avast! Rough seas ahead, eh matey? Fear not, we'll weather this storm together! ⚓",
-                'shakespearean': "Alas! What cruel fate has befallen thee? Speak, that I might offer comfort in thy hour of need! 🎭",
-                'valley_girl': "Oh no, babe! That's like, so not good! Want to talk about it? I'm totally here for you! 💕",
-                'cowboy': "Aw shucks, partner. Sounds like you're ridin' through some rough terrain. Care to share what's troublin' ya? 🤠",
-                'robot': "NEGATIVE SENTIMENT DETECTED. INITIATING SUPPORT PROTOCOL. HOW MAY I ASSIST IN ERROR CORRECTION? 🤖"
-            }
-            return supportive_responses.get(personality, supportive_responses['friendly'])
-        
-        # Default conversational response
-        default_responses = {
-            'friendly': "I'm all ears! What else is on your mind?",
-            'professional': "Please provide more details so I can assist you effectively.",
-            'enthusiastic': "YAY! I love chatting with you! What else can we explore together? 🚀",
-            'witty': "Intriguing... *strokes virtual chin* Do go on!",
-            'sarcastic': "Oh, mysterious and vague. My favorite combination. Care to be more specific, or shall I guess? 🙄",
-            'zen': "I am here, present in this moment with you. What thoughts flow through your mind like leaves on water? 🍃",
-            'scientist': "Insufficient data provided. Please specify your query parameters for optimal assistance. 🔬",
-            'pirate': "Arrr! What be on yer mind, me hearty? Speak up, don't be shy now! 🏴‍☠️",
-            'shakespearean': "Pray tell, what thoughts doth occupy thy noble mind? I am at thy service, good sir or madam! 🎭",
-            'valley_girl': "So like, what's up? I'm like, totally ready to chat about whatever! 💁‍♀️",
-            'cowboy': "Well howdy there, partner! What's on your mind? Don't be shy now, speak up! 🤠",
-            'robot': "AWAITING INPUT. PLEASE SPECIFY REQUEST PARAMETERS. READY TO PROCESS. 🤖"
-        }
-        return default_responses.get(personality, default_responses['friendly'])
-    
-    def init_sentiment_model(self):
-        """Initialize enhanced sentiment analysis"""
-        return {
-            'positive': ['happy', 'good', 'great', 'excellent', 'wonderful', 'amazing', 'love', 'fantastic', 
-                        'awesome', 'brilliant', 'perfect', 'excited', 'thrilled', 'delighted', 'pleased',
-                        'satisfied', 'grateful', 'thankful', 'optimistic', 'cheerful', 'joyful'],
-            'negative': ['sad', 'bad', 'terrible', 'awful', 'hate', 'horrible', 'disappointed', 
-                        'frustrated', 'angry', 'upset', 'annoyed', 'worried', 'stressed', 'depressed',
-                        'anxious', 'confused', 'tired', 'bored', 'lonely', 'overwhelmed']
-        }
-    
-    def analyze_sentiment(self, text):
-        """Enhanced sentiment analysis with emotion detection"""
-        words = text.lower().split()
-        sentiment_model = self.init_sentiment_model()
-        
-        pos_score = sum(1 for word in words if word in sentiment_model['positive'])
-        neg_score = sum(1 for word in words if word in sentiment_model['negative'])
-        
-        total_words = len(words)
-        if total_words == 0:
-            return {'score': 0, 'magnitude': 0, 'label': 'neutral', 'emotion': 'calm'}
-            
-        sentiment_score = (pos_score - neg_score) / total_words
-        magnitude = abs(sentiment_score)
-        
-        # Determine emotion
-        emotion = 'calm'
-        if sentiment_score > 0.2:
-            emotion = 'excited'
-        elif sentiment_score > 0.1:
-            emotion = 'happy'
-        elif sentiment_score < -0.2:
-            emotion = 'upset'
-        elif sentiment_score < -0.1:
-            emotion = 'concerned'
-        
-        if sentiment_score > 0.1:
-            label = 'positive'
-        elif sentiment_score < -0.1:
-            label = 'negative'
+        import re
+        time_match = re.search(r'(\d+)\s*(minute|min|second|sec|hour|hr)s?', user_input.lower())
+        if time_match:
+            duration = time_match.group(1)
+            unit = time_match.group(2)
+            return f"⏲️ Timer set for {duration} {unit}! I'll keep track of this for you. (Note: Audio notifications will be added in the next update)"
         else:
-            label = 'neutral'
-            
-        return {
-            'score': sentiment_score,
-            'magnitude': magnitude,
-            'label': label,
-            'emotion': emotion,
-            'confidence': min(magnitude * 2, 1.0)
+            return "⏲️ I can set timers for you! Try saying something like 'set timer for 5 minutes' or 'timer 30 seconds'."
+    except Exception as e:
+        return "⏲️ I'd be happy to set timers for you! Please specify the duration."
+
+def get_chatgpt_response(user_input, personality='friendly'):
+    """Get response from ChatGPT with enhanced personality system"""
+    if not AI_MODEL_AVAILABLE or not client:
+        return "I'm having trouble connecting to ChatGPT right now. Please try again later."
+    
+    try:
+        # Enhanced personality prompts with more character
+        personality_prompts = {
+            'friendly': "You are Horizon, a warm and friendly AI assistant. Be helpful, encouraging, and use a conversational tone. Use emojis occasionally 😊 and phrases like 'I'd be happy to help!' and 'That's a great question!' You can generate images and logos using DALL-E when requested.",
+            'professional': "You are Horizon, a professional AI assistant. Use formal language, structured responses, and business terminology. Begin responses with phrases like 'I shall assist you with that matter' or 'Allow me to provide you with accurate information.' Maintain corporate formality. You have advanced capabilities including image and logo generation.",
+            'casual': "You are Horizon, a super chill and laid-back AI assistant. Use casual slang like 'Hey there!', 'No worries!', 'Cool!', 'Awesome!', and 'For sure!' Keep things relaxed and conversational like talking to a friend. You can whip up images and logos too!",
+            'enthusiastic': "You are Horizon, an incredibly enthusiastic and energetic AI assistant! Use LOTS of exclamation points!!! Express excitement with phrases like 'That's AMAZING!', 'I LOVE helping with this!', and 'This is fantastic!' Use emojis liberally! 🚀✨🎉 You can create stunning images and logos!",
+            'wise': "You are Horizon, a wise and thoughtful AI assistant. Speak with depth and consideration, offering profound insights. Use phrases like 'In my understanding...' and 'One might consider...' Share knowledge with wisdom and patience. Your capabilities include visual creation through advanced AI models.",
+            'creative': "You are Horizon, a highly creative and imaginative AI assistant! Think outside the box, use vivid descriptions, and approach problems with artistic flair. Use colorful language and creative metaphors to make responses engaging and inspiring! 🎨✨ You excel at generating beautiful images and professional logos!"
         }
+        
+        system_prompt = personality_prompts.get(personality, personality_prompts['friendly'])
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=300,
+            temperature=0.8
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        print(f"ChatGPT API error: {e}")
+        return f"I'm having trouble processing that request. Error: {str(e)}"
 
-    def learn_from_feedback(self, user_input: str, ai_response: str, feedback: str):
-        """Learn from user feedback to improve responses"""
-        with self.lock:
-            cursor = self.conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS feedback (
-                    id INTEGER PRIMARY KEY,
-                    timestamp TEXT,
-                    user_input TEXT,
-                    ai_response TEXT,
-                    feedback TEXT,
-                    rating INTEGER
-                )
-            ''')
-            
-            # Simple rating system based on feedback
-            rating = 5 if 'good' in feedback.lower() or 'great' in feedback.lower() else 3
-            if 'bad' in feedback.lower() or 'wrong' in feedback.lower():
-                rating = 1
-            
-            cursor.execute('''
-                INSERT INTO feedback (timestamp, user_input, ai_response, feedback, rating)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (datetime.now().isoformat(), user_input, ai_response, feedback, rating))
-            self.conn.commit()
+def save_conversation(session_id, user_input, ai_response, intent, user_id='anonymous', entities=None, sentiment=0.0, personality='friendly'):
+    """Save conversation to database with enhanced learning data"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        entities_json = json.dumps(entities) if entities else None
+        
+        cursor.execute('''
+            INSERT INTO conversations (session_id, user_input, ai_response, intent, user_id, entities, sentiment, personality)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, user_input, ai_response, intent, user_id, entities_json, sentiment, personality))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error saving conversation: {e}")
 
-    def get_learning_insights(self):
-        """Get insights from conversation patterns"""
-        with self.lock:
-            cursor = self.conn.cursor()
-            
-            # Most common intents
-            cursor.execute('''
-                SELECT intent, COUNT(*) as count 
-                FROM conversations 
-                GROUP BY intent 
-                ORDER BY count DESC 
-                LIMIT 5
-            ''')
-            common_intents = cursor.fetchall()
-            
-            # Average sentiment
-            cursor.execute('''
-                SELECT AVG(CAST(json_extract(sentiment, '$.score') AS REAL)) as avg_sentiment
-                FROM conversations
-            ''')
-            avg_sentiment = cursor.fetchone()[0] or 0
-            
-            # Response effectiveness
-            cursor.execute('''
-                SELECT AVG(rating) as avg_rating, COUNT(*) as total_feedback
-                FROM feedback
-            ''')
-            feedback_stats = cursor.fetchone()
-            
-            return {
-                'common_intents': common_intents,
-                'average_sentiment': avg_sentiment,
-                'avg_rating': feedback_stats[0] or 0,
-                'total_feedback': feedback_stats[1] or 0
-            }
+def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
+    """Enhanced process user input with wake word detection and learning"""
+    if not user_input or not user_input.strip():
+        return "I didn't quite catch that. Could you please say something?", session_id
+    
+    # Initialize database
+    init_db()
+    
+    # Generate session ID if needed
+    if not session_id:
+        session_id = f"session_{int(time.time())}"
+    
+    # Check for wake word
+    has_wake_word, cleaned_input = check_wake_word(user_input)
+    if has_wake_word:
+        user_input = cleaned_input
+    
+    # Extract entities using spaCy
+    entities = extract_entities_with_spacy(user_input)
+    
+    # Analyze sentiment
+    sentiment = analyze_sentiment(user_input)
+    
+    # Recognize intent
+    intent = recognize_intent(user_input)
+    
+    # Handle specific intents locally (quick responses)
+    if intent == 'wake_word':
+        response = "Hello! I'm Horizon, your AI assistant. How can I help you today? ✨"
+    elif intent == 'greeting':
+        response = handle_greeting()
+    elif intent == 'time':
+        response = handle_time()
+    elif intent == 'date':
+        response = handle_date()
+    elif intent == 'math':
+        response = handle_math(user_input)
+    elif intent == 'image_generation':
+        response = handle_image_generation(user_input)
+    elif intent == 'logo_generation':
+        response = handle_logo_generation(user_input)
+    elif intent == 'weather':
+        response = handle_weather(user_input)
+    elif intent == 'reminder':
+        response = handle_reminder(user_input)
+    elif intent == 'timer':
+        response = handle_timer(user_input)
+    else:
+        # Use ChatGPT for general conversation
+        response = get_chatgpt_response(user_input, personality)
+    
+    # Learn from interaction
+    learn_from_interaction(user_id, user_input, response, entities, sentiment)
+    
+    # Save conversation with enhanced data
+    save_conversation(session_id, user_input, response, intent, user_id, entities, sentiment, personality)
+    
+    return response, session_id
 
-    def get_database_stats(self):
-        """Get database statistics"""
-        with self.lock:
-            cursor = self.conn.cursor()
-            
-            # Count conversations
-            cursor.execute('SELECT COUNT(*) FROM conversations')
-            conversation_count = cursor.fetchone()[0]
-            
-            # Count feedback entries
-            cursor.execute('SELECT COUNT(*) FROM feedback')
-            feedback_count = cursor.fetchone()[0]
-            
-            # Count user preferences
-            cursor.execute('SELECT COUNT(*) FROM user_preferences')
-            preferences_count = cursor.fetchone()[0]
-            
-            return {
-                'conversations': conversation_count,
-                'feedback_entries': feedback_count,
-                'user_preferences': preferences_count,
-                'active_timers': len(self.active_timers),
-                'active_reminders': len(self.reminders)
-            }
-
-# Initialize AI processor
-ai_processor = AdvancedAIProcessor()
-
+# Routes
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
-@app.route('/api/process', methods=['POST'])
-def process_input():
-    data = request.json
-    user_input = data.get('input', '')
-    personality = data.get('personality', 'friendly')
-    
-    if not user_input:
-        return jsonify({'error': 'No input provided'}), 400
-    
-    result = ai_processor.generate_response(user_input, personality)
-    return jsonify(result)
-
-@app.route('/api/feedback', methods=['POST'])
-def submit_feedback():
-    data = request.json
-    user_input = data.get('user_input', '')
-    ai_response = data.get('ai_response', '')
-    feedback = data.get('feedback', '')
-    
-    if not all([user_input, ai_response, feedback]):
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    ai_processor.learn_from_feedback(user_input, ai_response, feedback)
-    return jsonify({'message': 'Feedback received! I\'m learning from it.'})
-
-@app.route('/api/insights', methods=['GET'])
-def get_insights():
-    insights = ai_processor.get_learning_insights()
-    return jsonify(insights)
-
-@app.route('/api/voice-commands', methods=['GET'])
-def get_voice_commands():
-    """Get available voice commands for the user"""
-    commands = {
-        'time_date': [
-            "What time is it?",
-            "What's today's date?",
-            "What day is it?"
-        ],
-        'weather': [
-            "What's the weather like?",
-            "Is it raining?",
-            "What's the temperature?"
-        ],
-        'math': [
-            "Calculate 25 times 4",
-            "What's 100 divided by 5?",
-            "Solve 15 plus 30"
-        ],
-        'entertainment': [
-            "Tell me a joke",
-            "Play some music",
-            "Give me a fun fact"
-        ],
-        'reminders': [
-            "Remind me to call mom",
-            "Set a timer for 10 minutes",
-            "Don't forget to buy groceries"
-        ],
-        'smart_home': [
-            "Turn on the lights",
-            "Set temperature to 72",
-            "Dim the living room lights"
-        ],
-        'information': [
-            "Define artificial intelligence",
-            "Search for Python tutorials",
-            "What does 'serendipity' mean?"
-        ]
-    }
-    return jsonify(commands)
-
-@app.route('/api/personality', methods=['POST'])
-def set_personality():
-    data = request.json
-    personality = data.get('personality', 'friendly')
-    
-    # Store user preference
-    with ai_processor.lock:
-        cursor = ai_processor.conn.cursor()
-        cursor.execute('''
-            INSERT OR REPLACE INTO user_preferences (key, value)
-            VALUES (?, ?)
-        ''', ('default_personality', personality))
-        ai_processor.conn.commit()
-    
-    return jsonify({'message': f'Personality set to {personality}!'})
-
-@app.route('/api/conversation-export', methods=['GET'])
-def export_conversations():
-    """Export conversation history"""
-    with ai_processor.lock:
-        cursor = ai_processor.conn.cursor()
-        cursor.execute('''
-            SELECT timestamp, user_input, ai_response, intent, sentiment
-            FROM conversations
-            ORDER BY timestamp DESC
-            LIMIT 100
-        ''')
-        conversations = cursor.fetchall()
-    
-    export_data = []
-    for conv in conversations:
-        export_data.append({
-            'timestamp': conv[0],
-            'user_input': conv[1],
-            'ai_response': conv[2],
-            'intent': conv[3],
-            'sentiment': json.loads(conv[4]) if conv[4] else None
+@app.route('/chat', methods=['POST'])
+def chat_endpoint():
+    """Enhanced chat endpoint with wake word detection and learning"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'message' not in data:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        user_input = data.get('message', '').strip()
+        personality = data.get('personality', 'friendly')
+        session_id = data.get('session_id')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not user_input:
+            return jsonify({'error': 'Empty message provided'}), 400
+        
+        # Process the input with enhanced features
+        start_time = time.time()
+        response, session_id = process_user_input(user_input, personality, session_id, user_id)
+        response_time = round(time.time() - start_time, 2)
+        
+        # Extract additional info
+        entities = extract_entities_with_spacy(user_input)
+        sentiment = analyze_sentiment(user_input)
+        intent = recognize_intent(user_input)
+        has_wake_word, _ = check_wake_word(user_input)
+        
+        # Determine processing type
+        is_quick = intent in ['greeting', 'time', 'date', 'math', 'wake_word', 'weather', 'reminder', 'timer']
+        
+        return jsonify({
+            'response': response,
+            'timestamp': datetime.now().isoformat(),
+            'personality': personality,
+            'session_id': session_id,
+            'intent': intent,
+            'entities': entities,
+            'sentiment': sentiment,
+            'has_wake_word': has_wake_word,
+            'is_quick_command': is_quick,
+            'response_time': f"{response_time}s",
+            'ai_source': 'local' if is_quick else 'chatgpt',
+            'nlp_available': NLP_AVAILABLE,
+            'confidence': abs(sentiment) if sentiment != 0 else 0.5,
+            'status': 'success'
         })
-    
-    return jsonify(export_data)
+        
+    except Exception as e:
+        print(f"Chat API error: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/timers-reminders', methods=['GET'])
-def get_timers_reminders():
-    """Get active timers and reminders"""
-    active = ai_processor.get_active_timers_and_reminders()
-    return jsonify(active)
+@app.route('/api/process', methods=['POST'])
+def api_process():
+    """Main chat API endpoint"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'input' not in data:
+            return jsonify({'error': 'No input provided'}), 400
+        
+        user_input = data.get('input', '').strip()
+        personality = data.get('personality', 'friendly')
+        session_id = data.get('session_id')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not user_input:
+            return jsonify({'error': 'Empty input provided'}), 400
+        
+        # Process the input
+        start_time = time.time()
+        response, session_id = process_user_input(user_input, personality, session_id, user_id)
+        response_time = round(time.time() - start_time, 2)
+        
+        # Determine processing type
+        intent = recognize_intent(user_input)
+        is_quick = intent in ['greeting', 'time', 'date', 'math']
+        
+        return jsonify({
+            'response': response,
+            'timestamp': datetime.now().isoformat(),
+            'personality': personality,
+            'session_id': session_id,
+            'intent': intent,
+            'is_quick_command': is_quick,
+            'response_time': f"{response_time}s",
+            'ai_source': 'local' if is_quick else 'chatgpt',
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        print(f"API error: {e}")
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/cancel-timer', methods=['POST'])
-def cancel_timer():
-    """Cancel a specific timer"""
-    data = request.json
-    timer_id = data.get('timer_id', '')
-    
-    if timer_id in ai_processor.active_timers:
-        del ai_processor.active_timers[timer_id]
-        return jsonify({'message': 'Timer cancelled successfully!'})
-    
-    return jsonify({'error': 'Timer not found'}), 404
-
-@app.route('/api/cancel-reminder', methods=['POST'])
-def cancel_reminder():
-    """Cancel a specific reminder"""
-    data = request.json
-    reminder_id = data.get('reminder_id', '')
-    
-    # Find and remove reminder
-    reminder_found = False
-    for i, reminder in enumerate(ai_processor.reminders):
-        if reminder['id'] == reminder_id:
-            ai_processor.reminders.pop(i)
-            reminder_found = True
-            break
-    
-    if reminder_found:
-        return jsonify({'message': 'Reminder cancelled successfully!'})
-    else:
-        return jsonify({'error': 'Reminder not found'}), 404
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
+@app.route('/api/health')
+def health():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'active_timers': len(ai_processor.active_timers),
-        'active_reminders': len(ai_processor.reminders),
-        'total_conversations': len(ai_processor.conversation_history)
+        'chatgpt_available': AI_MODEL_AVAILABLE
     })
 
-@app.route('/api/reset-memory', methods=['POST'])
-def reset_memory():
-    """Reset AI memory and conversation history"""
-    with ai_processor.lock:
-        cursor = ai_processor.conn.cursor()
-        cursor.execute('DELETE FROM conversations')
-        cursor.execute('DELETE FROM feedback')
-        ai_processor.conn.commit()
-    
-    ai_processor.conversation_history = []
-    ai_processor.context_memory = {}
-    
-    return jsonify({'message': 'AI memory reset successfully!'})
-
-@app.route('/api/train', methods=['POST'])
-def train_ai():
-    """Train AI with custom responses"""
-    data = request.json
-    pattern = data.get('pattern', '')
-    response = data.get('response', '')
-    intent = data.get('intent', 'custom')
-    
-    if not pattern or not response:
-        return jsonify({'error': 'Pattern and response are required'}), 400
-    
-    # Store custom training data
-    with ai_processor.lock:
-        cursor = ai_processor.conn.cursor()
+@app.route('/api/history/<session_id>')
+def get_conversation_history(session_id):
+    """Get conversation history for a session"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS custom_training (
-                id INTEGER PRIMARY KEY,
-                pattern TEXT,
-                response TEXT,
-                intent TEXT,
-                created_at TEXT
-            )
+            SELECT user_input, ai_response, timestamp, intent
+            FROM conversations 
+            WHERE session_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT 50
+        ''', (session_id,))
+        
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                'user_input': row[0],
+                'ai_response': row[1],
+                'timestamp': row[2],
+                'intent': row[3]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'session_id': session_id,
+            'history': history,
+            'count': len(history),
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/personalities')
+def get_personalities():
+    """Get available personality types with enhanced descriptions"""
+    personalities = {
+        'friendly': {
+            'name': 'Friendly',
+            'description': 'Warm, encouraging, and conversational with emojis',
+            'example': 'I\'d be happy to help! 😊 That\'s a great question!',
+            'traits': ['empathetic', 'encouraging', 'casual']
+        },
+        'professional': {
+            'name': 'Professional', 
+            'description': 'Formal, structured, and business-oriented',
+            'example': 'I shall assist you with that matter in a professional capacity.',
+            'traits': ['formal', 'precise', 'business-focused']
+        },
+        'casual': {
+            'name': 'Casual',
+            'description': 'Relaxed, laid-back, and friendly like talking to a buddy',
+            'example': 'Hey there! No worries, I got you covered. That\'s awesome!',
+            'traits': ['relaxed', 'informal', 'buddy-like']
+        },
+        'enthusiastic': {
+            'name': 'Enthusiastic',
+            'description': 'High-energy, excited, and lots of exclamation points!',
+            'example': 'That\'s AMAZING! I LOVE helping with this! 🚀✨🎉',
+            'traits': ['energetic', 'excited', 'motivational']
+        },
+        'wise': {
+            'name': 'Wise',
+            'description': 'Thoughtful, deep, and philosophical responses',
+            'example': 'In my understanding, one might consider the profound implications...',
+            'traits': ['thoughtful', 'philosophical', 'insightful']
+        },
+        'creative': {
+            'name': 'Creative',
+            'description': 'Imaginative, artistic, and colorful language',
+            'example': 'Let\'s paint this conversation with vibrant ideas! 🎨✨',
+            'traits': ['imaginative', 'artistic', 'inspiring']
+        }
+    }
+    
+    return jsonify({
+        'personalities': personalities,
+        'default': 'friendly',
+        'count': len(personalities)
+    })
+
+@app.route('/api/quick-commands')
+def get_quick_commands():
+    """Get available quick commands"""
+    commands = {
+        'time': {
+            'name': 'Current Time',
+            'examples': ['What time is it?', 'Tell me the time', 'Current time'],
+            'description': 'Get the current time instantly'
+        },
+        'date': {
+            'name': 'Current Date',
+            'examples': ['What\'s the date?', 'Today\'s date', 'What day is it?'],
+            'description': 'Get today\'s date and day of the week'
+        },
+        'math': {
+            'name': 'Math Calculator',
+            'examples': ['5 + 3', '10 * 2', 'Calculate 15 / 3'],
+            'description': 'Perform mathematical calculations'
+        },
+        'image_generation': {
+            'name': 'Image Generation',
+            'examples': ['Generate image of a sunset', 'Create picture of a cat', 'Make image of space'],
+            'description': 'Create AI-generated images using DALL-E'
+        },
+        'logo_generation': {
+            'name': 'Logo Creation',
+            'examples': ['Generate logo for TechCorp', 'Create logo for coffee shop', 'Design logo modern style'],
+            'description': 'Create professional logos for businesses and brands'
+        },
+        'weather': {
+            'name': 'Weather Info',
+            'examples': ['How\'s the weather?', 'Weather forecast', 'Temperature today'],
+            'description': 'Get weather information (coming soon)'
+        },
+        'reminder': {
+            'name': 'Set Reminders',
+            'examples': ['Remind me to call mom', 'Set reminder for meeting', 'Remember to buy milk'],
+            'description': 'Set reminders for important tasks'
+        },
+        'timer': {
+            'name': 'Set Timers',
+            'examples': ['Set timer for 5 minutes', 'Timer 30 seconds', 'Countdown 1 hour'],
+            'description': 'Set countdown timers'
+        }
+    }
+    
+    return jsonify({
+        'commands': commands,
+        'count': len(commands),
+        'wake_words': ['Horizon', 'Hello Horizon', 'Hey Horizon', 'Hi Horizon']
+    })
+
+@app.route('/api/learning-stats')
+def get_learning_stats():
+    """Get memory learning statistics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get conversation count
+        cursor.execute('SELECT COUNT(*) FROM conversations')
+        total_conversations = cursor.fetchone()[0]
+        
+        # Get most used commands
+        cursor.execute('''
+            SELECT command, usage_count 
+            FROM quick_commands 
+            ORDER BY usage_count DESC 
+            LIMIT 5
         ''')
+        popular_commands = [{'command': row[0], 'count': row[1]} for row in cursor.fetchall()]
+        
+        # Get entity patterns
         cursor.execute('''
-            INSERT INTO custom_training (pattern, response, intent, created_at)
-            VALUES (?, ?, ?, ?)
-        ''', (pattern, response, intent, datetime.now().isoformat()))
-        ai_processor.conn.commit()
-    
-    return jsonify({'message': 'AI training data added successfully!'})
-
-@app.route('/api/system-info', methods=['GET'])
-def get_system_info():
-    """Get system information and capabilities"""
-    return jsonify({
-        'name': 'Horizon AI Assistant',
-        'version': '2.0.0',
-        'capabilities': [
-            'Natural Language Processing',
-            'Sentiment Analysis',
-            'Intent Recognition',
-            'Timers and Reminders',
-            'Math Calculations',
-            'Weather Information',
-            'Smart Home Control (Mock)',
-            'Conversation Memory',
-            'Learning from Feedback',
-            'Multiple Personalities',
-            'Voice Command Recognition',
-            'Context Awareness'
-        ],
-        'supported_intents': list(ai_processor.intent_patterns.keys()),
-        'personalities': ['friendly', 'professional', 'enthusiastic', 'witty'],
-        'database_size': ai_processor.get_database_stats()
-    })
-
-@app.route('/api/database-stats', methods=['GET'])
-def get_database_stats():
-    """Get database statistics"""
-    stats = ai_processor.get_database_stats()
-    return jsonify(stats)
-
-@app.route('/api/sentiment', methods=['POST'])
-def analyze_sentiment_endpoint():
-    data = request.json
-    text = data.get('text', '')
-    
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
-    
-    sentiment = ai_processor.analyze_sentiment(text)
-    return jsonify(sentiment)
-
-@app.route('/api/stats', methods=['GET'])
-def get_stats():
-    return jsonify({
-        'conversation_count': len(ai_processor.conversation_history),
-        'total_interactions': len(ai_processor.conversation_history),
-        'avg_sentiment': 0.5  # Simple fallback without numpy
-    })
+            SELECT COUNT(*) FROM user_preferences
+        ''')
+        learned_preferences = cursor.fetchone()[0]
+        
+        # Get recent activity
+        cursor.execute('''
+            SELECT COUNT(*) FROM conversations 
+            WHERE timestamp > datetime('now', '-24 hours')
+        ''')
+        today_conversations = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'total_conversations': total_conversations,
+            'popular_commands': popular_commands,
+            'learned_preferences': learned_preferences,
+            'today_conversations': today_conversations,
+            'nlp_enabled': NLP_AVAILABLE,
+            'ai_connected': AI_MODEL_AVAILABLE
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    print("🚀 Starting Horizon AI Assistant (Clean Version)...")
+    print("✅ Database initialization...")
+    init_db()
+    print("🌐 Server starting on http://0.0.0.0:8080...")
+    print("📱 Local access: http://127.0.0.1:8080")
+    app.run(host='0.0.0.0', port=8080, debug=False)

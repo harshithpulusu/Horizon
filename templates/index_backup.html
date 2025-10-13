@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .control-panel {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .quick-commands-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .quick-commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .quick-cmd-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .quick-cmd-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .wake-word-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 0, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            display: none;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .personality-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .personality-selector select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        /* ChatGPT-style Messages Area */
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #ffffff;
+            max-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .message.user .message-avatar {
+            background: #0084ff;
+            color: white;
+        }
+
+        .message.ai .message-avatar {
+            background: #42a5f5;
+            color: white;
+        }
+
+        .message-content-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-content {
+            background: #f1f3f5;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .message.user .message-content {
+            background: #0084ff;
+            color: white;
+            margin-right: 0;
+        }
+
+        .message.ai .message-content {
+            background: #f1f3f5;
+            color: #333;
+        }
+
+        .input-section {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #userInput {
+            width: 100%;
+            padding: 12px 50px 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4facfe;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .send-btn:hover {
+            background: #3d8bfe;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Typing indicator */
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .typing-dots div {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots div:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-6px);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .main-chat {
+                margin: 10px;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-chat">
+            <div class="header">
+                <h1>🌟 Horizon AI Assistant</h1>
+                <p>Your Advanced Voice-Activated AI Companion</p>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-indicator" id="statusIndicator">Ready</div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="value" id="conversationCount">0</div>
+                        <div class="label">Conversations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="value" id="confidenceScore">87%</div>
+                        <div class="label">Confidence</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="controls">
+                    <button class="btn btn-primary" id="startListening">
+                        🎤 Start Listening
+                    </button>
+                    <button class="btn btn-danger" id="stopListening" disabled>
+                        ⏹️ Stop Listening
+                    </button>
+                    <button class="btn btn-secondary" id="testMicBtn">
+                        🎙️ Test Microphone
+                    </button>
+                    <button class="btn btn-secondary" id="helpBtn">
+                        ❓ Help
+                    </button>
+                    <button class="btn btn-secondary" id="quickCommandsBtn">
+                        ⚡ Quick Commands
+                    </button>
+                    <button class="btn btn-warning" id="clearConversationBtn" title="Start a new conversation session">
+                        🗑️ Clear Conversation
+                    </button>
+                </div>
+                
+                <div class="personality-selector">
+                    <label for="personalitySelect">AI Personality:</label>
+                    <select id="personalitySelect">
+                        <option value="friendly" selected>😊 Friendly</option>
+                        <option value="professional">👔 Professional</option>
+                        <option value="creative">🎨 Creative</option>
+                        <option value="enthusiastic">🚀 Enthusiastic</option>
+                        <option value="wise">🧠 Wise</option>
+                        <option value="casual">� Casual</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Quick Commands Panel -->
+            <div class="quick-commands-panel" id="quickCommandsPanel">
+                <div class="quick-commands" id="quickCommands">
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('What time is it?')">
+                        🕐 Current Time
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('What\'s today\'s date?')">
+                        📅 Today's Date
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('Generate image of a sunset')">
+                        🎨 Generate Image
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('Create logo for my company')">
+                        🏢 Create Logo
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('Calculate 15 + 25')">
+                        🧮 Math Calculator
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('How\'s the weather?')">
+                        🌤️ Weather Info
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('Remind me to call mom')">
+                        ⏰ Set Reminder
+                    </div>
+                    <div class="quick-cmd-btn" onclick="sendQuickCommand('Set timer for 5 minutes')">
+                        ⏲️ Set Timer
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wake Word Indicator -->
+            <div class="wake-word-indicator" id="wakeWordIndicator">
+                🎤 Wake Word Detected: "Horizon"
+            </div>
+                        <option value="casual">😎 Casual</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ChatGPT-style Messages Area -->
+            <div class="messages" id="chatMessages">
+                <!-- Welcome message -->
+                <div class="message ai">
+                    <div class="message-avatar">H</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-content">
+                            Welcome to Horizon! I'm your advanced AI assistant. I can help you with complex tasks, creative projects, and provide intelligent insights. How can I assist you today?
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="userInput" 
+                            placeholder="Type your message here... or use voice commands!"
+                            rows="1"
+                        ></textarea>
+                        <button type="button" id="sendButton" class="send-btn">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ChatGPT-style interface JavaScript with all original features
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const conversationCount = document.getElementById('conversationCount');
+        const confidenceScore = document.getElementById('confidenceScore');
+        const personalitySelect = document.getElementById('personalitySelect');
+        
+        let conversationCounter = 0;
+        
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        // Send message on Enter (but allow Shift+Enter for new lines)
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Send button click
+        sendButton.addEventListener('click', sendMessage);
+        
+        // Voice controls
+        document.getElementById('startListening').addEventListener('click', startListening);
+        document.getElementById('stopListening').addEventListener('click', stopListening);
+        document.getElementById('testMicBtn').addEventListener('click', testMicrophone);
+        document.getElementById('helpBtn').addEventListener('click', showHelp);
+        document.getElementById('clearConversationBtn').addEventListener('click', clearConversation);
+        
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            
+            // Clear input
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            
+            // Update status
+            statusIndicator.textContent = 'Processing...';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to server
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    message: message,
+                    personality: personalitySelect.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                addMessage(data.response, 'ai');
+                
+                // Update stats
+                conversationCounter++;
+                conversationCount.textContent = conversationCounter;
+                statusIndicator.textContent = 'Ready';
+                
+                if (data.confidence) {
+                    confidenceScore.textContent = Math.round(data.confidence * 100) + '%';
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+                statusIndicator.textContent = 'Error';
+                console.error('Error:', error);
+            });
+        }
+        
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = sender === 'user' ? 'U' : 'H';
+            
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'message-content-wrapper';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            contentWrapper.appendChild(messageContent);
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentWrapper);
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = 'H';
+            
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'message-content-wrapper';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = '<div class="typing-dots"><div></div><div></div><div></div></div>';
+            
+            contentWrapper.appendChild(messageContent);
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(contentWrapper);
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        // Voice functions (placeholder implementations)
+        function startListening() {
+            statusIndicator.textContent = 'Listening...';
+            document.getElementById('startListening').disabled = true;
+            document.getElementById('stopListening').disabled = false;
+            addMessage('🎤 Voice listening activated! Speak now...', 'ai');
+        }
+        
+        function stopListening() {
+            statusIndicator.textContent = 'Ready';
+            document.getElementById('startListening').disabled = false;
+            document.getElementById('stopListening').disabled = true;
+            addMessage('🎤 Voice listening stopped.', 'ai');
+        }
+        
+        function testMicrophone() {
+            addMessage('🎙️ Microphone test: Your microphone appears to be working! This feature will test audio input capabilities.', 'ai');
+        }
+        
+        function showHelp() {
+            const helpMessage = `🤖 Welcome to Horizon AI Assistant!
+
+✨ Features:
+• Type messages or use voice commands
+• Choose different AI personalities
+• Voice activation with 🎤 Start Listening
+• Clear conversation history
+• Real-time status updates
+
+🎯 How to use:
+• Just type naturally - I understand context
+• Use voice commands when listening is active
+• Select different personalities for varied responses
+• Press Enter to send, Shift+Enter for new lines
+
+🎭 Personalities available:
+• Friendly: Warm and approachable
+• Professional: Formal and business-like
+• Creative: Imaginative and artistic
+• Analytical: Logical and detailed
+• Casual: Relaxed and informal`;
+            
+            addMessage(helpMessage, 'ai');
+        }
+        
+        function clearConversation() {
+            chatMessages.innerHTML = `
+                <div class="message ai">
+                    <div class="message-avatar">H</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-content">
+                            Welcome to Horizon! I'm your advanced AI assistant. I can help you with complex tasks, creative projects, and provide intelligent insights. How can I assist you today?
+                        </div>
+                    </div>
+                </div>
+            `;
+            conversationCounter = 0;
+            conversationCount.textContent = '0';
+            statusIndicator.textContent = 'Ready';
+        }
+        
+        // Focus input on load
+        document.addEventListener('DOMContentLoaded', function() {
+            userInput.focus();
+        });
+    </script>
+</body>
+</html>
