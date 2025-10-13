@@ -446,6 +446,35 @@ def save_conversation(session_id, user_input, ai_response, intent, user_id='anon
     except Exception as e:
         print(f"Error saving conversation: {e}")
 
+def update_quick_command_usage(command):
+    """Update quick command usage statistics"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Check if command exists
+        cursor.execute('SELECT usage_count FROM quick_commands WHERE command = ?', (command,))
+        result = cursor.fetchone()
+        
+        if result:
+            # Update existing command
+            cursor.execute('''
+                UPDATE quick_commands 
+                SET usage_count = usage_count + 1, last_used = CURRENT_TIMESTAMP 
+                WHERE command = ?
+            ''', (command,))
+        else:
+            # Insert new command
+            cursor.execute('''
+                INSERT INTO quick_commands (command, usage_count, last_used) 
+                VALUES (?, 1, CURRENT_TIMESTAMP)
+            ''', (command,))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error updating quick command usage: {e}")
+
 def process_user_input(user_input, personality='friendly', session_id=None, user_id='anonymous'):
     """Enhanced process user input with wake word detection and learning"""
     if not user_input or not user_input.strip():
@@ -793,6 +822,233 @@ def get_learning_stats():
             'ai_connected': AI_MODEL_AVAILABLE
         })
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/timers', methods=['GET', 'POST', 'DELETE'])
+def handle_timers():
+    """Handle timer operations"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Create timers table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS timers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                duration INTEGER NOT NULL,
+                remaining INTEGER NOT NULL,
+                is_running BOOLEAN DEFAULT FALSE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                user_id TEXT DEFAULT 'anonymous'
+            )
+        ''')
+        
+        if request.method == 'GET':
+            # Get all active timers
+            cursor.execute('SELECT * FROM timers ORDER BY created_at DESC')
+            timers = []
+            for row in cursor.fetchall():
+                timers.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'duration': row[2],
+                    'remaining': row[3],
+                    'is_running': bool(row[4]),
+                    'created_at': row[5]
+                })
+            conn.close()
+            return jsonify({'timers': timers})
+            
+        elif request.method == 'POST':
+            # Create new timer
+            data = request.get_json()
+            name = data.get('name', 'Timer')
+            duration = data.get('duration', 300000)  # 5 minutes default
+            
+            cursor.execute('''
+                INSERT INTO timers (name, duration, remaining) 
+                VALUES (?, ?, ?)
+            ''', (name, duration, duration))
+            
+            timer_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'id': timer_id,
+                'name': name,
+                'duration': duration,
+                'remaining': duration,
+                'is_running': False
+            })
+            
+        elif request.method == 'DELETE':
+            # Delete timer
+            timer_id = request.args.get('id')
+            if timer_id:
+                cursor.execute('DELETE FROM timers WHERE id = ?', (timer_id,))
+                conn.commit()
+            conn.close()
+            return jsonify({'success': True})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reminders', methods=['GET', 'POST', 'DELETE'])
+def handle_reminders():
+    """Handle reminder operations"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Create reminders table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                reminder_time DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                user_id TEXT DEFAULT 'anonymous',
+                is_completed BOOLEAN DEFAULT FALSE
+            )
+        ''')
+        
+        if request.method == 'GET':
+            # Get all active reminders
+            cursor.execute('''
+                SELECT * FROM reminders 
+                WHERE is_completed = FALSE 
+                ORDER BY reminder_time ASC
+            ''')
+            reminders = []
+            for row in cursor.fetchall():
+                reminders.append({
+                    'id': row[0],
+                    'title': row[1],
+                    'reminder_time': row[2],
+                    'created_at': row[3],
+                    'is_completed': bool(row[5])
+                })
+            conn.close()
+            return jsonify({'reminders': reminders})
+            
+        elif request.method == 'POST':
+            # Create new reminder
+            data = request.get_json()
+            title = data.get('title', 'Reminder')
+            reminder_time = data.get('reminder_time')
+            
+            if not reminder_time:
+                return jsonify({'error': 'Reminder time is required'}), 400
+            
+            cursor.execute('''
+                INSERT INTO reminders (title, reminder_time) 
+                VALUES (?, ?)
+            ''', (title, reminder_time))
+            
+            reminder_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'id': reminder_id,
+                'title': title,
+                'reminder_time': reminder_time,
+                'is_completed': False
+            })
+            
+        elif request.method == 'DELETE':
+            # Delete or complete reminder
+            reminder_id = request.args.get('id')
+            if reminder_id:
+                cursor.execute('UPDATE reminders SET is_completed = TRUE WHERE id = ?', (reminder_id,))
+                conn.commit()
+            conn.close()
+            return jsonify({'success': True})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/quick-commands', methods=['GET', 'POST'])
+def handle_quick_commands():
+    """Handle quick command operations"""
+    try:
+        if request.method == 'GET':
+            # Get popular quick commands
+            conn = sqlite3.connect('ai_memory.db')
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT command, usage_count 
+                FROM quick_commands 
+                ORDER BY usage_count DESC 
+                LIMIT 10
+            ''')
+            
+            commands = []
+            for row in cursor.fetchall():
+                commands.append({
+                    'command': row[0],
+                    'usage_count': row[1]
+                })
+            
+            conn.close()
+            return jsonify({'commands': commands})
+            
+        elif request.method == 'POST':
+            # Process quick command
+            data = request.get_json()
+            command = data.get('command', '').lower()
+            
+            # Handle specific quick commands
+            if 'time' in command:
+                response = f"🕐 Current time: {datetime.now().strftime('%I:%M %p')}"
+            elif 'date' in command:
+                response = f"📅 Today's date: {datetime.now().strftime('%A, %B %d, %Y')}"
+            elif 'calculate' in command or 'math' in command:
+                # Simple math evaluation (be careful with eval in production)
+                try:
+                    # Extract numbers and operators
+                    import re
+                    math_expr = re.search(r'(\d+(?:\.\d+)?)\s*([\+\-\*\/])\s*(\d+(?:\.\d+)?)', command)
+                    if math_expr:
+                        num1, op, num2 = math_expr.groups()
+                        num1, num2 = float(num1), float(num2)
+                        if op == '+':
+                            result = num1 + num2
+                        elif op == '-':
+                            result = num1 - num2
+                        elif op == '*':
+                            result = num1 * num2
+                        elif op == '/':
+                            result = num1 / num2 if num2 != 0 else 'Error: Division by zero'
+                        response = f"🧮 {num1} {op} {num2} = {result}"
+                    else:
+                        response = "🧮 I can help with basic math like '25 * 4' or '100 / 5'"
+                except:
+                    response = "🧮 Sorry, I couldn't calculate that. Try simpler math expressions."
+            elif 'joke' in command:
+                jokes = [
+                    "Why don't scientists trust atoms? Because they make up everything! 😄",
+                    "Why did the scarecrow win an award? He was outstanding in his field! 🌾",
+                    "What do you call a fake noodle? An impasta! 🍝",
+                    "Why don't eggs tell jokes? They'd crack each other up! 🥚",
+                    "What do you call a bear with no teeth? A gummy bear! 🐻"
+                ]
+                response = f"😄 {random.choice(jokes)}"
+            else:
+                response = "⚡ Quick command processed! You can ask me about time, date, math, jokes, or set timers and reminders."
+            
+            # Update usage statistics
+            update_quick_command_usage(command)
+            
+            return jsonify({
+                'response': response,
+                'is_quick_command': True
+            })
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
