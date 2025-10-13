@@ -20,9 +20,207 @@
 
         .container {
             display: flex;
-            flex-direction: column;
             width: 100%;
             height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 320px;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            background: rgba(25, 25, 25, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .section-icon {
+            font-size: 16px;
+            color: #667eea;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a0a0a0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .section-content {
+            padding: 15px 20px;
+            min-height: 60px;
+        }
+
+        .empty-state {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px 0;
+            font-style: italic;
+        }
+
+        .quick-commands-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 15px 10px;
+        }
+
+        .sidebar-command {
+            background: rgba(40, 40, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: #e5e5e5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-command:hover {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateX(4px);
+        }
+
+        .command-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .command-text {
+            font-size: 13px;
+            color: #c0c0c0;
+            flex: 1;
+        }
+
+        .timer-item, .reminder-item {
+            background: rgba(40, 40, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .timer-header, .reminder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .timer-name, .reminder-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e5e5;
+        }
+
+        .timer-time {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .timer-btn {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timer-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .reminder-time {
+            font-size: 12px;
+            color: #a0a0a0;
         }
 
         .main-chat {
@@ -32,10 +230,16 @@
             background: rgba(20, 20, 20, 0.95);
             backdrop-filter: blur(10px);
             margin: 20px;
+            margin-left: 340px;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed + .main-chat {
+            margin-left: 60px;
         }
 
         .header {
@@ -426,8 +630,21 @@
 
         /* Responsive design */
         @media (max-width: 768px) {
-            .container {
+            .sidebar {
+                width: 280px;
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-240px);
+            }
+            
+            .main-chat {
                 margin: 10px;
+                margin-left: 300px;
+            }
+            
+            .sidebar.collapsed + .main-chat {
+                margin-left: 50px;
             }
             
             .control-panel {
@@ -441,6 +658,30 @@
             
             .message-content-wrapper {
                 max-width: 85%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+            
+            .main-chat {
+                margin: 10px;
+                margin-left: 10px;
+            }
+            
+            .sidebar.collapsed + .main-chat {
+                margin-left: 10px;
             }
         }
 
@@ -637,8 +878,218 @@
         const conversationCount = document.getElementById('conversationCount');
         const responseTimeEl = document.getElementById('responseTime');
         const personalitySelect = document.getElementById('personalitySelect');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
         
         let conversationCounter = 0;
+        let activeTimers = [];
+        let activeReminders = [];
+        
+        // Sidebar toggle functionality
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+        
+        // Restore sidebar state from localStorage
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+        }
+        
+        // Timer management
+        function addTimer(name, duration) {
+            const timer = {
+                id: Date.now(),
+                name: name,
+                duration: duration,
+                remaining: duration,
+                isRunning: false,
+                startTime: null
+            };
+            
+            activeTimers.push(timer);
+            updateTimersDisplay();
+            return timer;
+        }
+        
+        function startTimer(timerId) {
+            const timer = activeTimers.find(t => t.id === timerId);
+            if (timer && !timer.isRunning) {
+                timer.isRunning = true;
+                timer.startTime = Date.now();
+                updateTimersDisplay();
+                
+                const interval = setInterval(() => {
+                    if (!timer.isRunning) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const elapsed = Date.now() - timer.startTime;
+                    timer.remaining = Math.max(0, timer.duration - elapsed);
+                    
+                    if (timer.remaining === 0) {
+                        timer.isRunning = false;
+                        clearInterval(interval);
+                        showTimerComplete(timer);
+                        removeTimer(timerId);
+                    }
+                    
+                    updateTimersDisplay();
+                }, 100);
+            }
+        }
+        
+        function pauseTimer(timerId) {
+            const timer = activeTimers.find(t => t.id === timerId);
+            if (timer && timer.isRunning) {
+                timer.isRunning = false;
+                const elapsed = Date.now() - timer.startTime;
+                timer.remaining = Math.max(0, timer.duration - elapsed);
+                timer.duration = timer.remaining;
+                updateTimersDisplay();
+            }
+        }
+        
+        function removeTimer(timerId) {
+            activeTimers = activeTimers.filter(t => t.id !== timerId);
+            updateTimersDisplay();
+        }
+        
+        function updateTimersDisplay() {
+            const container = document.getElementById('activeTimers');
+            
+            if (activeTimers.length === 0) {
+                container.innerHTML = '<div class="empty-state">No active timers</div>';
+                return;
+            }
+            
+            container.innerHTML = activeTimers.map(timer => `
+                <div class="timer-item">
+                    <div class="timer-header">
+                        <div class="timer-name">${timer.name}</div>
+                        <button class="timer-btn" onclick="removeTimer(${timer.id})">×</button>
+                    </div>
+                    <div class="timer-time">${formatTime(timer.remaining)}</div>
+                    <div class="timer-controls">
+                        ${timer.isRunning ? 
+                            `<button class="timer-btn" onclick="pauseTimer(${timer.id})">⏸️ Pause</button>` :
+                            `<button class="timer-btn" onclick="startTimer(${timer.id})">▶️ Start</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function formatTime(ms) {
+            const totalSeconds = Math.ceil(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function showTimerComplete(timer) {
+            addMessage(`⏰ Timer "${timer.name}" has completed!`, 'ai');
+            
+            // Browser notification if supported
+            if (Notification.permission === 'granted') {
+                new Notification(`Timer Complete: ${timer.name}`, {
+                    icon: '/static/favicon.ico',
+                    body: 'Your timer has finished!'
+                });
+            }
+        }
+        
+        // Reminder management
+        function addReminder(title, time) {
+            const reminder = {
+                id: Date.now(),
+                title: title,
+                time: time,
+                timestamp: Date.now()
+            };
+            
+            activeReminders.push(reminder);
+            updateRemindersDisplay();
+            
+            // Set timeout for reminder
+            const delay = time.getTime() - Date.now();
+            if (delay > 0) {
+                setTimeout(() => {
+                    showReminderNotification(reminder);
+                    removeReminder(reminder.id);
+                }, delay);
+            }
+            
+            return reminder;
+        }
+        
+        function removeReminder(reminderId) {
+            activeReminders = activeReminders.filter(r => r.id !== reminderId);
+            updateRemindersDisplay();
+        }
+        
+        function updateRemindersDisplay() {
+            const container = document.getElementById('activeReminders');
+            
+            if (activeReminders.length === 0) {
+                container.innerHTML = '<div class="empty-state">No active reminders</div>';
+                return;
+            }
+            
+            container.innerHTML = activeReminders.map(reminder => `
+                <div class="reminder-item">
+                    <div class="reminder-header">
+                        <div class="reminder-title">${reminder.title}</div>
+                        <button class="timer-btn" onclick="removeReminder(${reminder.id})">×</button>
+                    </div>
+                    <div class="reminder-time">${reminder.time.toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        function showReminderNotification(reminder) {
+            addMessage(`🔔 Reminder: ${reminder.title}`, 'ai');
+            
+            // Browser notification if supported
+            if (Notification.permission === 'granted') {
+                new Notification(`Reminder: ${reminder.title}`, {
+                    icon: '/static/favicon.ico',
+                    body: 'You asked me to remind you about this.'
+                });
+            }
+        }
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        // Enhanced message processing for timers and reminders
+        function processTimerReminders(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Timer patterns
+            const timerMatch = lowerMessage.match(/set timer for (\d+) (minute|minutes|min|second|seconds|sec)/);
+            if (timerMatch) {
+                const amount = parseInt(timerMatch[1]);
+                const unit = timerMatch[2];
+                const duration = unit.startsWith('min') ? amount * 60 * 1000 : amount * 1000;
+                const timer = addTimer(`${amount} ${unit}`, duration);
+                startTimer(timer.id);
+                return true;
+            }
+            
+            // Reminder patterns (simple 5-minute reminder for demo)
+            if (lowerMessage.includes('remind me to')) {
+                const reminderText = message.replace(/remind me to /i, '');
+                const reminderTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+                addReminder(reminderText, reminderTime);
+                return true;
+            }
+            
+            return false;
+        }
         
         // Auto-resize textarea
         userInput.addEventListener('input', function() {
@@ -695,6 +1146,27 @@
             
             // Check for wake word
             checkWakeWord(message);
+            
+            // Check for local timer/reminder processing
+            if (processTimerReminders(message)) {
+                // Add user message
+                addMessage(message, 'user');
+                
+                // Clear input
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                
+                // Add confirmation message
+                if (message.toLowerCase().includes('timer')) {
+                    addMessage('✅ Timer set and started! You can see it in the sidebar.', 'ai');
+                } else if (message.toLowerCase().includes('remind')) {
+                    addMessage('✅ Reminder set! I\'ll notify you in 5 minutes.', 'ai');
+                }
+                
+                conversationCounter++;
+                conversationCount.textContent = conversationCounter;
+                return;
+            }
             
             // Add user message
             addMessage(message, 'user');
