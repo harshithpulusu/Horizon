@@ -936,7 +936,7 @@
                     <div class="timer-time">${formatTime(timer.remaining)}</div>
                     <div class="timer-controls">
                         ${timer.isRunning ? 
-                            `<button class="timer-btn" onclick="pauseTimer(${timer.id})">⏸️ Pause</button>` :
+                            `<button class="timer-btn" onclick="pauseTimer(${timer.id})" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">⏹️ Stop</button>` :
                             `<button class="timer-btn" onclick="startTimer(${timer.id})">▶️ Start</button>`
                         }
                     </div>
