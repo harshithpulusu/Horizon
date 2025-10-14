@@ -1240,14 +1240,50 @@
         }
         
         // Voice functions
+        // Microphone/voice recognition using Web Speech API
+        let recognition;
+        let isListening = false;
+        
         function startListening() {
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                addMessage('⚠️ Speech recognition not supported in this browser.', 'ai');
+                return;
+            }
             statusIndicator.textContent = 'Listening...';
             document.getElementById('startListening').disabled = true;
             document.getElementById('stopListening').disabled = false;
             addMessage('🎤 Voice listening activated! Say "Horizon" followed by your request...', 'ai');
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+            isListening = true;
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            };
+            recognition.onerror = function(event) {
+                addMessage('⚠️ Microphone error: ' + event.error, 'ai');
+                stopListening();
+            };
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('startListening').disabled = false;
+                document.getElementById('stopListening').disabled = true;
+                statusIndicator.textContent = 'Ready';
+            };
+            recognition.start();
         }
         
         function stopListening() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
             statusIndicator.textContent = 'Ready';
             document.getElementById('startListening').disabled = false;
             document.getElementById('stopListening').disabled = true;
