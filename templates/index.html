@@ -850,7 +850,8 @@
                 duration: duration,
                 remaining: duration,
                 isRunning: false,
-                startTime: null
+                startTime: null,
+                intervalId: null
             };
             
             activeTimers.push(timer);
@@ -865,9 +866,10 @@
                 timer.startTime = Date.now();
                 updateTimersDisplay();
                 
-                const interval = setInterval(() => {
+                timer.intervalId = setInterval(() => {
                     if (!timer.isRunning) {
-                        clearInterval(interval);
+                        clearInterval(timer.intervalId);
+                        timer.intervalId = null;
                         return;
                     }
                     
@@ -876,13 +878,14 @@
                     
                     if (timer.remaining === 0) {
                         timer.isRunning = false;
-                        clearInterval(interval);
+                        clearInterval(timer.intervalId);
+                        timer.intervalId = null;
                         showTimerComplete(timer);
                         removeTimer(timerId);
                     }
                     
                     updateTimersDisplay();
-                }, 100);
+                }, 50); // Reduced from 100ms to 50ms for better responsiveness
             }
         }
         
@@ -890,6 +893,13 @@
             const timer = activeTimers.find(t => t.id === timerId);
             if (timer && timer.isRunning) {
                 timer.isRunning = false;
+                
+                // Immediately clear the interval
+                if (timer.intervalId) {
+                    clearInterval(timer.intervalId);
+                    timer.intervalId = null;
+                }
+                
                 const elapsed = Date.now() - timer.startTime;
                 timer.remaining = Math.max(0, timer.duration - elapsed);
                 timer.duration = timer.remaining;
@@ -898,6 +908,13 @@
         }
         
         function removeTimer(timerId) {
+            const timer = activeTimers.find(t => t.id === timerId);
+            if (timer) {
+                // Clear interval if timer is running
+                if (timer.intervalId) {
+                    clearInterval(timer.intervalId);
+                }
+            }
             activeTimers = activeTimers.filter(t => t.id !== timerId);
             updateTimersDisplay();
         }
