@@ -544,17 +544,23 @@
         }
 
         .feature-indicator {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            color: #e5e5e5;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 12px;
+            position: absolute;
+            bottom: 15px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            font-size: 11px;
             z-index: 1000;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            font-weight: 500;
+        }
+
+        .feature-indicator-left {
+            left: 20px;
+        }
+
+        .feature-indicator-right {
+            right: 20px;
         }
 
         .nlp-status {
@@ -656,10 +662,6 @@
     </style>
 </head>
 <body>
-    <div class="feature-indicator">
-        🧠 Enhanced NLP • 🎯 Wake Words • 💾 Memory Learning • 🎨 DALL-E
-    </div>
-
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -730,6 +732,12 @@
         <div class="main-chat">
             <!-- Header -->
             <div class="header">
+                <div class="feature-indicator feature-indicator-left">
+                    🧠 Enhanced NLP • 🎯 Wake Words
+                </div>
+                <div class="feature-indicator feature-indicator-right">
+                    💾 Memory Learning • 🎨 DALL-E
+                </div>
                 <div class="wake-word-indicator" id="wakeWordIndicator">
                     Say "Horizon" or "Hello Horizon"
                 </div>
@@ -790,7 +798,7 @@
                     <button class="quick-btn" onclick="sendQuickCommand('Generate a logo for my company')">🏢 Logo</button>
                     <button class="quick-btn" onclick="sendQuickCommand('Create an image of a sunset')">🎨 Image</button>
                     <button class="quick-btn" onclick="sendQuickCommand('Help')">❓ Help</button>
-                    <button class="quick-btn" onclick="sendQuickCommand('What do you remember about me?')">🧠 Memory</button>
+                    <button class="quick-btn" onclick="sendQuickCommand('What are your capabilities?')">🚀 Features</button>
                 </div>
             </div>
 
