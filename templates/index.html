@@ -563,6 +563,100 @@
             right: 20px;
         }
 
+        /* Keyboard Shortcuts Modal */
+        .shortcuts-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 15px;
+            padding: 0;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #e5e5e5;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #e5e5e5;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .shortcut-item:last-child {
+            border-bottom: none;
+        }
+
+        .shortcut-key {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a855f7;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .shortcut-desc {
+            color: #e5e5e5;
+            font-size: 14px;
+        }
+
         .nlp-status {
             background: #10b981;
             color: white;
@@ -803,6 +897,38 @@
                 </div>
             </div>
 
+            <!-- Keyboard Shortcuts Modal -->
+            <div id="shortcutsModal" class="shortcuts-modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>⌨️ Keyboard Shortcuts</h3>
+                        <button class="modal-close" onclick="toggleShortcutsModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + Enter</span>
+                            <span class="shortcut-desc">Send message</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + M</span>
+                            <span class="shortcut-desc">Toggle microphone</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + T</span>
+                            <span class="shortcut-desc">Set new timer</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">↑ / ↓</span>
+                            <span class="shortcut-desc">Navigate message history</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Escape</span>
+                            <span class="shortcut-desc">Close modals</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Messages Area -->
             <div class="messages-container" id="chatMessages">
                 <div class="message ai">
@@ -966,12 +1092,55 @@
         function showTimerComplete(timer) {
             addMessage(`⏰ Timer "${timer.name}" has completed!`, 'ai');
             
+            // Play timer completion sound
+            playTimerSound();
+            
             // Browser notification if supported
             if (Notification.permission === 'granted') {
                 new Notification(`Timer Complete: ${timer.name}`, {
                     icon: '/static/favicon.ico',
                     body: 'Your timer has finished!'
                 });
+            }
+        }
+
+        // Play timer completion sound
+        function playTimerSound() {
+            try {
+                // Create audio context for better browser support
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a simple chime sound using oscillators
+                const oscillator1 = audioContext.createOscillator();
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Set frequencies for a pleasant chime (C and E notes)
+                oscillator1.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+                
+                // Set wave type
+                oscillator1.type = 'sine';
+                oscillator2.type = 'sine';
+                
+                // Connect oscillators to gain node
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Set volume and envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                
+                // Start and stop the sound
+                oscillator1.start(audioContext.currentTime);
+                oscillator2.start(audioContext.currentTime);
+                oscillator1.stop(audioContext.currentTime + 1.5);
+                oscillator2.stop(audioContext.currentTime + 1.5);
+                
+            } catch (error) {
+                console.log('Audio playback not supported or blocked');
             }
         }
         
@@ -1079,6 +1248,40 @@
                 sendMessage();
             }
         });
+
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Enter: Send message (global)
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+            // Ctrl+M: Toggle microphone
+            else if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                const micButton = document.getElementById('startListening');
+                const isListening = micButton.style.display === 'none';
+                if (isListening) {
+                    stopListening();
+                } else {
+                    startListening();
+                }
+            }
+            // Ctrl+T: Quick timer setup
+            else if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                userInput.value = 'Set a timer for ';
+                userInput.focus();
+                userInput.setSelectionRange(userInput.value.length, userInput.value.length);
+            }
+            // Escape: Close modals
+            else if (e.key === 'Escape') {
+                const modal = document.getElementById('shortcutsModal');
+                if (modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                }
+            }
+        });
         
         // Send button click
         sendButton.addEventListener('click', sendMessage);
@@ -1091,6 +1294,16 @@
         function sendQuickCommand(command) {
             userInput.value = command;
             sendMessage();
+        }
+        
+        // Toggle keyboard shortcuts modal
+        function toggleShortcutsModal() {
+            const modal = document.getElementById('shortcutsModal');
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
         }
         
         // Wake word detection
