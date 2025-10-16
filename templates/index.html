@@ -979,6 +979,8 @@
         let conversationCounter = 0;
         let activeTimers = [];
         let activeReminders = [];
+        let messageHistory = JSON.parse(localStorage.getItem('horizonMessageHistory') || '[]');
+        let historyIndex = -1;
         
         // Timer management
         function addTimer(name, duration) {
