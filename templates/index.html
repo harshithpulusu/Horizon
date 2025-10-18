@@ -965,6 +965,15 @@
         </div>
     </div>
 
+    <!-- Horizon AI Assistant - Modular JavaScript Architecture -->
+    <!-- Load modular components (enhanced functionality) -->
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/voice.js"></script>
+    <script src="/static/js/timers.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/app.js"></script>
+
+    <!-- Legacy inline script (for compatibility) -->
     <script>
         // Enhanced Dark Theme JavaScript
         const chatMessages = document.getElementById('chatMessages');
@@ -1537,6 +1546,24 @@
         // Focus input on load
         document.addEventListener('DOMContentLoaded', function() {
             userInput.focus();
+        });
+    </script>
+
+    <!-- Modular Architecture Initialization -->
+    <script>
+        console.log('🎉 Horizon AI Assistant - Enhanced with Modular Architecture!');
+        
+        // The app.js module will automatically initialize the modular system
+        // while maintaining backward compatibility with the inline functions above
+        
+        // Optional: Override inline functions with module versions for enhanced features
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (window.horizonApp && window.horizonApp.isInitialized) {
+                    console.log('✅ Modular system active alongside legacy code');
+                    console.log('📊 Module Status:', window.horizonApp.getStatus());
+                }
+            }, 1000);
         });
     </script>
 </body>
