@@ -3,9 +3,11 @@ Horizon Media Generator Core Module
 
 This module handles media generation functionality for the Horizon AI Assistant.
 It provides image, video, audio, and 3D model generation capabilities.
+Uses event-driven architecture and centralized state management.
 
 Classes:
 - MediaEngine: Main media generation system
+- MediaEventHandler: Event handler for media-related events
 - ImageGenerator: Image and artwork generation
 - VideoGenerator: Video and animation generation  
 - AudioGenerator: Music and audio generation
@@ -23,9 +25,20 @@ import json
 import uuid
 import random
 import requests
+import re
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 from config import Config
+
+# Import event system and state management
+from .events import (
+    EventHandler, EventData, HorizonEventTypes, 
+    get_event_emitter, emit_event, listen_for_event
+)
+from .state_manager import (
+    get_state_manager, get_state, update_state, 
+    subscribe_to_state
+)
 
 # Import optional media generation libraries
 try:
@@ -100,6 +113,136 @@ DEFAULT_AUDIO_PARAMS = {
 }
 
 
+class MediaEventHandler(EventHandler):
+    """Event handler for media generation events."""
+    
+    def __init__(self, media_engine):
+        super().__init__("media_event_handler")
+        self.media_engine = media_engine
+        self.handled_events = [
+            HorizonEventTypes.MEDIA_GENERATION_REQUESTED,
+            HorizonEventTypes.AI_RESPONSE_GENERATED
+        ]
+    
+    def handle_event_sync(self, event: EventData) -> None:
+        """Handle media-related events."""
+        try:
+            if event.event_type == HorizonEventTypes.MEDIA_GENERATION_REQUESTED:
+                self._handle_media_request(event)
+            elif event.event_type == HorizonEventTypes.AI_RESPONSE_GENERATED:
+                self._check_for_media_requests(event)
+        except Exception as e:
+            print(f"❌ Error in media event handler: {e}")
+    
+    def _handle_media_request(self, event: EventData):
+        """Handle direct media generation requests."""
+        media_type = event.data.get('media_type', 'image')
+        prompt = event.data.get('prompt', '')
+        params = event.data.get('params', {})
+        
+        # Add to generation queue
+        media_state = get_state("media")
+        request_id = media_state.add_to_queue(media_type, prompt, params)
+        update_state("media", media_state, source="media_engine")
+        
+        # Start generation
+        result = self.media_engine.generate_media(media_type, prompt, params)
+        
+        # Update state with result
+        media_state = get_state("media")
+        media_state.complete_generation(request_id, result)
+        update_state("media", media_state, source="media_engine")
+        
+        # Emit completion event
+        if result.get('success'):
+            emit_event(
+                HorizonEventTypes.MEDIA_GENERATION_COMPLETED,
+                "media_engine",
+                {
+                    'media_type': media_type,
+                    'prompt': prompt,
+                    'result': result,
+                    'request_id': request_id
+                },
+                user_id=event.user_id,
+                session_id=event.session_id
+            )
+        else:
+            emit_event(
+                HorizonEventTypes.MEDIA_GENERATION_FAILED,
+                "media_engine",
+                {
+                    'media_type': media_type,
+                    'prompt': prompt,
+                    'error': result.get('error', 'Unknown error'),
+                    'request_id': request_id
+                },
+                user_id=event.user_id,
+                session_id=event.session_id
+            )
+    
+    def _check_for_media_requests(self, event: EventData):
+        """Check AI responses for media generation requests."""
+        user_input = event.data.get('user_input', '').lower()
+        
+        # Check for image generation requests
+        if any(phrase in user_input for phrase in [
+            'generate image', 'create image', 'make image', 'generate picture', 
+            'create picture', 'make picture', 'draw', 'create an image'
+        ]):
+            # Extract prompt from user input
+            prompt = self._extract_media_prompt(user_input, 'image')
+            if prompt:
+                emit_event(
+                    HorizonEventTypes.MEDIA_GENERATION_REQUESTED,
+                    "ai_response_analyzer",
+                    {
+                        'media_type': 'image',
+                        'prompt': prompt,
+                        'params': {}
+                    },
+                    user_id=event.user_id,
+                    session_id=event.session_id
+                )
+        
+        # Check for logo generation requests
+        elif any(phrase in user_input for phrase in [
+            'generate logo', 'create logo', 'make logo', 'design logo'
+        ]):
+            prompt = self._extract_media_prompt(user_input, 'logo')
+            if prompt:
+                emit_event(
+                    HorizonEventTypes.MEDIA_GENERATION_REQUESTED,
+                    "ai_response_analyzer",
+                    {
+                        'media_type': 'image',
+                        'prompt': f"professional logo design for {prompt}",
+                        'params': {'type': 'logo'}
+                    },
+                    user_id=event.user_id,
+                    session_id=event.session_id
+                )
+    
+    def _extract_media_prompt(self, user_input: str, media_type: str) -> str:
+        """Extract media generation prompt from user input."""
+        # Remove trigger words to extract the actual description
+        trigger_words = {
+            'image': ['generate', 'create', 'make', 'draw', 'image', 'picture', 'an', 'a', 'of'],
+            'logo': ['generate', 'create', 'make', 'design', 'logo', 'for', 'a', 'an', 'the']
+        }
+        
+        prompt = user_input
+        for word in trigger_words.get(media_type, []):
+            prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+        
+        prompt = re.sub(r'\s+', ' ', prompt).strip()  # Clean up extra spaces
+        
+        if not prompt or len(prompt) < 3:
+            prompt = "a beautiful landscape" if media_type == 'image' else "modern tech company"
+        
+        return prompt
+
+
 class MediaEngine:
     """Main media generation system."""
     
@@ -112,13 +255,34 @@ class MediaEngine:
             'model': None
         }
         
+        # Get references to event and state systems
+        self.event_emitter = get_event_emitter()
+        self.state_manager = get_state_manager()
+        
         # Ensure output directories exist
         self._create_output_directories()
         
         # Initialize available generators
         self._initialize_generators()
         
-        print("🎨 Media Engine initialized")
+        # Register event handler
+        self.event_handler = MediaEventHandler(self)
+        self.event_emitter.register_handler(HorizonEventTypes.MEDIA_GENERATION_REQUESTED, self.event_handler)
+        self.event_emitter.register_handler(HorizonEventTypes.AI_RESPONSE_GENERATED, self.event_handler)
+        
+        # Update media state
+        self._update_media_state()
+        
+        print("🎨 Media Engine initialized with event-driven architecture")
+    
+    def _update_media_state(self):
+        """Update media state with current configuration."""
+        available_generators = self.get_available_generators()
+        
+        # Update state
+        update_state("media.available_generators", available_generators, source="media_engine")
+        update_state("media.is_generating", False, source="media_engine")
+        update_state("media.generation_progress", 0.0, source="media_engine")
     
     def _create_output_directories(self):
         """Create output directories for generated media."""
@@ -147,7 +311,7 @@ class MediaEngine:
     def generate_media(self, media_type: str, prompt: str, 
                       params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Generate media of specified type.
+        Generate media of specified type with event emission.
         
         Args:
             media_type: Type of media to generate (image, video, audio, model)
@@ -164,8 +328,45 @@ class MediaEngine:
                 'available_generators': self.get_available_generators()
             }
         
-        generator = self.generators[media_type]
-        return generator.generate(prompt, params or {})
+        # Update state to indicate generation started
+        update_state("media.is_generating", True, source="media_engine")
+        update_state("media.current_generation_type", media_type, source="media_engine")
+        update_state("media.current_generation_prompt", prompt, source="media_engine")
+        
+        # Emit generation started event
+        emit_event(
+            HorizonEventTypes.MEDIA_GENERATION_STARTED,
+            "media_engine",
+            {
+                'media_type': media_type,
+                'prompt': prompt,
+                'params': params or {}
+            }
+        )
+        
+        try:
+            generator = self.generators[media_type]
+            result = generator.generate(prompt, params or {})
+            
+            # Update state with completion
+            update_state("media.is_generating", False, source="media_engine")
+            update_state("media.current_generation_type", "", source="media_engine")
+            update_state("media.current_generation_prompt", "", source="media_engine")
+            
+            return result
+            
+        except Exception as e:
+            # Update state with error
+            update_state("media.is_generating", False, source="media_engine")
+            update_state("media.current_generation_type", "", source="media_engine")
+            update_state("media.current_generation_prompt", "", source="media_engine")
+            
+            return {
+                'success': False,
+                'error': str(e),
+                'media_type': media_type,
+                'prompt': prompt
+            }
 
 
 class ImageGenerator:

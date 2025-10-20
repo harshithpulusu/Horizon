@@ -121,6 +121,68 @@ TOPIC_KEYWORDS = {
 }
 
 
+class AIEventHandler(EventHandler):
+    """Event handler for AI-related events."""
+    
+    def __init__(self, ai_engine):
+        super().__init__("ai_event_handler")
+        self.ai_engine = ai_engine
+        self.handled_events = [
+            HorizonEventTypes.USER_MESSAGE_RECEIVED,
+            HorizonEventTypes.AI_MODEL_SWITCHED,
+            HorizonEventTypes.USER_PERSONALITY_CHANGED
+        ]
+    
+    def handle_event_sync(self, event: EventData) -> None:
+        """Handle AI-related events."""
+        try:
+            if event.event_type == HorizonEventTypes.USER_MESSAGE_RECEIVED:
+                self._handle_user_message(event)
+            elif event.event_type == HorizonEventTypes.AI_MODEL_SWITCHED:
+                self._handle_model_switch(event)
+            elif event.event_type == HorizonEventTypes.USER_PERSONALITY_CHANGED:
+                self._handle_personality_change(event)
+        except Exception as e:
+            print(f"❌ Error in AI event handler: {e}")
+    
+    def _handle_user_message(self, event: EventData):
+        """Handle incoming user messages."""
+        user_input = event.data.get('message', '')
+        personality = event.data.get('personality', 'friendly')
+        session_id = event.session_id
+        user_id = event.user_id or 'anonymous'
+        
+        # Update conversation state
+        update_state("conversation.current_message", user_input, source="ai_engine")
+        update_state("conversation.is_processing", True, source="ai_engine")
+        update_state("conversation.processing_stage", "ai_processing", source="ai_engine")
+        
+        # Emit processing started event
+        emit_event(
+            HorizonEventTypes.AI_PROCESSING_STARTED,
+            "ai_engine",
+            {
+                'user_input': user_input,
+                'personality': personality,
+                'session_id': session_id
+            },
+            user_id=user_id,
+            session_id=session_id
+        )
+    
+    def _handle_model_switch(self, event: EventData):
+        """Handle AI model switching."""
+        new_model = event.data.get('model', 'chatgpt')
+        update_state("ai.current_model", new_model, source="ai_engine")
+        print(f"🔄 AI model switched to: {new_model}")
+    
+    def _handle_personality_change(self, event: EventData):
+        """Handle personality mode changes."""
+        new_personality = event.data.get('personality', 'friendly')
+        update_state("user.personality_mode", new_personality, source="ai_engine")
+        print(f"🎭 Personality changed to: {new_personality}")
+
+
 class AIEngine:
     """Main AI Engine class that manages all AI operations."""
     
@@ -131,12 +193,52 @@ class AIEngine:
         self.imagen_configured = False
         self.ai_model_available = False
         
+        # Get references to event and state systems
+        self.event_emitter = get_event_emitter()
+        self.state_manager = get_state_manager()
+        
         # Initialize AI models
         self._initialize_openai()
         self._initialize_gemini()
         self._initialize_imagen()
         
-        print("🧠 AI Engine initialized successfully")
+        # Register event handler
+        self.event_handler = AIEventHandler(self)
+        self.event_emitter.register_handler(HorizonEventTypes.USER_MESSAGE_RECEIVED, self.event_handler)
+        self.event_emitter.register_handler(HorizonEventTypes.AI_MODEL_SWITCHED, self.event_handler)
+        self.event_emitter.register_handler(HorizonEventTypes.USER_PERSONALITY_CHANGED, self.event_handler)
+        
+        # Update AI state
+        self._update_ai_state()
+        
+        print("🧠 AI Engine initialized with event-driven architecture")
+    
+    def _update_ai_state(self):
+        """Update AI state with current configuration."""
+        available_models = []
+        model_status = {}
+        api_keys_configured = {}
+        
+        if self.ai_model_available:
+            available_models.append('chatgpt')
+            model_status['chatgpt'] = 'active'
+            api_keys_configured['openai'] = True
+        else:
+            model_status['chatgpt'] = 'unavailable'
+            api_keys_configured['openai'] = False
+        
+        if self.gemini_configured:
+            available_models.append('gemini')
+            model_status['gemini'] = 'active'
+            api_keys_configured['gemini'] = True
+        else:
+            model_status['gemini'] = 'unavailable'
+            api_keys_configured['gemini'] = False
+        
+        # Update state
+        update_state("ai.available_models", available_models, source="ai_engine")
+        update_state("ai.model_status", model_status, source="ai_engine")
+        update_state("ai.api_keys_configured", api_keys_configured, source="ai_engine")
     
     def _initialize_openai(self):
         """Initialize OpenAI ChatGPT API."""
@@ -223,7 +325,15 @@ class AIEngine:
             return None, False
         
         try:
+            # Update AI state
+            update_state("ai.is_busy", True, source="ai_engine")
+            update_state("ai.current_task", "chatgpt_processing", source="ai_engine")
+            
             session_id = session_id or str(uuid.uuid4())
+            
+            # Get current state for context
+            conversation_state = get_state("conversation")
+            user_state = get_state("user")
             
             # Import functions that will be moved to other core modules
             # For now, we'll use placeholder functions
@@ -237,6 +347,10 @@ class AIEngine:
             emotion_data = self._analyze_emotion(user_input)
             detected_emotion = emotion_data.get('emotion', 'neutral')
             sentiment_score = emotion_data.get('sentiment', 0.0)
+            
+            # Update conversation state with analysis
+            update_state("conversation.sentiment", sentiment_score, source="ai_engine")
+            update_state("conversation.mood", detected_emotion, source="ai_engine")
             
             # Create enhanced personality-specific system prompt
             base_prompt = self._get_personality_prompt(personality)
@@ -255,19 +369,25 @@ class AIEngine:
                 context_parts.append(f"User's sentiment: {sentiment_score:.2f} ({self._classify_mood(sentiment_score)})")
                 context_parts.append(f"Please respond appropriately to their {detected_emotion} emotional state and be supportive.")
             
+            # Add conversation context from state
+            if conversation_state.history:
+                recent_context = conversation_state.get_recent_context(3)
+                if recent_context:
+                    context_parts.append("\\nRecent conversation context:")
+                    for msg in recent_context:
+                        context_parts.append(f"User: {msg['user_input']}")
+                        context_parts.append(f"Assistant: {msg['ai_response']}")
+            
             enhanced_system_prompt = "\\n".join(context_parts)
             
             # Build conversation messages with context
             messages = [{"role": "system", "content": enhanced_system_prompt}]
             
-            # Add conversation history if session exists (placeholder for now)
-            context_used = False
-            if session_id:
-                # This will be implemented when database module is ready
-                pass
-            
             # Add current user input
             messages.append({"role": "user", "content": user_input})
+            
+            # Record API request start
+            start_time = datetime.now()
             
             # Make API call to ChatGPT with enhanced context
             response = self.openai_client.chat.completions.create(
@@ -279,13 +399,66 @@ class AIEngine:
             
             ai_response = response.choices[0].message.content.strip()
             
+            # Calculate response time
+            response_time = (datetime.now() - start_time).total_seconds()
+            
+            # Update state with results
+            update_state("conversation.ai_response", ai_response, source="ai_engine")
+            update_state("conversation.response_time", response_time, source="ai_engine")
+            update_state("conversation.is_processing", False, source="ai_engine")
+            update_state("ai.is_busy", False, source="ai_engine")
+            
+            # Record successful request
+            ai_state = get_state("ai")
+            ai_state.record_request(True, response_time)
+            update_state("ai", ai_state, source="ai_engine")
+            
             # Enhance response with emotional awareness
             ai_response = self._enhance_response_with_emotion(ai_response, detected_emotion, personality)
             
-            return ai_response, context_used
+            # Emit response ready event
+            emit_event(
+                HorizonEventTypes.AI_RESPONSE_GENERATED,
+                "ai_engine",
+                {
+                    'response': ai_response,
+                    'user_input': user_input,
+                    'personality': personality,
+                    'processing_time': response_time,
+                    'emotion': detected_emotion,
+                    'sentiment': sentiment_score
+                },
+                user_id=user_id,
+                session_id=session_id
+            )
+            
+            return ai_response, True
             
         except Exception as e:
             print(f"ChatGPT API error: {e}")
+            
+            # Update state with error
+            update_state("ai.is_busy", False, source="ai_engine")
+            update_state("conversation.is_processing", False, source="ai_engine")
+            
+            # Record failed request
+            ai_state = get_state("ai")
+            ai_state.record_request(False)
+            update_state("ai", ai_state, source="ai_engine")
+            
+            # Emit error event
+            emit_event(
+                HorizonEventTypes.AI_ERROR_OCCURRED,
+                "ai_engine",
+                {
+                    'error': str(e),
+                    'user_input': user_input,
+                    'personality': personality
+                },
+                user_id=user_id,
+                session_id=session_id
+            )
+            
             return None, False
     
     def generate_fallback_response(self, user_input: str, personality: str) -> str:
@@ -367,17 +540,74 @@ class AIEngine:
             Tuple of (response, context_used)
         """
         try:
+            # Emit processing started event
+            emit_event(
+                HorizonEventTypes.AI_PROCESSING_STARTED,
+                "ai_engine",
+                {
+                    'user_input': user_input,
+                    'personality': personality
+                },
+                user_id=user_id,
+                session_id=session_id
+            )
+            
             # Try ChatGPT first with conversation context and AI intelligence
             chatgpt_response, context_used = self.ask_chatgpt(user_input, personality, session_id, user_id)
             
             if chatgpt_response:
+                # Emit successful response event
+                emit_event(
+                    HorizonEventTypes.AI_RESPONSE_READY,
+                    "ai_engine",
+                    {
+                        'response': chatgpt_response,
+                        'source': 'chatgpt',
+                        'context_used': context_used
+                    },
+                    user_id=user_id,
+                    session_id=session_id
+                )
                 return chatgpt_response, context_used
             else:
                 # Fall back to smart responses
-                return self.generate_fallback_response(user_input, personality), False
+                fallback_response = self.generate_fallback_response(user_input, personality)
+                
+                # Update state to indicate fallback was used
+                ai_state = get_state("ai")
+                ai_state.fallback_responses_used += 1
+                update_state("ai", ai_state, source="ai_engine")
+                
+                # Emit fallback response event
+                emit_event(
+                    HorizonEventTypes.AI_RESPONSE_READY,
+                    "ai_engine",
+                    {
+                        'response': fallback_response,
+                        'source': 'fallback',
+                        'context_used': False
+                    },
+                    user_id=user_id,
+                    session_id=session_id
+                )
+                return fallback_response, False
                 
         except Exception as e:
             print(f"AI model error: {e}")
+            
+            # Emit error event
+            emit_event(
+                HorizonEventTypes.AI_ERROR_OCCURRED,
+                "ai_engine",
+                {
+                    'error': str(e),
+                    'user_input': user_input
+                },
+                user_id=user_id,
+                session_id=session_id
+            )
+            
+            # Return fallback response even on error
             return self.generate_fallback_response(user_input, personality), False
     
     # Placeholder methods that will be moved to appropriate core modules
