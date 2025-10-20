@@ -965,25 +965,59 @@
         </div>
     </div>
 
+    <!-- Horizon AI Assistant - Modular JavaScript Architecture -->
+    
+    <!-- Load JavaScript modules in dependency order -->
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/voice.js"></script>
+    <script src="/static/js/timers.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/app.js"></script>
+    
+    <!-- Legacy compatibility and additional initialization -->
     <script>
-        // Enhanced Dark Theme JavaScript
-        const chatMessages = document.getElementById('chatMessages');
-        const userInput = document.getElementById('userInput');
-        const sendButton = document.getElementById('sendButton');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const conversationCount = document.getElementById('conversationCount');
-        const responseTimeEl = document.getElementById('responseTime');
-        const personalitySelect = document.getElementById('personalitySelect');
+        // Response time element reference
+        let responseTimeEl = document.getElementById('responseTime');
         const sidebar = document.getElementById('sidebar');
+
         
-        let conversationCounter = 0;
-        let activeTimers = [];
-        let activeReminders = [];
-        let messageHistory = JSON.parse(localStorage.getItem('horizonMessageHistory') || '[]');
-        let historyIndex = -1;
         
-        // Timer management
-        function addTimer(name, duration) {
+        // Enhanced sendMessage with response time tracking
+        const originalSendMessage = window.chatModule?.sendMessage;
+        if (window.chatModule && originalSendMessage) {
+            window.chatModule.sendMessage = async function() {
+                const startTime = Date.now();
+                await originalSendMessage.call(this);
+                
+                // Track response time for server requests
+                const originalFetch = window.fetch;
+                window.fetch = function(...args) {
+                    return originalFetch.apply(this, args).then(response => {
+                        if (args[0] === '/chat') {
+                            const responseTime = Date.now() - startTime;
+                            if (responseTimeEl) {
+                                responseTimeEl.textContent = `${responseTime}ms`;
+                            }
+                        }
+                        return response;
+                    });
+                };
+            };
+        }
+        
+        // Initialize response time tracking
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus input on load (preserved from original)
+            const userInput = document.getElementById('userInput');
+            if (userInput) {
+                userInput.focus();
+            }
+            
+            console.log('🎉 Horizon AI Assistant - Modular Architecture Loaded!');
+            console.log('📊 Module Status:', window.horizonApp?.getStatus());
+        });
+        
+        // End of modular initialization
             const timer = {
                 id: Date.now(),
                 name: name,
