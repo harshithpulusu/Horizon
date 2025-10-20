@@ -3,9 +3,11 @@ Horizon AI Engine Core Module
 
 This module contains the core AI functionality for Horizon AI Assistant.
 It handles AI model integrations, response generation, and intelligent fallbacks.
+Uses event-driven architecture and centralized state management.
 
 Classes:
 - AIEngine: Main AI engine class that manages all AI operations
+- AIEventHandler: Event handler for AI-related events
 - ResponseGenerator: Handles response generation with personality support
 - ModelManager: Manages AI model connections and configurations
 
@@ -22,6 +24,16 @@ import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from config import Config
+
+# Import event system and state management
+from .events import (
+    EventHandler, EventData, HorizonEventTypes, 
+    get_event_emitter, emit_event, listen_for_event
+)
+from .state_manager import (
+    get_state_manager, get_state, update_state, 
+    subscribe_to_state
+)
 
 # AI Model Imports
 try:
