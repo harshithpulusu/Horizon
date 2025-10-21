@@ -91,7 +91,7 @@ MEDIA_OUTPUT_DIRS = {
 DEFAULT_IMAGE_PARAMS = {
     'width': 1024,
     'height': 1024,
-    'quality': 'high',
+    'quality': 'standard',  # Changed from 'high' to 'standard'
     'style': 'photorealistic',
     'steps': 30,
     'guidance_scale': 7.5
@@ -414,21 +414,61 @@ class ImageGenerator:
         if not OPENAI_AVAILABLE:
             raise Exception("OpenAI library not available")
         
-        # This would implement actual DALL-E generation
-        # For now, return a placeholder result
-        filename = f"dalle_image_{uuid.uuid4().hex[:8]}.png"
-        filepath = os.path.join(MEDIA_OUTPUT_DIRS['images'], filename)
-        
-        return {
-            'success': True,
-            'model': 'dall-e-3',
-            'prompt': prompt,
-            'filename': filename,
-            'filepath': filepath,
-            'url': f'/static/generated_images/{filename}',
-            'params': params,
-            'generated_at': datetime.now().isoformat()
-        }
+        try:
+            # Get OpenAI client
+            from openai import OpenAI
+            import os
+            from config import Config
+            
+            # Initialize client
+            openai_api_key = os.getenv('OPENAI_API_KEY') or getattr(Config, 'OPENAI_API_KEY', None)
+            if not openai_api_key:
+                raise Exception("OpenAI API key not found")
+            
+            client = OpenAI(api_key=openai_api_key)
+            
+            print(f"🎨 Generating image with DALL-E: {prompt}")
+            
+            # Map quality parameters correctly for DALL-E
+            quality = params.get('quality', 'standard')
+            if quality == 'high':
+                quality = 'hd'
+            elif quality not in ['standard', 'hd']:
+                quality = 'standard'
+            
+            # Generate image using DALL-E
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size=f"{params.get('width', 1024)}x{params.get('height', 1024)}",
+                quality=quality,
+                n=1,
+            )
+            
+            image_url = response.data[0].url
+            filename = f"dalle_image_{uuid.uuid4().hex[:8]}.png"
+            filepath = os.path.join(MEDIA_OUTPUT_DIRS['images'], filename)
+            
+            return {
+                'success': True,
+                'model': 'dall-e-3',
+                'prompt': prompt,
+                'filename': filename,
+                'filepath': filepath,
+                'url': image_url,  # Return the actual DALL-E image URL
+                'image_url': image_url,
+                'params': params,
+                'generated_at': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ DALL-E generation error: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'model': 'dall-e-3',
+                'prompt': prompt
+            }
     
     def _generate_with_imagen(self, prompt: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Generate image using Google Imagen."""

@@ -155,6 +155,9 @@ def process_user_input_event_driven(user_input: str, personality: str = 'friendl
     # Create session if needed
     session_id = create_session_if_needed(session_id)
     
+    # Start timing
+    start_time = time.time()
+    
     # Update user state
     update_state("user.user_id", user_id, source="main_app")
     update_state("user.personality_mode", personality, source="main_app")
@@ -173,10 +176,20 @@ def process_user_input_event_driven(user_input: str, personality: str = 'friendl
         session_id=session_id
     )
     
-    # Process with AI engine (this will trigger AI events internally)
-    start_time = time.time()
-    response, context_used = ai_engine.ask_ai_model(user_input, personality, session_id, user_id)
-    processing_time = time.time() - start_time
+    # Recognize intent first
+    intent = recognize_intent_simple(user_input)
+    
+    # Handle special intents that need immediate processing
+    special_response = handle_special_intents(user_input, intent)
+    if special_response:
+        # For special intents, return immediately
+        response = special_response
+        context_used = False
+        processing_time = time.time() - start_time
+    else:
+        # Process with AI engine (this will trigger AI events internally)
+        response, context_used = ai_engine.ask_ai_model(user_input, personality, session_id, user_id)
+        processing_time = time.time() - start_time
     
     # Get current conversation state
     conversation_state = get_state("conversation")
@@ -186,7 +199,7 @@ def process_user_input_event_driven(user_input: str, personality: str = 'friendl
     conversation_state.add_message(
         user_input, 
         response, 
-        intent=recognize_intent_simple(user_input),
+        intent=intent,  # Use the intent we already determined
         sentiment=conversation_state.sentiment
     )
     update_state("conversation", conversation_state, source="main_app")
@@ -200,8 +213,8 @@ def process_user_input_event_driven(user_input: str, personality: str = 'friendl
         'user_id': user_id,
         'context_used': context_used,
         'processing_time': f"{processing_time:.2f}s",
-        'ai_source': 'chatgpt' if context_used else 'fallback',
-        'intent': recognize_intent_simple(user_input),
+        'ai_source': 'chatgpt' if context_used else ('special_intent' if special_response else 'fallback'),
+        'intent': intent,  # Use the intent we already determined
         'sentiment': conversation_state.sentiment,
         'mood': conversation_state.mood,
         'total_messages': conversation_state.total_messages,
@@ -233,12 +246,142 @@ def recognize_intent_simple(text: str) -> str:
         return 'date'
     elif any(op in text_lower for op in ['+', '-', '*', '/', 'calculate', 'math']):
         return 'math'
-    elif any(phrase in text_lower for phrase in ['generate image', 'create image', 'make image']):
+    elif any(phrase in text_lower for phrase in [
+        'generate image', 'create image', 'make image', 'generate picture', 
+        'create picture', 'make picture', 'draw', 'create an image', 'generate an image',
+        'make an image', 'create a picture', 'generate a picture', 'make a picture'
+    ]):
         return 'image_generation'
-    elif any(phrase in text_lower for phrase in ['generate logo', 'create logo', 'make logo']):
+    elif any(phrase in text_lower for phrase in [
+        'generate logo', 'create logo', 'make logo', 'design logo'
+    ]):
         return 'logo_generation'
     else:
         return 'general'
+
+
+def handle_special_intents(user_input: str, intent: str) -> Optional[str]:
+    """Handle special intents that need immediate processing."""
+    if intent == 'image_generation':
+        return handle_image_generation_event_driven(user_input)
+    elif intent == 'logo_generation':
+        return handle_logo_generation_event_driven(user_input)
+    elif intent == 'time':
+        return f"The current time is {datetime.now().strftime('%I:%M %p')}"
+    elif intent == 'date':
+        return f"Today is {datetime.now().strftime('%A, %B %d, %Y')}"
+    elif intent == 'math':
+        return handle_math_simple(user_input)
+    return None
+
+
+def handle_image_generation_event_driven(user_input: str) -> str:
+    """Handle image generation using the event-driven media engine."""
+    try:
+        # Extract image description
+        prompt = extract_image_prompt(user_input)
+        print(f"🎨 Processing image generation request: {prompt}")
+        
+        # Get media engine instance
+        from core.media_generator import get_enhanced_media_engine
+        media_engine = get_enhanced_media_engine()
+        
+        # Use media engine to generate image
+        result = media_engine.generate_media('image', prompt)
+        
+        if result.get('success'):
+            image_url = result.get('image_url') or result.get('url')
+            if image_url:
+                return f"🎨 I've created your image! Here it is: <img src='{image_url}' alt='{prompt}' style='max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;' /><br>📝 Prompt: {prompt}"
+            else:
+                return f"🎨 Image generated successfully! File: {result.get('filename', 'unknown')}<br>📝 Prompt: {prompt}"
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            return f"🎨 I had trouble generating that image. Error: {error_msg}"
+            
+    except Exception as e:
+        print(f"❌ Image generation error: {e}")
+        return f"🎨 I encountered an error while generating your image: {str(e)}"
+
+
+def handle_logo_generation_event_driven(user_input: str) -> str:
+    """Handle logo generation using the event-driven media engine."""
+    try:
+        # Extract brand/company name
+        prompt = extract_logo_prompt(user_input)
+        enhanced_prompt = f"professional minimalist logo design for {prompt}, clean vector style, modern typography, simple geometric shapes, flat design, corporate logo"
+        
+        print(f"🎨 Processing logo generation request: {enhanced_prompt}")
+        
+        # Get media engine instance
+        from core.media_generator import get_enhanced_media_engine
+        media_engine = get_enhanced_media_engine()
+        
+        # Use media engine to generate logo
+        result = media_engine.generate_media('image', enhanced_prompt)
+        
+        if result.get('success'):
+            image_url = result.get('image_url') or result.get('url')
+            if image_url:
+                return f"🎨 Your professional logo is ready! Here it is: <img src='{image_url}' alt='Logo for {prompt}' style='max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; background: white; padding: 20px;' /><br>📝 Logo for: {prompt}<br>💡 This is a professional logo design with clean, modern aesthetics!"
+            else:
+                return f"🎨 Logo generated successfully! File: {result.get('filename', 'unknown')}<br>📝 Logo for: {prompt}"
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            return f"🎨 I had trouble generating that logo. Error: {error_msg}"
+            
+    except Exception as e:
+        print(f"❌ Logo generation error: {e}")
+        return f"🎨 I encountered an error while generating your logo: {str(e)}"
+
+
+def extract_image_prompt(user_input: str) -> str:
+    """Extract image description from user input."""
+    import re
+    prompt = user_input
+    
+    # Remove trigger words to extract the actual description
+    for word in ['generate', 'create', 'make', 'draw', 'image', 'picture', 'an', 'a', 'of']:
+        prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+    
+    prompt = re.sub(r'\s+', ' ', prompt).strip()  # Clean up extra spaces
+    
+    if not prompt or len(prompt) < 3:
+        prompt = "a beautiful landscape"
+    
+    return prompt
+
+
+def extract_logo_prompt(user_input: str) -> str:
+    """Extract brand/company name from logo request."""
+    import re
+    prompt = user_input
+    
+    # Remove trigger words
+    for word in ['generate', 'create', 'make', 'design', 'logo', 'for', 'a', 'an', 'the']:
+        prompt = re.sub(r'\b' + word + r'\b', '', prompt, flags=re.IGNORECASE)
+    
+    prompt = re.sub(r'\s+', ' ', prompt).strip()
+    
+    if not prompt or len(prompt) < 2:
+        prompt = "modern tech company"
+    
+    return prompt
+
+
+def handle_math_simple(user_input: str) -> str:
+    """Handle basic math operations."""
+    import re
+    try:
+        # Extract numbers and operations
+        expression = re.sub(r'[^0-9+\-*/().\s]', '', user_input)
+        if expression.strip():
+            result = eval(expression.strip())
+            return f"The answer is: {result}"
+        else:
+            return "I couldn't understand the math problem. Please try again with a clear expression like '5 + 3' or '10 * 2'."
+    except Exception:
+        return "I had trouble calculating that. Please make sure your math expression is valid."
 
 
 # Flask Routes
