@@ -1051,8 +1051,243 @@ class EnhancedMediaEngine(MediaEngine):
         }
 
 
+# Advanced Image Generator with Inheritance
+class AdvancedImageGenerator(ImageGenerator):
+    """Enhanced image generator that inherits from the base ImageGenerator."""
+    
+    def __init__(self):
+        """Initialize advanced image generator with additional features."""
+        super().__init__()  # Get all the working functionality from base class
+        
+        # Style presets for enhanced image generation
+        self.style_presets = {
+            'photorealistic': 'photorealistic, high quality, detailed, professional photography',
+            'artistic': 'artistic, creative, expressive, masterpiece, fine art style',
+            'cinematic': 'cinematic lighting, movie scene, dramatic, film photography, epic',
+            'vintage': 'vintage style, retro, classic, nostalgic, film grain, aged',
+            'modern': 'modern, contemporary, sleek, minimalist, clean design',
+            'fantasy': 'fantasy art, magical, mystical, enchanted, otherworldly',
+            'cartoon': 'cartoon style, animated, colorful, playful, illustration',
+            'sketch': 'pencil sketch, hand drawn, artistic sketch, black and white',
+            'watercolor': 'watercolor painting, soft colors, artistic, painted',
+            'oil_painting': 'oil painting, classical art, painted, artistic masterpiece'
+        }
+        
+        # Size presets for different use cases
+        self.size_presets = {
+            'square': {'width': 1024, 'height': 1024},
+            'portrait': {'width': 768, 'height': 1024},
+            'landscape': {'width': 1024, 'height': 768},
+            'wide': {'width': 1344, 'height': 768},
+            'tall': {'width': 768, 'height': 1344}
+        }
+        
+        # Quality presets
+        self.quality_presets = {
+            'draft': 'standard',
+            'standard': 'standard', 
+            'high': 'hd',
+            'premium': 'hd'
+        }
+        
+        print("🎨✨ Advanced Image Generator initialized with enhanced features")
+    
+    def generate_with_style(self, prompt: str, style: str = 'photorealistic', 
+                           params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate image with predefined style presets."""
+        try:
+            # Get style enhancement
+            style_enhancement = self.style_presets.get(style, self.style_presets['photorealistic'])
+            
+            # Enhance the prompt with style
+            enhanced_prompt = f"{prompt}, {style_enhancement}"
+            
+            # Use the base class working generation method
+            params = params or {}
+            params['style_used'] = style
+            
+            print(f"🎨 Generating with style '{style}': {enhanced_prompt}")
+            
+            result = super().generate(enhanced_prompt, params)
+            
+            # Add style info to result
+            if result.get('success'):
+                result['style_applied'] = style
+                result['original_prompt'] = prompt
+                result['enhanced_prompt'] = enhanced_prompt
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Advanced generation error: {e}")
+            # Fallback to base generation if style enhancement fails
+            return super().generate(prompt, params or {})
+    
+    def generate_multiple_sizes(self, prompt: str, sizes: List[str] = None, 
+                               params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate the same image in multiple sizes."""
+        try:
+            sizes = sizes or ['square', 'landscape']
+            results = []
+            
+            for size_name in sizes:
+                if size_name in self.size_presets:
+                    size_params = {**(params or {}), **self.size_presets[size_name]}
+                    size_params['size_name'] = size_name
+                    
+                    print(f"🎨 Generating {size_name} version: {size_params['width']}x{size_params['height']}")
+                    
+                    # Use base class generation for each size
+                    result = super().generate(prompt, size_params)
+                    if result.get('success'):
+                        result['size_variant'] = size_name
+                        results.append(result)
+            
+            return {
+                'success': True,
+                'multi_size': True,
+                'variants': results,
+                'count': len(results),
+                'prompt': prompt,
+                'generated_at': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ Multi-size generation error: {e}")
+            # Fallback to single generation
+            return super().generate(prompt, params or {})
+    
+    def generate_variations(self, prompt: str, count: int = 3, 
+                           params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate multiple variations of the same prompt."""
+        try:
+            variations = []
+            
+            for i in range(count):
+                # Add slight variation to each prompt
+                varied_prompt = f"{prompt}, variation {i+1}, unique perspective"
+                
+                print(f"🎨 Generating variation {i+1}/{count}")
+                
+                # Use base class generation for each variation
+                result = super().generate(varied_prompt, params or {})
+                if result.get('success'):
+                    result['variation_number'] = i + 1
+                    result['original_prompt'] = prompt
+                    variations.append(result)
+            
+            return {
+                'success': True,
+                'variations': True,
+                'results': variations,
+                'count': len(variations),
+                'original_prompt': prompt,
+                'generated_at': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ Variations generation error: {e}")
+            # Fallback to single generation
+            return super().generate(prompt, params or {})
+    
+    def enhance_prompt(self, prompt: str, enhancement_type: str = 'quality') -> str:
+        """Enhance prompts with additional descriptive terms."""
+        enhancements = {
+            'quality': 'high quality, detailed, sharp focus, professional',
+            'artistic': 'artistic, creative, masterpiece, award winning',
+            'dramatic': 'dramatic lighting, cinematic, epic, stunning',
+            'detailed': 'highly detailed, intricate, complex, elaborate',
+            'beautiful': 'beautiful, gorgeous, stunning, breathtaking'
+        }
+        
+        enhancement = enhancements.get(enhancement_type, enhancements['quality'])
+        return f"{prompt}, {enhancement}"
+    
+    def get_available_styles(self) -> List[str]:
+        """Get list of available style presets."""
+        return list(self.style_presets.keys())
+    
+    def get_available_sizes(self) -> List[str]:
+        """Get list of available size presets."""
+        return list(self.size_presets.keys())
+    
+    def get_style_description(self, style: str) -> str:
+        """Get description of what a style preset does."""
+        descriptions = {
+            'photorealistic': 'Creates realistic, high-quality photographs',
+            'artistic': 'Generates creative, expressive artistic images',
+            'cinematic': 'Produces dramatic, movie-like scenes',
+            'vintage': 'Creates retro, nostalgic, aged-looking images',
+            'modern': 'Generates clean, contemporary, minimalist designs',
+            'fantasy': 'Creates magical, mystical, otherworldly scenes',
+            'cartoon': 'Produces colorful, animated-style illustrations',
+            'sketch': 'Generates pencil sketch, hand-drawn style images',
+            'watercolor': 'Creates soft, painted watercolor-style art',
+            'oil_painting': 'Produces classical, painted masterpiece style'
+        }
+        return descriptions.get(style, 'Custom style preset')
+
+
+# Enhanced Media Engine with Advanced Generator
+class SuperEnhancedMediaEngine(EnhancedMediaEngine):
+    """Media engine with advanced image generation capabilities."""
+    
+    def __init__(self):
+        """Initialize super enhanced media engine."""
+        super().__init__()
+        
+        # Replace basic image generator with advanced one
+        if self.generators.get('image'):
+            self.generators['image'] = AdvancedImageGenerator()
+        
+        print("🚀✨ Super Enhanced Media Engine initialized with advanced image generation")
+    
+    def generate_styled_image(self, prompt: str, style: str = 'photorealistic', 
+                             params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate image with specific style using advanced generator."""
+        if 'image' in self.generators and hasattr(self.generators['image'], 'generate_with_style'):
+            return self.generators['image'].generate_with_style(prompt, style, params)
+        else:
+            # Fallback to regular generation
+            return self.generate_media('image', prompt, params)
+    
+    def generate_image_variations(self, prompt: str, count: int = 3, 
+                                 params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate multiple variations using advanced generator."""
+        if 'image' in self.generators and hasattr(self.generators['image'], 'generate_variations'):
+            return self.generators['image'].generate_variations(prompt, count, params)
+        else:
+            # Fallback to regular generation
+            return self.generate_media('image', prompt, params)
+    
+    def generate_multi_size_image(self, prompt: str, sizes: List[str] = None, 
+                                 params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate image in multiple sizes using advanced generator."""
+        if 'image' in self.generators and hasattr(self.generators['image'], 'generate_multiple_sizes'):
+            return self.generators['image'].generate_multiple_sizes(prompt, sizes, params)
+        else:
+            # Fallback to regular generation
+            return self.generate_media('image', prompt, params)
+    
+    def get_image_capabilities(self) -> Dict[str, Any]:
+        """Get advanced image generation capabilities."""
+        base_caps = super().get_generation_capabilities()
+        
+        if 'image' in self.generators and hasattr(self.generators['image'], 'get_available_styles'):
+            advanced_caps = {
+                'styles': self.generators['image'].get_available_styles(),
+                'sizes': self.generators['image'].get_available_sizes(),
+                'features': ['style_presets', 'multi_size', 'variations', 'prompt_enhancement']
+            }
+            base_caps['advanced_image'] = advanced_caps
+        
+        return base_caps
+
+
 # Global enhanced instances
 enhanced_media_engine = None
+super_enhanced_media_engine = None
+advanced_image_generator = None
 logo_generator = None
 enhanced_3d_generator = None
 
@@ -1062,6 +1297,20 @@ def get_enhanced_media_engine() -> EnhancedMediaEngine:
     if enhanced_media_engine is None:
         enhanced_media_engine = EnhancedMediaEngine()
     return enhanced_media_engine
+
+def get_super_enhanced_media_engine() -> SuperEnhancedMediaEngine:
+    """Get the super enhanced media engine instance with advanced features."""
+    global super_enhanced_media_engine
+    if super_enhanced_media_engine is None:
+        super_enhanced_media_engine = SuperEnhancedMediaEngine()
+    return super_enhanced_media_engine
+
+def get_advanced_image_generator() -> AdvancedImageGenerator:
+    """Get the advanced image generator instance."""
+    global advanced_image_generator
+    if advanced_image_generator is None:
+        advanced_image_generator = AdvancedImageGenerator()
+    return advanced_image_generator
 
 def get_logo_generator() -> LogoGenerator:
     """Get the logo generator instance."""
@@ -1097,3 +1346,29 @@ def generate_3d_model(prompt: str, params: Dict[str, Any] = None) -> Dict[str, A
 def generate_logo_design(brand_name: str, industry: str, style: str = "modern") -> Dict[str, Any]:
     """Generate professional logo design."""
     return get_enhanced_media_engine().generate_logo(brand_name, industry, style)
+
+# Advanced generation convenience functions
+def generate_styled_image(prompt: str, style: str = 'photorealistic', 
+                         params: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Generate image with specific style using advanced generator."""
+    return get_super_enhanced_media_engine().generate_styled_image(prompt, style, params)
+
+def generate_image_variations(prompt: str, count: int = 3, 
+                             params: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Generate multiple variations of an image."""
+    return get_super_enhanced_media_engine().generate_image_variations(prompt, count, params)
+
+def generate_multi_size_image(prompt: str, sizes: List[str] = None, 
+                             params: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Generate image in multiple sizes."""
+    return get_super_enhanced_media_engine().generate_multi_size_image(prompt, sizes, params)
+
+def get_available_image_styles() -> List[str]:
+    """Get list of available image styles."""
+    generator = get_advanced_image_generator()
+    return generator.get_available_styles()
+
+def get_available_image_sizes() -> List[str]:
+    """Get list of available image sizes."""
+    generator = get_advanced_image_generator()
+    return generator.get_available_sizes()
