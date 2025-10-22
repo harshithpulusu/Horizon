@@ -74,7 +74,7 @@ def test_style_presets():
         styles = advanced_gen.get_available_styles()
         
         # Check that we have expected styles
-        expected_styles = ['photorealistic', 'artistic', 'cinematic']  # Use styles that are actually available
+        expected_styles = ['photorealistic', 'artistic', 'cinematic', 'abstract', 'minimalist']
         for style in expected_styles:
             assert style in styles, f"Missing expected style: {style}"
         
@@ -94,7 +94,7 @@ def test_size_presets():
         sizes = advanced_gen.get_available_sizes()
         
         # Check that we have expected sizes
-        expected_sizes = ['square', 'portrait', 'landscape']  # Use sizes that are actually available
+        expected_sizes = ['square', 'portrait', 'landscape', 'wide', 'banner']
         for size in expected_sizes:
             assert size in sizes, f"Missing expected size: {size}"
         
@@ -114,7 +114,7 @@ def test_super_enhanced_media_engine():
         super_engine = SuperEnhancedMediaEngine()
         
         # Check inheritance - should have all basic methods
-        assert hasattr(super_engine, 'generate_media'), "Super engine missing basic generate_media"
+        assert hasattr(super_engine, 'generate_image'), "Super engine missing basic generate_image"
         assert hasattr(super_engine, 'generate_logo'), "Super engine missing basic generate_logo"
         
         # Check new methods
@@ -167,12 +167,12 @@ def test_backward_compatibility():
         basic_engine = MediaEngine()
         
         # Should have basic functionality
-        assert hasattr(basic_engine, 'generate_media'), "Basic engine missing generate_media"
-        # Note: generate_logo is only in EnhancedMediaEngine, not basic MediaEngine
+        assert hasattr(basic_engine, 'generate_image'), "Basic engine missing generate_image"
+        assert hasattr(basic_engine, 'generate_logo'), "Basic engine missing generate_logo"
         
         # Test that enhanced engine can be used as basic engine
         enhanced_engine = get_enhanced_media_engine()
-        assert hasattr(enhanced_engine, 'generate_media'), "Enhanced engine missing basic generate_media"
+        assert hasattr(enhanced_engine, 'generate_image'), "Enhanced engine missing basic generate_image"
         
         print("✅ Backward compatibility maintained")
         return True
