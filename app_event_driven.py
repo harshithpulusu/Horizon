@@ -6,6 +6,7 @@ Advanced AI features with event-driven component architecture and centralized st
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from flask_socketio import SocketIO
 from datetime import datetime
 import os
 import time
@@ -24,17 +25,26 @@ from core.state_manager import (
 )
 from core.ai_engine import get_ai_engine
 from core.media_generator import get_enhanced_media_engine
+from core.timer_api import api_bp
+from core.websocket_manager import init_websocket_manager, setup_websocket_handlers
 from config import Config
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
+# Initialize SocketIO for WebSocket support
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Register API Blueprint
+app.register_blueprint(api_bp)
+
 # Global references to core systems
 event_emitter = None
 state_manager = None
 ai_engine = None
 media_engine = None
+websocket_manager = None
 
 
 class WebEventHandler(EventHandler):
@@ -75,7 +85,7 @@ class WebEventHandler(EventHandler):
 
 def initialize_horizon_systems():
     """Initialize all Horizon core systems."""
-    global event_emitter, state_manager, ai_engine, media_engine
+    global event_emitter, state_manager, ai_engine, media_engine, websocket_manager
     
     print("🚀 Initializing Horizon AI Assistant with Event-Driven Architecture...")
     
@@ -84,6 +94,10 @@ def initialize_horizon_systems():
     state_manager = get_state_manager()
     ai_engine = get_ai_engine()
     media_engine = get_enhanced_media_engine()
+    
+    # Initialize WebSocket manager
+    websocket_manager = init_websocket_manager(socketio)
+    setup_websocket_handlers(socketio)
     
     # Register web event handler
     web_handler = WebEventHandler()
@@ -634,5 +648,8 @@ if __name__ == '__main__':
     print("📱 Local access: http://127.0.0.1:8080")
     print("🔄 Event-driven architecture active")
     print("🗃️ Centralized state management active")
+    print("🔄 WebSocket real-time updates active")
+    print("⏱️ Timer/Reminder API endpoints available")
     
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    # Use SocketIO run instead of app.run for WebSocket support
+    socketio.run(app, host='0.0.0.0', port=8080, debug=False)
