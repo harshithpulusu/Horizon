@@ -314,6 +314,29 @@ class HorizonEventTypes:
     WEB_REQUEST_RECEIVED = "web_request_received"
     WEB_RESPONSE_SENT = "web_response_sent"
     WEB_ERROR_OCCURRED = "web_error_occurred"
+    
+    # Timer events
+    TIMER_CREATED = "timer_created"
+    TIMER_STARTED = "timer_started"
+    TIMER_PAUSED = "timer_paused"
+    TIMER_RESUMED = "timer_resumed"
+    TIMER_STOPPED = "timer_stopped"
+    TIMER_COMPLETED = "timer_completed"
+    TIMER_UPDATED = "timer_updated"
+    TIMER_DELETED = "timer_deleted"
+    
+    # Reminder events
+    REMINDER_CREATED = "reminder_created"
+    REMINDER_UPDATED = "reminder_updated"
+    REMINDER_DUE = "reminder_due"
+    REMINDER_SNOOZED = "reminder_snoozed"
+    REMINDER_COMPLETED = "reminder_completed"
+    REMINDER_DELETED = "reminder_deleted"
+    
+    # Real-time communication events
+    WEBSOCKET_CONNECTED = "websocket_connected"
+    WEBSOCKET_DISCONNECTED = "websocket_disconnected"
+    REALTIME_UPDATE_SENT = "realtime_update_sent"
 
 
 # Global event emitter instance
