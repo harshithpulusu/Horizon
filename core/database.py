@@ -209,6 +209,46 @@ class DatabaseManager:
                 )
             """)
             
+            # Timer and Reminder tables for productivity features
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS timers (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    duration_seconds INTEGER NOT NULL,
+                    start_time TIMESTAMP,
+                    end_time TIMESTAMP,
+                    status TEXT DEFAULT 'created',
+                    timer_type TEXT DEFAULT 'general',
+                    notification_sound TEXT,
+                    auto_start BOOLEAN DEFAULT 0,
+                    metadata TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS reminders (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    reminder_time TIMESTAMP NOT NULL,
+                    status TEXT DEFAULT 'active',
+                    priority TEXT DEFAULT 'medium',
+                    category TEXT DEFAULT 'general',
+                    recurring_pattern TEXT,
+                    notification_sent BOOLEAN DEFAULT 0,
+                    metadata TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            """)
+            
             # Insert schema version
             cursor.execute("""
                 INSERT OR REPLACE INTO metadata (key, value, updated_at)
@@ -222,6 +262,11 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_memories_user_id ON user_memories(user_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_analytics_user_id ON analytics(user_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_media_history_user_id ON media_history(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timers_user_id ON timers(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timers_status ON timers(status)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reminders_user_id ON reminders(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reminders_reminder_time ON reminders(reminder_time)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reminders_status ON reminders(status)")
             
             conn.commit()
             print("✅ Database initialized successfully")
@@ -485,12 +530,282 @@ class AnalyticsManager:
             }
 
 
+class TimerManager:
+    """Timer management system with CRUD operations."""
+    
+    def __init__(self, database_manager: DatabaseManager):
+        """Initialize timer manager."""
+        self.db_manager = database_manager
+        print("⏱️ Timer Manager initialized")
+    
+    def create_timer(self, user_id: str, title: str, duration_seconds: int, 
+                    description: str = None, timer_type: str = "general",
+                    auto_start: bool = False, metadata: Dict[str, Any] = None) -> str:
+        """Create a new timer."""
+        timer_id = str(uuid.uuid4())
+        
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO timers (id, user_id, title, description, duration_seconds, 
+                                  status, timer_type, auto_start, metadata)
+                VALUES (?, ?, ?, ?, ?, 'created', ?, ?, ?)
+            """, (timer_id, user_id, title, description, duration_seconds, 
+                  timer_type, auto_start, json.dumps(metadata or {})))
+            conn.commit()
+        
+        return timer_id
+    
+    def get_timer(self, timer_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific timer by ID."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                return self._row_to_dict(cursor, row)
+            return None
+    
+    def get_user_timers(self, user_id: str, status: str = None) -> List[Dict[str, Any]]:
+        """Get all timers for a user, optionally filtered by status."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if status:
+                cursor.execute("""
+                    SELECT * FROM timers WHERE user_id = ? AND status = ?
+                    ORDER BY created_at DESC
+                """, (user_id, status))
+            else:
+                cursor.execute("""
+                    SELECT * FROM timers WHERE user_id = ?
+                    ORDER BY created_at DESC
+                """, (user_id,))
+            
+            return [self._row_to_dict(cursor, row) for row in cursor.fetchall()]
+    
+    def update_timer(self, timer_id: str, **kwargs) -> bool:
+        """Update timer fields."""
+        if not kwargs:
+            return False
+        
+        # Add updated_at timestamp
+        kwargs['updated_at'] = datetime.now()
+        
+        # Build dynamic UPDATE query
+        set_clause = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [timer_id]
+        
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"UPDATE timers SET {set_clause} WHERE id = ?", values)
+            conn.commit()
+            
+            return cursor.rowcount > 0
+    
+    def start_timer(self, timer_id: str) -> bool:
+        """Start a timer."""
+        now = datetime.now()
+        timer = self.get_timer(timer_id)
+        
+        if not timer:
+            return False
+        
+        duration = timedelta(seconds=timer['duration_seconds'])
+        end_time = now + duration
+        
+        return self.update_timer(timer_id, 
+                               status='running',
+                               start_time=now,
+                               end_time=end_time)
+    
+    def pause_timer(self, timer_id: str) -> bool:
+        """Pause a running timer."""
+        return self.update_timer(timer_id, status='paused')
+    
+    def stop_timer(self, timer_id: str) -> bool:
+        """Stop a timer."""
+        return self.update_timer(timer_id, status='stopped')
+    
+    def complete_timer(self, timer_id: str) -> bool:
+        """Mark a timer as completed."""
+        return self.update_timer(timer_id, status='completed')
+    
+    def delete_timer(self, timer_id: str) -> bool:
+        """Delete a timer."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM timers WHERE id = ?", (timer_id,))
+            conn.commit()
+            
+            return cursor.rowcount > 0
+    
+    def get_active_timers(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all active (running/paused) timers for a user."""
+        return self.get_user_timers(user_id, status='running') + \
+               self.get_user_timers(user_id, status='paused')
+    
+    def _row_to_dict(self, cursor, row) -> Dict[str, Any]:
+        """Convert database row to dictionary."""
+        columns = [desc[0] for desc in cursor.description]
+        result = dict(zip(columns, row))
+        
+        # Parse JSON metadata
+        if result.get('metadata'):
+            try:
+                result['metadata'] = json.loads(result['metadata'])
+            except:
+                result['metadata'] = {}
+        
+        return result
+
+
+class ReminderManager:
+    """Reminder management system with CRUD operations."""
+    
+    def __init__(self, database_manager: DatabaseManager):
+        """Initialize reminder manager."""
+        self.db_manager = database_manager
+        print("🔔 Reminder Manager initialized")
+    
+    def create_reminder(self, user_id: str, title: str, reminder_time: datetime,
+                       description: str = None, priority: str = "medium",
+                       category: str = "general", recurring_pattern: str = None,
+                       metadata: Dict[str, Any] = None) -> str:
+        """Create a new reminder."""
+        reminder_id = str(uuid.uuid4())
+        
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO reminders (id, user_id, title, description, reminder_time,
+                                     priority, category, recurring_pattern, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (reminder_id, user_id, title, description, reminder_time,
+                  priority, category, recurring_pattern, json.dumps(metadata or {})))
+            conn.commit()
+        
+        return reminder_id
+    
+    def get_reminder(self, reminder_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific reminder by ID."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM reminders WHERE id = ?", (reminder_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                return self._row_to_dict(cursor, row)
+            return None
+    
+    def get_user_reminders(self, user_id: str, status: str = None) -> List[Dict[str, Any]]:
+        """Get all reminders for a user, optionally filtered by status."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if status:
+                cursor.execute("""
+                    SELECT * FROM reminders WHERE user_id = ? AND status = ?
+                    ORDER BY reminder_time ASC
+                """, (user_id, status))
+            else:
+                cursor.execute("""
+                    SELECT * FROM reminders WHERE user_id = ?
+                    ORDER BY reminder_time ASC
+                """, (user_id,))
+            
+            return [self._row_to_dict(cursor, row) for row in cursor.fetchall()]
+    
+    def get_due_reminders(self, user_id: str = None) -> List[Dict[str, Any]]:
+        """Get reminders that are due now."""
+        now = datetime.now()
+        
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if user_id:
+                cursor.execute("""
+                    SELECT * FROM reminders 
+                    WHERE user_id = ? AND reminder_time <= ? AND status = 'active'
+                    ORDER BY reminder_time ASC
+                """, (user_id, now))
+            else:
+                cursor.execute("""
+                    SELECT * FROM reminders 
+                    WHERE reminder_time <= ? AND status = 'active'
+                    ORDER BY reminder_time ASC
+                """, (now,))
+            
+            return [self._row_to_dict(cursor, row) for row in cursor.fetchall()]
+    
+    def update_reminder(self, reminder_id: str, **kwargs) -> bool:
+        """Update reminder fields."""
+        if not kwargs:
+            return False
+        
+        # Add updated_at timestamp
+        kwargs['updated_at'] = datetime.now()
+        
+        # Build dynamic UPDATE query
+        set_clause = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [reminder_id]
+        
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"UPDATE reminders SET {set_clause} WHERE id = ?", values)
+            conn.commit()
+            
+            return cursor.rowcount > 0
+    
+    def snooze_reminder(self, reminder_id: str, minutes: int = 10) -> bool:
+        """Snooze a reminder by specified minutes."""
+        reminder = self.get_reminder(reminder_id)
+        if not reminder:
+            return False
+        
+        current_time = datetime.fromisoformat(reminder['reminder_time'].replace('Z', '+00:00')) \
+                      if isinstance(reminder['reminder_time'], str) else reminder['reminder_time']
+        new_time = current_time + timedelta(minutes=minutes)
+        
+        return self.update_reminder(reminder_id, reminder_time=new_time)
+    
+    def complete_reminder(self, reminder_id: str) -> bool:
+        """Mark a reminder as completed."""
+        return self.update_reminder(reminder_id, status='completed', notification_sent=True)
+    
+    def delete_reminder(self, reminder_id: str) -> bool:
+        """Delete a reminder."""
+        with self.db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
+            conn.commit()
+            
+            return cursor.rowcount > 0
+    
+    def _row_to_dict(self, cursor, row) -> Dict[str, Any]:
+        """Convert database row to dictionary."""
+        columns = [desc[0] for desc in cursor.description]
+        result = dict(zip(columns, row))
+        
+        # Parse JSON metadata
+        if result.get('metadata'):
+            try:
+                result['metadata'] = json.loads(result['metadata'])
+            except:
+                result['metadata'] = {}
+        
+        return result
+
+
 # Global instances
 database_manager = None
 user_manager = None
 conversation_manager = None
 memory_manager = None
 analytics_manager = None
+timer_manager = None
+reminder_manager = None
 
 def get_database_manager() -> DatabaseManager:
     """Get the global database manager instance."""
@@ -526,6 +841,20 @@ def get_analytics_manager() -> AnalyticsManager:
     if analytics_manager is None:
         analytics_manager = AnalyticsManager(get_database_manager())
     return analytics_manager
+
+def get_timer_manager() -> TimerManager:
+    """Get the global timer manager instance."""
+    global timer_manager
+    if timer_manager is None:
+        timer_manager = TimerManager(get_database_manager())
+    return timer_manager
+
+def get_reminder_manager() -> ReminderManager:
+    """Get the global reminder manager instance."""
+    global reminder_manager
+    if reminder_manager is None:
+        reminder_manager = ReminderManager(get_database_manager())
+    return reminder_manager
 
 # Convenience functions for backward compatibility
 def get_database_connection() -> sqlite3.Connection:
