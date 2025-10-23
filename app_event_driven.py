@@ -605,6 +605,116 @@ def get_system_stats():
         }), 500
 
 
+@app.route('/api/analytics/track', methods=['POST'])
+def track_analytics():
+    """Track analytics events from the frontend."""
+    try:
+        data = request.get_json()
+        
+        if not data or 'events' not in data:
+            return jsonify({'error': 'No events provided'}), 400
+        
+        # Process analytics events
+        events = data['events']
+        session_id = data.get('session_id', 'unknown')
+        user_id = data.get('user_id', 'anonymous')
+        
+        # Here you could store events in database, send to analytics service, etc.
+        # For now, we'll just log them
+        print(f"📊 Analytics: Received {len(events)} events from user {user_id[:8]}...")
+        
+        # Emit analytics event
+        emit_event(
+            HorizonEventTypes.USER_ANALYTICS_TRACKED,
+            "analytics_api",
+            {
+                "events_count": len(events),
+                "session_id": session_id,
+                "user_id": user_id,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+        
+        return jsonify({
+            'success': True,
+            'events_processed': len(events),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Analytics tracking error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/analytics/summary')
+def get_analytics_summary():
+    """Get analytics summary for current session."""
+    try:
+        session_id = request.args.get('session_id')
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        # Get current system state for analytics
+        system_state = get_state("system")
+        ai_state = get_state("ai")
+        conversation_state = get_state("conversation")
+        
+        summary = {
+            'session_id': session_id,
+            'user_id': user_id,
+            'timestamp': datetime.now().isoformat(),
+            'system_health': system_state.is_healthy,
+            'ai_requests': ai_state.total_requests,
+            'conversation_count': conversation_state.total_messages,
+            'uptime': system_state.startup_time,
+            'features_used': {
+                'timer_reminder': True,
+                'voice_recognition': True,
+                'image_generation': True,
+                'websocket_realtime': True
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'summary': summary
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+
+@app.route('/api/analytics/heatmap')
+def get_heatmap_data():
+    """Get heatmap data for visualization."""
+    try:
+        session_id = request.args.get('session_id')
+        limit = int(request.args.get('limit', 100))
+        
+        # For now, return sample heatmap data
+        # In production, this would come from stored user interaction data
+        sample_heatmap = [
+            {'x': 400, 'y': 300, 'intensity': 0.8, 'type': 'click'},
+            {'x': 200, 'y': 150, 'intensity': 0.6, 'type': 'hover'},
+            {'x': 600, 'y': 400, 'intensity': 0.9, 'type': 'click'},
+        ]
+        
+        return jsonify({
+            'success': True,
+            'heatmap_data': sample_heatmap,
+            'session_id': session_id,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+
 @app.route('/api/personalities')
 def get_personalities():
     """Get available personality types."""

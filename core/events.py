@@ -337,6 +337,12 @@ class HorizonEventTypes:
     WEBSOCKET_CONNECTED = "websocket_connected"
     WEBSOCKET_DISCONNECTED = "websocket_disconnected"
     REALTIME_UPDATE_SENT = "realtime_update_sent"
+    
+    # Analytics and tracking events
+    USER_ANALYTICS_TRACKED = "user_analytics_tracked"
+    PERFORMANCE_METRICS_UPDATED = "performance_metrics_updated"
+    HEATMAP_DATA_RECORDED = "heatmap_data_recorded"
+    AB_TEST_VARIANT_APPLIED = "ab_test_variant_applied"
 
 
 # Global event emitter instance

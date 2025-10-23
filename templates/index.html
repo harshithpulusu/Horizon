@@ -1239,6 +1239,14 @@
                             <span class="shortcut-desc">Set new timer</span>
                         </div>
                         <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + H</span>
+                            <span class="shortcut-desc">Show heatmap</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + A</span>
+                            <span class="shortcut-desc">Analytics details</span>
+                        </div>
+                        <div class="shortcut-item">
                             <span class="shortcut-key">↑ / ↓</span>
                             <span class="shortcut-desc">Navigate message history</span>
                         </div>
@@ -1598,11 +1606,26 @@
                 userInput.focus();
                 userInput.setSelectionRange(userInput.value.length, userInput.value.length);
             }
+            // Ctrl+H: Show heatmap visualization
+            else if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                showHeatmapVisualization();
+            }
+            // Ctrl+A: Show analytics details
+            else if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                showAnalyticsDetails();
+            }
             // Escape: Close modals
             else if (e.key === 'Escape') {
                 const modal = document.getElementById('shortcutsModal');
                 if (modal.style.display === 'flex') {
                     modal.style.display = 'none';
+                }
+                // Also remove heatmap overlay if visible
+                const heatmapOverlay = document.getElementById('heatmapOverlay');
+                if (heatmapOverlay) {
+                    heatmapOverlay.remove();
                 }
             }
         });
