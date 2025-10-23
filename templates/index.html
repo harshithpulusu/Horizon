@@ -683,6 +683,50 @@
             font-size: 10px;
         }
 
+        .session-connected {
+            background: #10b981;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .session-disconnected {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .session-id {
+            background: #6366f1;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .activity-time {
+            background: #8b5cf6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        .status-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
         /* Enhanced image styles */
         .message-content img {
             max-width: 100%;
@@ -760,6 +804,37 @@
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <h3>🌟 Horizon Dashboard</h3>
+                <div class="dashboard-stats">
+                    <div class="stat-item" title="Total Sessions">
+                        <span>📊</span>
+                        <span id="totalSessions">1</span>
+                    </div>
+                    <div class="stat-item" title="Messages Today">
+                        <span>💬</span>
+                        <span id="messagesToday">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat History Section -->
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <span class="section-icon">📜</span>
+                    <span class="section-title">CHAT HISTORY</span>
+                    <button class="section-toggle" onclick="toggleChatHistory()" title="Toggle History">
+                        <span id="historyToggle">▼</span>
+                    </button>
+                </div>
+                <div class="section-content" id="chatHistoryContent">
+                    <div class="history-search">
+                        <input type="text" id="historySearch" placeholder="Search conversations..." 
+                               class="history-search-input" onkeyup="filterChatHistory()">
+                    </div>
+                    <div class="chat-history-list" id="chatHistoryList">
+                        <div class="empty-state">No previous conversations</div>
+                    </div>
+                </div>
             </div>
             
             <!-- Active Timers Section -->
@@ -858,9 +933,23 @@
                         <span>💾</span>
                         <span class="memory-indicator">Learning</span>
                     </div>
+                    <div class="status-item" title="Session Status">
+                        <span>📡</span>
+                        <span id="sessionStatus" class="session-connected">Connected</span>
+                    </div>
+                    <div class="status-item" title="Session ID">
+                        <span>🆔</span>
+                        <span id="sessionId" class="session-id">--</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="response-time" id="responseTime">0ms</span>
+                <div class="status-right">
+                    <div class="status-item" title="Last Activity">
+                        <span>⏰</span>
+                        <span id="lastActivity" class="activity-time">Just now</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="response-time" id="responseTime">0ms</span>
+                    </div>
                 </div>
             </div>
 
