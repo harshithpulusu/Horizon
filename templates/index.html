@@ -165,6 +165,89 @@
             border-radius: 6px;
         }
 
+        .analytics-summary {
+            margin-bottom: 15px;
+        }
+
+        .analytics-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .analytics-row:last-child {
+            border-bottom: none;
+        }
+
+        .analytics-label {
+            font-size: 11px;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .analytics-value {
+            font-size: 12px;
+            color: #e5e5e5;
+            font-weight: 500;
+            background: rgba(102, 126, 234, 0.2);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .analytics-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .analytics-btn {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 60px;
+        }
+
+        .analytics-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .heatmap-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .heatmap-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.6) 0%, rgba(255, 0, 0, 0) 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: heatmapPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes heatmapPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.3; }
+        }
+
         .sidebar-section {
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             margin-bottom: 0;
@@ -1003,6 +1086,48 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Analytics Dashboard Section -->
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <span class="section-icon">📊</span>
+                    <span class="section-title">ANALYTICS</span>
+                    <button class="section-toggle" onclick="toggleAnalyticsDashboard()" title="Toggle Analytics">
+                        <span id="analyticsToggle">▼</span>
+                    </button>
+                </div>
+                <div class="section-content" id="analyticsDashboardContent">
+                    <div class="analytics-summary">
+                        <div class="analytics-row">
+                            <span class="analytics-label">Session Time:</span>
+                            <span class="analytics-value" id="sessionDuration">0m</span>
+                        </div>
+                        <div class="analytics-row">
+                            <span class="analytics-label">Events Tracked:</span>
+                            <span class="analytics-value" id="eventsCount">0</span>
+                        </div>
+                        <div class="analytics-row">
+                            <span class="analytics-label">Performance:</span>
+                            <span class="analytics-value" id="performanceScore">Good</span>
+                        </div>
+                        <div class="analytics-row">
+                            <span class="analytics-label">A/B Variant:</span>
+                            <span class="analytics-value" id="abVariant">A</span>
+                        </div>
+                    </div>
+                    <div class="analytics-actions">
+                        <button class="analytics-btn" onclick="showAnalyticsDetails()" title="View Detailed Analytics">
+                            📈 Details
+                        </button>
+                        <button class="analytics-btn" onclick="exportAnalyticsData()" title="Export Analytics Data">
+                            📥 Export
+                        </button>
+                        <button class="analytics-btn" onclick="clearAnalyticsData()" title="Clear Analytics Data">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="main-chat">
@@ -1543,6 +1668,16 @@
                 userInput.value = '';
                 userInput.style.height = 'auto';
                 
+                // Add to chat history via analytics
+                if (window.horizonAnalytics) {
+                    window.horizonAnalytics.addToChatHistory(message, 
+                        message.toLowerCase().includes('timer') ? 
+                        '✅ Timer set and started! You can see it in the sidebar.' :
+                        '✅ Reminder set! I\'ll notify you in 5 minutes.', 
+                        { responseTime: 0, intent: 'timer_reminder', isLocal: true }
+                    );
+                }
+                
                 // Add confirmation message
                 if (message.toLowerCase().includes('timer')) {
                     addMessage('✅ Timer set and started! You can see it in the sidebar.', 'ai');
@@ -1578,7 +1713,8 @@
                 },
                 body: JSON.stringify({ 
                     message: message,
-                    personality: personalitySelect.value
+                    personality: personalitySelect.value,
+                    session_id: window.horizonAnalytics ? window.horizonAnalytics.sessionId : undefined
                 })
             })
             .then(response => response.json())
@@ -1586,13 +1722,25 @@
                 hideTypingIndicator();
                 addMessage(data.response, 'ai');
                 
+                const responseTime = Date.now() - startTime;
+                
+                // Add to analytics chat history
+                if (window.horizonAnalytics) {
+                    window.horizonAnalytics.addToChatHistory(message, data.response, {
+                        personality: personalitySelect.value,
+                        responseTime: responseTime,
+                        intent: data.intent || 'general',
+                        sentiment: data.sentiment || 0,
+                        aiSource: data.ai_source || 'unknown'
+                    });
+                }
+                
                 // Update stats
                 conversationCounter++;
                 conversationCount.textContent = conversationCounter;
                 statusIndicator.textContent = 'Ready';
                 
                 // Update response time
-                const responseTime = Date.now() - startTime;
                 responseTimeEl.textContent = responseTime + 'ms';
                 
                 // Show quick command indicator if it was a quick command
@@ -1609,6 +1757,16 @@
                 hideTypingIndicator();
                 addMessage('Sorry, I encountered an error. Please try again.', 'ai');
                 statusIndicator.textContent = 'Error';
+                
+                // Track error in analytics
+                if (window.horizonAnalytics) {
+                    window.horizonAnalytics.trackEvent('chat_error', {
+                        message: message,
+                        error: error.message,
+                        responseTime: Date.now() - startTime
+                    });
+                }
+                
                 console.error('Error:', error);
             });
         }
@@ -1734,7 +1892,141 @@
         // Focus input on load
         document.addEventListener('DOMContentLoaded', function() {
             userInput.focus();
+            
+            // Update analytics dashboard periodically
+            setInterval(updateAnalyticsDashboard, 5000); // Every 5 seconds
         });
+
+        // Analytics Dashboard Functions
+        function toggleAnalyticsDashboard() {
+            const content = document.getElementById('analyticsDashboardContent');
+            const toggle = document.getElementById('analyticsToggle');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▶';
+            }
+        }
+
+        function updateAnalyticsDashboard() {
+            if (!window.horizonAnalytics) return;
+            
+            const summary = window.horizonAnalytics.getAnalyticsSummary();
+            
+            // Update session duration
+            const duration = Math.floor(summary.sessionDuration / 60000); // Convert to minutes
+            const sessionDurationEl = document.getElementById('sessionDuration');
+            if (sessionDurationEl) {
+                sessionDurationEl.textContent = duration + 'm';
+            }
+            
+            // Update events count
+            const eventsCountEl = document.getElementById('eventsCount');
+            if (eventsCountEl) {
+                eventsCountEl.textContent = summary.totalEvents;
+            }
+            
+            // Update performance score
+            const performanceScoreEl = document.getElementById('performanceScore');
+            if (performanceScoreEl && summary.performanceMetrics.pageLoad) {
+                const loadTime = summary.performanceMetrics.pageLoad.loadTime;
+                let score = 'Good';
+                let color = '#10b981';
+                
+                if (loadTime > 3000) {
+                    score = 'Poor';
+                    color = '#ef4444';
+                } else if (loadTime > 1000) {
+                    score = 'Fair';
+                    color = '#f59e0b';
+                }
+                
+                performanceScoreEl.textContent = score;
+                performanceScoreEl.style.background = color;
+            }
+            
+            // Update A/B variant
+            const abVariantEl = document.getElementById('abVariant');
+            if (abVariantEl) {
+                abVariantEl.textContent = summary.abTestVariant;
+            }
+        }
+
+        function showAnalyticsDetails() {
+            if (!window.horizonAnalytics) return;
+            
+            const summary = window.horizonAnalytics.getAnalyticsSummary();
+            const details = `
+🔬 HORIZON ANALYTICS DETAILS
+
+📊 Session Information:
+• Session ID: ${summary.sessionId}
+• User ID: ${summary.userId}
+• Duration: ${Math.floor(summary.sessionDuration / 60000)} minutes
+• A/B Test Variant: ${summary.abTestVariant}
+
+📈 Activity Metrics:
+• Total Events: ${summary.totalEvents}
+• Chat Messages: ${summary.chatHistory}
+• Heatmap Points: ${summary.heatmapPoints}
+
+⚡ Performance Metrics:
+${summary.performanceMetrics.pageLoad ? `• Page Load: ${summary.performanceMetrics.pageLoad.loadTime}ms` : '• Page Load: Not measured'}
+${summary.performanceMetrics.memory ? `• Memory Usage: ${Math.round(summary.performanceMetrics.memory.usedJSHeapSize / 1024 / 1024)}MB` : '• Memory Usage: Not available'}
+
+🎯 Feature Usage:
+• Timer/Reminder System: Active
+• Voice Recognition: Available
+• Image Generation: Available
+• Session Persistence: Active
+            `.trim();
+            
+            alert(details);
+        }
+
+        function exportAnalyticsData() {
+            if (window.horizonAnalytics) {
+                window.horizonAnalytics.exportAnalyticsData();
+            }
+        }
+
+        function clearAnalyticsData() {
+            if (window.horizonAnalytics) {
+                window.horizonAnalytics.clearAnalyticsData();
+                updateAnalyticsDashboard();
+            }
+        }
+
+        function showHeatmapVisualization() {
+            if (!window.horizonAnalytics) return;
+            
+            // Create heatmap overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'heatmap-overlay';
+            overlay.id = 'heatmapOverlay';
+            
+            // Add heatmap points
+            window.horizonAnalytics.heatmapData.slice(-100).forEach(point => {
+                const heatPoint = document.createElement('div');
+                heatPoint.className = 'heatmap-point';
+                heatPoint.style.left = point.x + 'px';
+                heatPoint.style.top = point.y + 'px';
+                overlay.appendChild(heatPoint);
+            });
+            
+            document.body.appendChild(overlay);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                const overlayEl = document.getElementById('heatmapOverlay');
+                if (overlayEl) {
+                    overlayEl.remove();
+                }
+            }, 5000);
+        }
     </script>
 </body>
 </html>
