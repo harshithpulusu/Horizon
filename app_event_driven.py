@@ -39,6 +39,10 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 # Register API Blueprint
 app.register_blueprint(api_bp)
 
+# Register Multimodal API Blueprint (new, optional functionality)
+from api.multimodal_routes import multimodal_bp
+app.register_blueprint(multimodal_bp, url_prefix='/api/multimodal')
+
 # Global references to core systems
 event_emitter = None
 state_manager = None
