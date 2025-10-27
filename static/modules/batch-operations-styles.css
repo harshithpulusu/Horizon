@@ -1,0 +1,648 @@
+/*
+Batch Operations Styles
+Additive-only CSS with unique prefixes to avoid conflicts with existing styles.
+*/
+
+/* Batch Operations Panel */
+.batch-operations-panel {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 400px;
+    max-height: 80vh;
+    background: var(--batch-bg-color, #ffffff);
+    border: 1px solid var(--batch-border-color, #e1e5e9);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    z-index: 1001;
+    font-family: inherit;
+    display: none;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .batch-operations-panel {
+        background: var(--batch-dark-bg-color, #2d3748);
+        border-color: var(--batch-dark-border-color, #4a5568);
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+}
+
+/* Panel Header */
+.batch-panel-header {
+    background: var(--batch-header-bg, #f7fafc);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--batch-border-color, #e1e5e9);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.batch-panel-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--batch-text-color, #2d3748);
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-panel-header {
+        background: var(--batch-dark-header-bg, #4a5568);
+        border-bottom-color: var(--batch-dark-border-color, #4a5568);
+    }
+    
+    .batch-panel-header h3 {
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+}
+
+/* Panel Controls */
+.batch-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* Panel Content */
+.batch-operations-panel > div:not(.batch-panel-header) {
+    padding: 16px 20px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--batch-border-color, #e1e5e9);
+}
+
+.batch-operations-panel > div:last-child {
+    border-bottom: none;
+}
+
+/* Section Headers */
+.batch-operations-panel h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--batch-secondary-text, #718096);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-operations-panel h4 {
+        color: var(--batch-dark-secondary-text, #a0aec0);
+    }
+}
+
+.batch-operations-panel h5 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--batch-secondary-text, #718096);
+}
+
+/* Buttons */
+.batch-btn {
+    background: var(--batch-primary-color, #3182ce);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.batch-btn:hover {
+    background: var(--batch-primary-hover, #2c5aa0);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.batch-btn:active {
+    transform: translateY(0);
+}
+
+.batch-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.batch-btn-small {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* Toggle Button */
+.batch-operations-toggle {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    background: var(--batch-primary-color, #3182ce);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    opacity: 0.6;
+}
+
+.batch-operations-toggle:hover {
+    background: var(--batch-primary-hover, #2c5aa0);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+}
+
+/* Quick Actions */
+.batch-quick-actions {
+    background: var(--batch-section-bg, #f9fafb);
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-quick-actions {
+        background: var(--batch-dark-section-bg, #374151);
+    }
+}
+
+.batch-template-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+}
+
+.batch-template-btn {
+    background: var(--batch-template-bg, #ffffff);
+    border: 2px solid var(--batch-border-color, #e1e5e9);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.batch-template-btn:hover {
+    border-color: var(--batch-primary-color, #3182ce);
+    background: var(--batch-primary-light, #ebf8ff);
+    transform: translateY(-2px);
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-template-btn {
+        background: var(--batch-dark-template-bg, #4a5568);
+        border-color: var(--batch-dark-border-color, #4a5568);
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+    
+    .batch-template-btn:hover {
+        border-color: var(--batch-dark-primary, #63b3ed);
+        background: var(--batch-dark-primary-light, #2a4365);
+    }
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 12px;
+}
+
+.batch-select,
+.batch-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--batch-input-border, #e1e5e9);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--batch-input-bg, #ffffff);
+    color: var(--batch-text-color, #2d3748);
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.batch-select:focus,
+.batch-textarea:focus {
+    outline: none;
+    border-color: var(--batch-primary-color, #3182ce);
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-select,
+    .batch-textarea {
+        background: var(--batch-dark-input-bg, #4a5568);
+        border-color: var(--batch-dark-border-color, #4a5568);
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+    
+    .batch-select:focus,
+    .batch-textarea:focus {
+        border-color: var(--batch-dark-primary, #63b3ed);
+        box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.1);
+    }
+}
+
+.batch-textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Status Display */
+.batch-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--batch-status-bg, #f7fafc);
+    border-radius: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .status-item {
+        background: var(--batch-dark-status-bg, #4a5568);
+    }
+}
+
+.status-label {
+    font-size: 12px;
+    color: var(--batch-secondary-text, #718096);
+    font-weight: 500;
+}
+
+.status-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--batch-text-color, #2d3748);
+}
+
+@media (prefers-color-scheme: dark) {
+    .status-label {
+        color: var(--batch-dark-secondary-text, #a0aec0);
+    }
+    
+    .status-value {
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 2px;
+}
+
+.status-pending {
+    background: #fef5e7;
+    color: #744210;
+}
+
+.status-processing {
+    background: #ebf8ff;
+    color: #2a4365;
+}
+
+.status-completed {
+    background: #f0fff4;
+    color: #22543d;
+}
+
+.status-failed {
+    background: #fed7d7;
+    color: #742a2a;
+}
+
+.status-cancelled {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+@media (prefers-color-scheme: dark) {
+    .status-pending {
+        background: #553c0f;
+        color: #faf089;
+    }
+    
+    .status-processing {
+        background: #2a4365;
+        color: #90cdf4;
+    }
+    
+    .status-completed {
+        background: #22543d;
+        color: #9ae6b4;
+    }
+    
+    .status-failed {
+        background: #742a2a;
+        color: #feb2b2;
+    }
+    
+    .status-cancelled {
+        background: #4a5568;
+        color: #cbd5e0;
+    }
+}
+
+.batch-status-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Operation Items */
+.batch-operation-item {
+    background: var(--batch-item-bg, #ffffff);
+    border: 1px solid var(--batch-border-color, #e1e5e9);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.batch-operation-item:hover {
+    border-color: var(--batch-primary-color, #3182ce);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-operation-item {
+        background: var(--batch-dark-item-bg, #4a5568);
+        border-color: var(--batch-dark-border-color, #4a5568);
+    }
+    
+    .batch-operation-item:hover {
+        border-color: var(--batch-dark-primary, #63b3ed);
+    }
+}
+
+.operation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.operation-type {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--batch-text-color, #2d3748);
+}
+
+@media (prefers-color-scheme: dark) {
+    .operation-type {
+        color: var(--batch-dark-text-color, #e2e8f0);
+    }
+}
+
+.operation-details {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--batch-secondary-text, #718096);
+    margin-bottom: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .operation-details {
+        color: var(--batch-dark-secondary-text, #a0aec0);
+    }
+}
+
+.operation-error {
+    background: #fed7d7;
+    color: #742a2a;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .operation-error {
+        background: #742a2a;
+        color: #feb2b2;
+    }
+}
+
+.operation-progress {
+    background: #ebf8ff;
+    color: #2a4365;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+    .operation-progress {
+        background: #2a4365;
+        color: #90cdf4;
+    }
+}
+
+/* Empty States */
+.no-operations {
+    text-align: center;
+    color: var(--batch-secondary-text, #718096);
+    font-style: italic;
+    padding: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .no-operations {
+        color: var(--batch-dark-secondary-text, #a0aec0);
+    }
+}
+
+/* Notifications */
+.batch-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1002;
+    max-width: 300px;
+    font-size: 14px;
+    font-weight: 500;
+    animation: batchNotificationSlideIn 0.3s ease-out;
+}
+
+.batch-notification-success {
+    background: #f0fff4;
+    color: #22543d;
+    border: 1px solid #9ae6b4;
+}
+
+.batch-notification-error {
+    background: #fed7d7;
+    color: #742a2a;
+    border: 1px solid #feb2b2;
+}
+
+.batch-notification-info {
+    background: #ebf8ff;
+    color: #2a4365;
+    border: 1px solid #90cdf4;
+}
+
+@media (prefers-color-scheme: dark) {
+    .batch-notification-success {
+        background: #22543d;
+        color: #9ae6b4;
+    }
+    
+    .batch-notification-error {
+        background: #742a2a;
+        color: #feb2b2;
+    }
+    
+    .batch-notification-info {
+        background: #2a4365;
+        color: #90cdf4;
+    }
+}
+
+/* Animations */
+@keyframes batchNotificationSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes batchPanelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+.batch-operations-panel[style*="block"] {
+    animation: batchPanelSlideIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .batch-operations-panel {
+        width: calc(100vw - 40px);
+        max-width: 400px;
+        right: 20px;
+        left: 20px;
+        max-height: 70vh;
+    }
+    
+    .batch-operations-toggle {
+        right: 15px;
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .batch-template-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .batch-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .batch-operations-panel {
+        top: 20px;
+        bottom: 20px;
+        transform: none;
+        max-height: none;
+        height: auto;
+    }
+    
+    .batch-operations-panel > div:not(.batch-panel-header) {
+        max-height: 150px;
+    }
+}
+
+/* Scrollbar styling */
+.batch-operations-panel div::-webkit-scrollbar {
+    width: 6px;
+}
+
+.batch-operations-panel div::-webkit-scrollbar-track {
+    background: var(--batch-scrollbar-track, #f1f1f1);
+}
+
+.batch-operations-panel div::-webkit-scrollbar-thumb {
+    background: var(--batch-scrollbar-thumb, #c1c1c1);
+    border-radius: 3px;
+}
+
+.batch-operations-panel div::-webkit-scrollbar-thumb:hover {
+    background: var(--batch-scrollbar-thumb-hover, #a1a1a1);
+}
+
+/* Custom properties for theming */
+:root {
+    --batch-primary-color: #3182ce;
+    --batch-primary-hover: #2c5aa0;
+    --batch-primary-light: #ebf8ff;
+    --batch-bg-color: #ffffff;
+    --batch-border-color: #e1e5e9;
+    --batch-text-color: #2d3748;
+    --batch-secondary-text: #718096;
+    --batch-header-bg: #f7fafc;
+    --batch-section-bg: #f9fafb;
+    --batch-item-bg: #ffffff;
+    --batch-input-bg: #ffffff;
+    --batch-input-border: #e1e5e9;
+    --batch-status-bg: #f7fafc;
+}
+
+/* Dark theme custom properties */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --batch-primary-color: #63b3ed;
+        --batch-primary-hover: #4299e1;
+        --batch-primary-light: #2a4365;
+        --batch-bg-color: #2d3748;
+        --batch-border-color: #4a5568;
+        --batch-text-color: #e2e8f0;
+        --batch-secondary-text: #a0aec0;
+        --batch-header-bg: #4a5568;
+        --batch-section-bg: #374151;
+        --batch-item-bg: #4a5568;
+        --batch-input-bg: #4a5568;
+        --batch-input-border: #4a5568;
+        --batch-status-bg: #4a5568;
+    }
+}

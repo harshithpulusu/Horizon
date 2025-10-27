@@ -1,0 +1,255 @@
+/*
+Smart Suggestions Styles
+Additive-only CSS with unique prefixes to avoid conflicts with existing styles.
+*/
+
+/* Smart Suggestions Container */
+.smart-suggestions-container {
+    position: absolute;
+    background: var(--bg-color, #ffffff);
+    border: 1px solid var(--border-color, #e1e5e9);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    font-family: inherit;
+    margin-top: 2px;
+    display: none;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .smart-suggestions-container {
+        background: var(--dark-bg-color, #2d3748);
+        border-color: var(--dark-border-color, #4a5568);
+        color: var(--dark-text-color, #e2e8f0);
+    }
+}
+
+/* Suggestion Items */
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color, #f7fafc);
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+}
+
+.suggestion-item:last-of-type {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background-color: var(--hover-bg-color, #f7fafc);
+}
+
+@media (prefers-color-scheme: dark) {
+    .suggestion-item {
+        border-bottom-color: var(--dark-border-color, #4a5568);
+    }
+    
+    .suggestion-item:hover,
+    .suggestion-item.selected {
+        background-color: var(--dark-hover-bg-color, #4a5568);
+    }
+}
+
+/* Highlighted text in suggestions */
+.suggestion-item strong {
+    color: var(--primary-color, #3182ce);
+    font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+    .suggestion-item strong {
+        color: var(--dark-primary-color, #63b3ed);
+    }
+}
+
+/* Suggestion Hint */
+.suggestion-hint {
+    padding: 8px 16px;
+    background-color: var(--hint-bg-color, #f7fafc);
+    border-top: 1px solid var(--border-color, #e1e5e9);
+    font-size: 12px;
+    color: var(--secondary-text-color, #718096);
+    text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+    .suggestion-hint {
+        background-color: var(--dark-hint-bg-color, #4a5568);
+        border-top-color: var(--dark-border-color, #4a5568);
+        color: var(--dark-secondary-text-color, #a0aec0);
+    }
+}
+
+/* Toggle Button */
+.smart-suggestions-toggle {
+    background: var(--primary-color, #3182ce);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+    opacity: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.smart-suggestions-toggle:hover {
+    background: var(--primary-hover-color, #2c5aa0);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.smart-suggestions-toggle:active {
+    transform: translateY(0);
+}
+
+.smart-suggestions-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading state */
+.smart-suggestions-container.loading {
+    padding: 16px;
+    text-align: center;
+    color: var(--secondary-text-color, #718096);
+}
+
+.smart-suggestions-container.loading::before {
+    content: "⏳ Loading suggestions...";
+    font-size: 14px;
+}
+
+/* Error state */
+.smart-suggestions-container.error {
+    padding: 16px;
+    text-align: center;
+    color: var(--error-color, #e53e3e);
+}
+
+.smart-suggestions-container.error::before {
+    content: "❌ Failed to load suggestions";
+    font-size: 14px;
+}
+
+/* Empty state */
+.smart-suggestions-container.empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--secondary-text-color, #718096);
+}
+
+.smart-suggestions-container.empty::before {
+    content: "💡 No suggestions found";
+    font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .smart-suggestions-container {
+        max-height: 200px;
+        font-size: 14px;
+    }
+    
+    .suggestion-item {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .smart-suggestions-toggle {
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+}
+
+/* Focus styles for accessibility */
+.suggestion-item:focus,
+.smart-suggestions-toggle:focus {
+    outline: 2px solid var(--focus-color, #3182ce);
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .smart-suggestions-container {
+        border-width: 2px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .suggestion-item:hover,
+    .suggestion-item.selected {
+        background-color: var(--high-contrast-bg, #000000);
+        color: var(--high-contrast-text, #ffffff);
+    }
+}
+
+/* Animation for smooth appearance */
+@keyframes smartSuggestionsSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.smart-suggestions-container[style*="block"] {
+    animation: smartSuggestionsSlideDown 0.2s ease-out;
+}
+
+/* Scrollbar styling */
+.smart-suggestions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.smart-suggestions-container::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-color, #f1f1f1);
+}
+
+.smart-suggestions-container::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-color, #c1c1c1);
+    border-radius: 3px;
+}
+
+.smart-suggestions-container::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-color, #a1a1a1);
+}
+
+/* Custom properties for easy theming */
+:root {
+    --smart-suggestions-primary: #3182ce;
+    --smart-suggestions-primary-hover: #2c5aa0;
+    --smart-suggestions-bg: #ffffff;
+    --smart-suggestions-border: #e1e5e9;
+    --smart-suggestions-text: #2d3748;
+    --smart-suggestions-secondary: #718096;
+    --smart-suggestions-hover: #f7fafc;
+    --smart-suggestions-shadow: rgba(0, 0, 0, 0.15);
+}
+
+/* Dark theme custom properties */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --smart-suggestions-primary: #63b3ed;
+        --smart-suggestions-primary-hover: #4299e1;
+        --smart-suggestions-bg: #2d3748;
+        --smart-suggestions-border: #4a5568;
+        --smart-suggestions-text: #e2e8f0;
+        --smart-suggestions-secondary: #a0aec0;
+        --smart-suggestions-hover: #4a5568;
+        --smart-suggestions-shadow: rgba(0, 0, 0, 0.3);
+    }
+}
