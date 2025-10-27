@@ -47,6 +47,10 @@ app.register_blueprint(multimodal_bp, url_prefix='/api/multimodal')
 from api.suggestions_routes import suggestions_bp
 app.register_blueprint(suggestions_bp)
 
+# Register Batch Operations API Blueprint (new, optional functionality)
+from api.batch_routes import batch_bp
+app.register_blueprint(batch_bp)
+
 # Global references to core systems
 event_emitter = None
 state_manager = None
