@@ -43,6 +43,10 @@ app.register_blueprint(api_bp)
 from api.multimodal_routes import multimodal_bp
 app.register_blueprint(multimodal_bp, url_prefix='/api/multimodal')
 
+# Register Smart Suggestions API Blueprint (new, optional functionality)
+from api.suggestions_routes import suggestions_bp
+app.register_blueprint(suggestions_bp)
+
 # Global references to core systems
 event_emitter = None
 state_manager = None
