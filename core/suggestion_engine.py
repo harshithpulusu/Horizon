@@ -5,11 +5,18 @@ Advanced pattern analysis and suggestion generation.
 
 import re
 import json
-import nltk
 from typing import List, Dict, Set, Tuple
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 import os
+
+# Optional NLTK import with graceful fallback
+try:
+    import nltk
+    NLTK_AVAILABLE = True
+except ImportError:
+    NLTK_AVAILABLE = False
+    nltk = None
 
 class AdvancedSuggestionEngine:
     """
@@ -80,8 +87,10 @@ class AdvancedSuggestionEngine:
     
     def init_nlp(self) -> bool:
         """Initialize NLP components with graceful fallback"""
+        if not NLTK_AVAILABLE:
+            return False
+        
         try:
-            import nltk
             # Try to download required data (fail gracefully)
             try:
                 nltk.data.find('tokenizers/punkt')
@@ -91,7 +100,7 @@ class AdvancedSuggestionEngine:
                 except:
                     pass
             return True
-        except ImportError:
+        except Exception:
             return False
     
     def analyze_input_intent(self, text: str) -> Dict[str, any]:
