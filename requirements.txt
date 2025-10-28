@@ -16,6 +16,12 @@ mutagen>=1.47.0
 pydub>=0.25.1
 elevenlabs>=0.2.24
 
+# Calendar Integration
+google-auth>=2.23.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.0
+google-api-python-client>=2.100.0
+
 # Machine Learning for Predictive Assistance
 scikit-learn>=1.3.0
 pandas>=2.0.0

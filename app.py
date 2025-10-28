@@ -46,6 +46,21 @@ except Exception as e:
 os.makedirs('static/generated_images', exist_ok=True)
 os.makedirs('static/generated_logos', exist_ok=True)
 
+# Register new feature blueprints (safe modular integration)
+try:
+    from api.calendar_routes import calendar_bp
+    app.register_blueprint(calendar_bp)
+    print("✅ Calendar integration API registered")
+except ImportError as e:
+    print(f"⚠️ Calendar API not available: {e}")
+
+try:
+    from api.notes_routes import notes_bp
+    app.register_blueprint(notes_bp)
+    print("✅ Notes management API registered")
+except ImportError as e:
+    print(f"⚠️ Notes API not available: {e}")
+
 def init_db():
     """Initialize SQLite database with enhanced memory learning"""
     try:
