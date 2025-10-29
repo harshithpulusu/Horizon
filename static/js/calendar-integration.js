@@ -68,7 +68,35 @@ class CalendarIntegration {
     
     createCalendarToggle() {
         try {
-            // Create small toggle button that doesn't interfere
+            // Find the chat input container
+            const chatInputContainer = document.querySelector('.chat-input-container') ||
+                                     document.querySelector('.input-container') ||
+                                     document.querySelector('.message-input-container') ||
+                                     document.querySelector('.chat-input');
+            
+            if (!chatInputContainer) {
+                console.warn('Chat input container not found, using body');
+                // Fallback to body with different positioning
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'cal-toggle-btn';
+                toggleBtn.id = 'cal-toggle-btn';
+                toggleBtn.innerHTML = '📅';
+                toggleBtn.title = 'Calendar Integration';
+                toggleBtn.style.position = 'fixed';
+                toggleBtn.style.bottom = '20px';
+                toggleBtn.style.right = '20px';
+                
+                toggleBtn.addEventListener('click', () => this.showCalendarModal());
+                document.body.appendChild(toggleBtn);
+                return;
+            }
+            
+            // Make sure the container has relative positioning
+            if (getComputedStyle(chatInputContainer).position === 'static') {
+                chatInputContainer.style.position = 'relative';
+            }
+            
+            // Create toggle button for chat input area
             const toggleBtn = document.createElement('button');
             toggleBtn.className = 'cal-toggle-btn';
             toggleBtn.id = 'cal-toggle-btn';
@@ -77,8 +105,8 @@ class CalendarIntegration {
             
             toggleBtn.addEventListener('click', () => this.showCalendarModal());
             
-            // Add to top-right area without interfering
-            document.body.appendChild(toggleBtn);
+            // Add to chat input container
+            chatInputContainer.appendChild(toggleBtn);
             
         } catch (error) {
             console.error('Calendar toggle creation error:', error);
@@ -212,19 +240,19 @@ class CalendarIntegration {
             styles.textContent = `
                 /* Calendar Integration Styles - Modal Design */
                 .cal-toggle-btn {
-                    position: fixed;
+                    position: absolute;
                     top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 45px;
-                    height: 45px;
+                    right: 60px;
+                    transform: translateY(-50%);
+                    width: 35px;
+                    height: 35px;
                     border-radius: 50%;
                     border: none;
                     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
                     color: white;
-                    font-size: 1.3rem;
+                    font-size: 1.1rem;
                     cursor: pointer;
-                    box-shadow: 0 4px 16px rgba(0,123,255,0.3);
+                    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
                     z-index: 999;
                     transition: all 0.3s ease;
                 }
