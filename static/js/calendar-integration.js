@@ -52,79 +52,11 @@ class CalendarIntegration {
     
     createCalendarUI() {
         try {
-            // Find timer container to add calendar integration
-            const timerContainer = document.querySelector('.timer-container') || 
-                                 document.querySelector('#timer-section') ||
-                                 document.querySelector('.timer');
+            // Create small calendar toggle button only
+            this.createCalendarToggle();
             
-            if (!timerContainer) {
-                console.warn('Timer container not found, creating standalone calendar section');
-                this.createStandaloneUI();
-                return;
-            }
-            
-            // Create calendar integration section
-            const calendarSection = document.createElement('div');
-            calendarSection.className = 'cal-integration-section';
-            calendarSection.innerHTML = `
-                <div class="cal-header">
-                    <h4 class="cal-title">
-                        <i class="cal-icon">📅</i>
-                        Calendar Sync
-                    </h4>
-                    <div class="cal-status" id="cal-status">
-                        <span class="cal-status-text">Not Connected</span>
-                    </div>
-                </div>
-                
-                <div class="cal-controls">
-                    <button class="cal-btn cal-btn-primary" id="cal-auth-btn">
-                        Connect Google Calendar
-                    </button>
-                    
-                    <div class="cal-sync-controls" id="cal-sync-controls" style="display: none;">
-                        <button class="cal-btn cal-btn-secondary" id="cal-sync-timer-btn">
-                            Sync Current Timer
-                        </button>
-                        
-                        <button class="cal-btn cal-btn-outline" id="cal-view-events-btn">
-                            View Events
-                        </button>
-                        
-                        <div class="cal-auto-sync">
-                            <label class="cal-checkbox-label">
-                                <input type="checkbox" id="cal-auto-sync-toggle" class="cal-checkbox">
-                                <span class="cal-checkbox-text">Auto-sync timers</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="cal-timer-info" id="cal-timer-info" style="display: none;">
-                    <div class="cal-timer-details">
-                        <span class="cal-timer-text">Timer will sync to calendar</span>
-                        <div class="cal-timer-meta">
-                            <span class="cal-event-time"></span>
-                            <span class="cal-event-calendar"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="cal-recent-events" id="cal-recent-events" style="display: none;">
-                    <h5 class="cal-events-title">Recent Events</h5>
-                    <div class="cal-events-list"></div>
-                </div>
-            `;
-            
-            // Insert after timer or at the end of timer container
-            const timerDisplay = timerContainer.querySelector('.timer-display') ||
-                               timerContainer.querySelector('.timer-controls');
-            
-            if (timerDisplay && timerDisplay.nextSibling) {
-                timerContainer.insertBefore(calendarSection, timerDisplay.nextSibling);
-            } else {
-                timerContainer.appendChild(calendarSection);
-            }
+            // Create popup modal (hidden by default)
+            this.createCalendarModal();
             
             // Add calendar-specific styles
             this.addCalendarStyles();
@@ -134,29 +66,50 @@ class CalendarIntegration {
         }
     }
     
-    createStandaloneUI() {
+    createCalendarToggle() {
         try {
-            // Create standalone calendar section in main content area
-            const mainContent = document.querySelector('.main-content') ||
-                              document.querySelector('.container') ||
-                              document.body;
+            // Create small toggle button that doesn't interfere
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'cal-toggle-btn';
+            toggleBtn.id = 'cal-toggle-btn';
+            toggleBtn.innerHTML = '📅';
+            toggleBtn.title = 'Calendar Integration';
             
-            const calendarContainer = document.createElement('div');
-            calendarContainer.className = 'cal-standalone-container';
-            calendarContainer.innerHTML = `
-                <div class="cal-standalone-section">
-                    <div class="cal-header">
-                        <h3 class="cal-title">
+            toggleBtn.addEventListener('click', () => this.showCalendarModal());
+            
+            // Add to top-right area without interfering
+            document.body.appendChild(toggleBtn);
+            
+        } catch (error) {
+            console.error('Calendar toggle creation error:', error);
+        }
+    }
+    
+    createCalendarModal() {
+        try {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.className = 'cal-modal-overlay';
+            modal.id = 'cal-modal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div class="cal-modal-content">
+                    <div class="cal-modal-header">
+                        <h3 class="cal-modal-title">
                             <i class="cal-icon">📅</i>
                             Calendar Integration
                         </h3>
-                        <div class="cal-status" id="cal-status">
-                            <span class="cal-status-text">Not Connected</span>
-                        </div>
+                        <button class="cal-close-btn" id="cal-close-modal">✕</button>
                     </div>
                     
-                    <div class="cal-content">
-                        <div class="cal-auth-section">
+                    <div class="cal-modal-body">
+                        <div class="cal-status-section">
+                            <div class="cal-status" id="cal-status">
+                                <span class="cal-status-text">Not Connected</span>
+                            </div>
+                        </div>
+                        
+                        <div class="cal-auth-section" id="cal-auth-section">
                             <p class="cal-description">
                                 Connect your Google Calendar to sync timers and reminders automatically.
                             </p>
@@ -165,41 +118,85 @@ class CalendarIntegration {
                             </button>
                         </div>
                         
-                        <div class="cal-main-controls" id="cal-main-controls" style="display: none;">
+                        <div class="cal-connected-section" id="cal-connected-section" style="display: none;">
                             <div class="cal-actions">
                                 <button class="cal-btn cal-btn-secondary" id="cal-sync-timer-btn">
-                                    Sync Timer to Calendar
+                                    Sync Current Timer
                                 </button>
                                 <button class="cal-btn cal-btn-outline" id="cal-view-events-btn">
-                                    View My Events
-                                </button>
-                                <button class="cal-btn cal-btn-outline" id="cal-create-event-btn">
-                                    Create Event
+                                    View Recent Events
                                 </button>
                             </div>
                             
                             <div class="cal-settings">
-                                <h4>Settings</h4>
                                 <label class="cal-checkbox-label">
                                     <input type="checkbox" id="cal-auto-sync-toggle" class="cal-checkbox">
                                     <span class="cal-checkbox-text">Auto-sync timers to calendar</span>
                                 </label>
                             </div>
+                            
+                            <div class="cal-disconnect">
+                                <button class="cal-btn cal-btn-outline cal-btn-sm" id="cal-disconnect-btn">
+                                    Disconnect
+                                </button>
+                            </div>
                         </div>
                         
-                        <div class="cal-events-section" id="cal-events-section" style="display: none;">
-                            <h4>Upcoming Events</h4>
+                        <div class="cal-timer-info" id="cal-timer-info" style="display: none;">
+                            <div class="cal-timer-details">
+                                <span class="cal-timer-text">Timer synced to calendar</span>
+                                <div class="cal-timer-meta">
+                                    <span class="cal-event-time"></span>
+                                    <span class="cal-event-calendar"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="cal-recent-events" id="cal-recent-events" style="display: none;">
+                            <h4 class="cal-events-title">Recent Events</h4>
                             <div class="cal-events-list"></div>
                         </div>
                     </div>
                 </div>
             `;
             
-            mainContent.appendChild(calendarContainer);
-            this.addCalendarStyles();
+            document.body.appendChild(modal);
+            
+            // Add modal event listeners
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hideCalendarModal();
+                }
+            });
+            
+            document.getElementById('cal-close-modal').addEventListener('click', () => {
+                this.hideCalendarModal();
+            });
             
         } catch (error) {
-            console.error('Standalone calendar UI creation error:', error);
+            console.error('Calendar modal creation error:', error);
+        }
+    }
+    
+    createStandaloneUI() {
+        // This method is no longer needed since we use modal
+        console.log('Using modal instead of standalone UI');
+    }
+    
+    showCalendarModal() {
+        const modal = document.getElementById('cal-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            
+            // Check auth status when opening
+            this.checkAuthStatus();
+        }
+    }
+    
+    hideCalendarModal() {
+        const modal = document.getElementById('cal-modal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
     
@@ -213,67 +210,116 @@ class CalendarIntegration {
             const styles = document.createElement('style');
             styles.id = 'cal-integration-styles';
             styles.textContent = `
-                /* Calendar Integration Styles - Unique prefixes to avoid conflicts */
-                .cal-integration-section {
-                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                    border: 1px solid #dee2e6;
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-top: 16px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                /* Calendar Integration Styles - Modal Design */
+                .cal-toggle-btn {
+                    position: fixed;
+                    top: 20px;
+                    right: 80px;
+                    width: 45px;
+                    height: 45px;
+                    border-radius: 50%;
+                    border: none;
+                    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+                    color: white;
+                    font-size: 1.3rem;
+                    cursor: pointer;
+                    box-shadow: 0 4px 16px rgba(0,123,255,0.3);
+                    z-index: 999;
                     transition: all 0.3s ease;
                 }
                 
-                .cal-integration-section:hover {
-                    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+                .cal-toggle-btn:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 20px rgba(0,123,255,0.4);
                 }
                 
-                .cal-standalone-container {
-                    max-width: 800px;
-                    margin: 20px auto;
-                    padding: 0 20px;
+                .cal-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(4px);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    animation: cal-fade-in 0.3s ease;
                 }
                 
-                .cal-standalone-section {
-                    background: white;
+                .cal-modal-content {
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                    border: 2px solid #444;
                     border-radius: 16px;
-                    padding: 24px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    width: 90%;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    overflow: hidden;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                    animation: cal-slide-up 0.3s ease;
                 }
                 
-                .cal-header {
+                .cal-modal-header {
+                    padding: 20px 24px;
+                    background: linear-gradient(135deg, #333 0%, #444 100%);
+                    border-bottom: 2px solid #555;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 16px;
-                    padding-bottom: 12px;
-                    border-bottom: 2px solid #e9ecef;
                 }
                 
-                .cal-title {
+                .cal-modal-title {
                     margin: 0;
-                    color: #495057;
-                    font-size: 1.1rem;
+                    color: #e5e5e5;
+                    font-size: 1.3rem;
                     font-weight: 600;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 10px;
                 }
                 
-                .cal-icon {
-                    font-size: 1.2rem;
+                .cal-close-btn {
+                    background: none;
+                    border: none;
+                    color: #adb5bd;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                }
+                
+                .cal-close-btn:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e5e5e5;
+                }
+                
+                .cal-modal-body {
+                    padding: 24px;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                }
+                
+                .cal-status-section {
+                    text-align: center;
+                    margin-bottom: 24px;
                 }
                 
                 .cal-status {
-                    display: flex;
+                    display: inline-flex;
                     align-items: center;
                     gap: 8px;
                 }
                 
                 .cal-status-text {
-                    font-size: 0.9rem;
+                    font-size: 1rem;
                     font-weight: 500;
-                    padding: 4px 12px;
+                    padding: 8px 16px;
                     border-radius: 20px;
                     background: #6c757d;
                     color: white;
@@ -288,15 +334,20 @@ class CalendarIntegration {
                     animation: cal-pulse 1.5s infinite;
                 }
                 
-                @keyframes cal-pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.6; }
+                .cal-auth-section {
+                    text-align: center;
                 }
                 
-                .cal-controls, .cal-main-controls {
+                .cal-description {
+                    color: #ced4da;
+                    margin-bottom: 20px;
+                    line-height: 1.5;
+                }
+                
+                .cal-connected-section {
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
+                    gap: 20px;
                 }
                 
                 .cal-actions {
@@ -305,11 +356,24 @@ class CalendarIntegration {
                     flex-wrap: wrap;
                 }
                 
+                .cal-settings {
+                    padding: 16px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 8px;
+                    border: 1px solid #444;
+                }
+                
+                .cal-disconnect {
+                    text-align: center;
+                    padding-top: 16px;
+                    border-top: 1px solid #444;
+                }
+                
                 .cal-btn {
-                    padding: 10px 20px;
+                    padding: 12px 24px;
                     border: none;
                     border-radius: 8px;
-                    font-size: 0.9rem;
+                    font-size: 0.95rem;
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.3s ease;
@@ -317,17 +381,14 @@ class CalendarIntegration {
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 6px;
-                    min-height: 40px;
+                    gap: 8px;
+                    min-height: 44px;
+                    flex: 1;
                 }
                 
                 .cal-btn:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                }
-                
-                .cal-btn:active {
-                    transform: translateY(0);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
                 }
                 
                 .cal-btn-primary {
@@ -350,36 +411,29 @@ class CalendarIntegration {
                 
                 .cal-btn-outline {
                     background: transparent;
-                    color: #6c757d;
-                    border: 2px solid #dee2e6;
+                    color: #adb5bd;
+                    border: 2px solid #6c757d;
                 }
                 
                 .cal-btn-outline:hover {
-                    background: #f8f9fa;
+                    background: rgba(108, 117, 125, 0.1);
                     border-color: #adb5bd;
+                    color: #e5e5e5;
                 }
                 
-                .cal-btn:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                    transform: none !important;
-                }
-                
-                .cal-auto-sync, .cal-settings {
-                    margin-top: 12px;
-                    padding: 12px;
-                    background: rgba(248, 249, 250, 0.8);
-                    border-radius: 8px;
-                    border: 1px solid #e9ecef;
+                .cal-btn-sm {
+                    padding: 8px 16px;
+                    font-size: 0.85rem;
+                    min-height: 36px;
                 }
                 
                 .cal-checkbox-label {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 10px;
                     cursor: pointer;
-                    font-size: 0.9rem;
-                    color: #495057;
+                    font-size: 0.95rem;
+                    color: #e5e5e5;
                 }
                 
                 .cal-checkbox {
@@ -392,14 +446,14 @@ class CalendarIntegration {
                     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
                     border: 1px solid #90caf9;
                     border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 12px;
+                    padding: 16px;
+                    margin-top: 16px;
                 }
                 
                 .cal-timer-details {
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 6px;
                 }
                 
                 .cal-timer-text {
@@ -410,18 +464,18 @@ class CalendarIntegration {
                 .cal-timer-meta {
                     display: flex;
                     gap: 16px;
-                    font-size: 0.85rem;
+                    font-size: 0.9rem;
                     color: #424242;
                 }
                 
-                .cal-recent-events, .cal-events-section {
-                    margin-top: 16px;
+                .cal-recent-events {
+                    margin-top: 20px;
                 }
                 
                 .cal-events-title {
                     margin: 0 0 12px 0;
-                    color: #495057;
-                    font-size: 1rem;
+                    color: #e5e5e5;
+                    font-size: 1.1rem;
                     font-weight: 600;
                 }
                 
@@ -434,8 +488,8 @@ class CalendarIntegration {
                 }
                 
                 .cal-event-item {
-                    background: white;
-                    border: 1px solid #e9ecef;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid #444;
                     border-radius: 8px;
                     padding: 12px;
                     display: flex;
@@ -445,8 +499,8 @@ class CalendarIntegration {
                 }
                 
                 .cal-event-item:hover {
-                    background: #f8f9fa;
-                    border-color: #dee2e6;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: #555;
                 }
                 
                 .cal-event-info {
@@ -457,86 +511,55 @@ class CalendarIntegration {
                 
                 .cal-event-title {
                     font-weight: 500;
-                    color: #212529;
+                    color: #e5e5e5;
                     font-size: 0.9rem;
                 }
                 
                 .cal-event-time {
                     font-size: 0.8rem;
-                    color: #6c757d;
+                    color: #adb5bd;
                 }
                 
-                .cal-event-actions {
-                    display: flex;
-                    gap: 8px;
+                .cal-icon {
+                    font-size: 1.3rem;
                 }
                 
-                .cal-event-btn {
-                    padding: 4px 8px;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 0.75rem;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
+                /* Animations */
+                @keyframes cal-fade-in {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                 }
                 
-                .cal-event-btn-edit {
-                    background: #ffc107;
-                    color: #212529;
+                @keyframes cal-slide-up {
+                    from { 
+                        opacity: 0; 
+                        transform: translateY(30px) scale(0.95); 
+                    }
+                    to { 
+                        opacity: 1; 
+                        transform: translateY(0) scale(1); 
+                    }
                 }
                 
-                .cal-event-btn-delete {
-                    background: #dc3545;
-                    color: white;
-                }
-                
-                .cal-loading {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                    color: #6c757d;
-                }
-                
-                .cal-error {
-                    background: #f8d7da;
-                    border: 1px solid #f5c6cb;
-                    color: #721c24;
-                    padding: 12px;
-                    border-radius: 8px;
-                    margin-top: 12px;
-                    font-size: 0.9rem;
-                }
-                
-                .cal-success {
-                    background: #d4edda;
-                    border: 1px solid #c3e6cb;
-                    color: #155724;
-                    padding: 12px;
-                    border-radius: 8px;
-                    margin-top: 12px;
-                    font-size: 0.9rem;
+                @keyframes cal-pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.6; }
                 }
                 
                 /* Responsive design */
                 @media (max-width: 768px) {
+                    .cal-modal-content {
+                        width: 95%;
+                        margin: 20px;
+                    }
+                    
                     .cal-actions {
                         flex-direction: column;
                     }
                     
-                    .cal-btn {
-                        width: 100%;
-                    }
-                    
-                    .cal-timer-meta {
-                        flex-direction: column;
-                        gap: 4px;
-                    }
-                    
-                    .cal-event-item {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 8px;
+                    .cal-toggle-btn {
+                        right: 20px;
+                        top: 80px;
                     }
                 }
             `;
@@ -551,36 +574,27 @@ class CalendarIntegration {
     setupEventListeners() {
         try {
             // Authentication button
-            const authBtn = document.getElementById('cal-auth-btn');
-            if (authBtn) {
-                authBtn.addEventListener('click', () => this.handleAuth());
-            }
+            document.addEventListener('click', (e) => {
+                if (e.target.id === 'cal-auth-btn') {
+                    this.handleAuth();
+                }
+                if (e.target.id === 'cal-sync-timer-btn') {
+                    this.syncCurrentTimer();
+                }
+                if (e.target.id === 'cal-view-events-btn') {
+                    this.showRecentEvents();
+                }
+                if (e.target.id === 'cal-disconnect-btn') {
+                    this.handleDisconnect();
+                }
+            });
             
-            // Sync timer button
-            const syncBtn = document.getElementById('cal-sync-timer-btn');
-            if (syncBtn) {
-                syncBtn.addEventListener('click', () => this.syncCurrentTimer());
-            }
-            
-            // View events button
-            const viewBtn = document.getElementById('cal-view-events-btn');
-            if (viewBtn) {
-                viewBtn.addEventListener('click', () => this.showRecentEvents());
-            }
-            
-            // Create event button
-            const createBtn = document.getElementById('cal-create-event-btn');
-            if (createBtn) {
-                createBtn.addEventListener('click', () => this.createQuickEvent());
-            }
-            
-            // Auto-sync toggle
-            const autoSyncToggle = document.getElementById('cal-auto-sync-toggle');
-            if (autoSyncToggle) {
-                autoSyncToggle.addEventListener('change', (e) => {
+            // Auto-sync toggle (use event delegation)
+            document.addEventListener('change', (e) => {
+                if (e.target.id === 'cal-auto-sync-toggle') {
                     this.toggleAutoSync(e.target.checked);
-                });
-            }
+                }
+            });
             
             // Listen for timer events from existing timer system
             document.addEventListener('timerStarted', (e) => this.onTimerStarted(e.detail));
@@ -664,32 +678,35 @@ class CalendarIntegration {
     setAuthenticatedState(authenticated) {
         this.isAuthenticated = authenticated;
         
-        const authBtn = document.getElementById('cal-auth-btn');
-        const syncControls = document.getElementById('cal-sync-controls') || 
-                           document.getElementById('cal-main-controls');
+        const authSection = document.getElementById('cal-auth-section');
+        const connectedSection = document.getElementById('cal-connected-section');
         
         if (authenticated) {
             this.updateStatus('Connected', 'connected');
             
-            if (authBtn) {
-                authBtn.textContent = 'Disconnect';
-                authBtn.onclick = () => this.handleDisconnect();
+            if (authSection) {
+                authSection.style.display = 'none';
             }
             
-            if (syncControls) {
-                syncControls.style.display = 'block';
+            if (connectedSection) {
+                connectedSection.style.display = 'block';
             }
+            
+            // Auto-hide modal after connection
+            setTimeout(() => {
+                this.hideCalendarModal();
+                this.showSuccess('Google Calendar connected successfully!');
+            }, 1500);
             
         } else {
             this.updateStatus('Not Connected', 'disconnected');
             
-            if (authBtn) {
-                authBtn.textContent = 'Connect Google Calendar';
-                authBtn.onclick = () => this.handleAuth();
+            if (authSection) {
+                authSection.style.display = 'block';
             }
             
-            if (syncControls) {
-                syncControls.style.display = 'none';
+            if (connectedSection) {
+                connectedSection.style.display = 'none';
             }
         }
     }
@@ -981,6 +998,18 @@ class CalendarIntegration {
         }
     }
     
+    async handleDisconnect() {
+        try {
+            // Note: Actual disconnect would require backend endpoint
+            this.setAuthenticatedState(false);
+            this.stopAutoSync();
+            this.hideCalendarModal();
+            this.showSuccess('Disconnected from Google Calendar');
+        } catch (error) {
+            console.error('Disconnect error:', error);
+        }
+    }
+    
     showError(message) {
         this.showMessage(message, 'error');
     }
@@ -991,44 +1020,61 @@ class CalendarIntegration {
     
     showMessage(message, type = 'info') {
         try {
-            // Remove existing messages
-            const existingMessages = document.querySelectorAll('.cal-error, .cal-success');
-            existingMessages.forEach(msg => msg.remove());
+            // Create toast notification instead of modal message
+            const toast = document.createElement('div');
+            toast.className = `cal-toast cal-toast-${type}`;
+            toast.textContent = message;
             
-            // Create message element
-            const messageEl = document.createElement('div');
-            messageEl.className = `cal-${type}`;
-            messageEl.textContent = message;
+            // Style the toast
+            Object.assign(toast.style, {
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                color: 'white',
+                fontWeight: '500',
+                fontSize: '0.9rem',
+                zIndex: '10001',
+                opacity: '0',
+                transform: 'translateX(100%)',
+                transition: 'all 0.3s ease',
+                maxWidth: '300px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+            });
             
-            // Find container to show message
-            const container = document.querySelector('.cal-integration-section') ||
-                            document.querySelector('.cal-standalone-section') ||
-                            document.querySelector('.cal-controls');
-            
-            if (container) {
-                container.appendChild(messageEl);
-                
-                // Auto-remove after 5 seconds
-                setTimeout(() => {
-                    if (messageEl.parentNode) {
-                        messageEl.parentNode.removeChild(messageEl);
-                    }
-                }, 5000);
+            // Set background color based on type
+            if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            } else if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
             }
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 4000);
             
         } catch (error) {
             console.error('Message display error:', error);
-        }
-    }
-    
-    async handleDisconnect() {
-        try {
-            // Note: Actual disconnect would require backend endpoint
-            this.setAuthenticatedState(false);
-            this.stopAutoSync();
-            this.showSuccess('Disconnected from Google Calendar');
-        } catch (error) {
-            console.error('Disconnect error:', error);
+            // Fallback to console
+            console.log(`Calendar ${type}: ${message}`);
         }
     }
     
