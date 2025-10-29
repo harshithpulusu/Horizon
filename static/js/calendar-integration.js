@@ -213,8 +213,9 @@ class CalendarIntegration {
                 /* Calendar Integration Styles - Modal Design */
                 .cal-toggle-btn {
                     position: fixed;
-                    top: 20px;
-                    right: 80px;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
                     width: 45px;
                     height: 45px;
                     border-radius: 50%;
