@@ -1215,6 +1215,7 @@
                     <button class="quick-btn" onclick="sendQuickCommand('Help')">❓ Help</button>
                     <button class="quick-btn" onclick="sendQuickCommand('What are your capabilities?')">🚀 Features</button>
                     <button class="quick-btn" onclick="toggleShortcutsModal()" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
+                    <button class="quick-btn" onclick="if(window.calendarIntegration) window.calendarIntegration.showCalendarModal();" title="Calendar Integration">📅 Calendar</button>
                 </div>
             </div>
 
@@ -1302,11 +1303,9 @@
     <script src="/static/modules/context-manager.js"></script>
     <script src="/static/modules/multimodal-integration.js"></script>
     
-    <!-- Smart Suggestions & Batch Operations (Optional) -->
+    <!-- Smart Suggestions (Optional) -->
     <link rel="stylesheet" href="/static/modules/smart-suggestions-styles.css">
-    <link rel="stylesheet" href="/static/modules/batch-operations-styles.css">
     <script src="/static/modules/smart-suggestions.js"></script>
-    <script src="/static/modules/batch-manager.js"></script>
     <script src="/static/modules/new-features-integration.js"></script>
     
     <!-- Calendar & Notes Integration (Optional) -->

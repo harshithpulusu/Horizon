@@ -1,6 +1,6 @@
 /**
  * New Features Integration Layer
- * Safe wrapper that connects smart suggestions and batch operations with existing system.
+ * Safe wrapper that connects smart suggestions with existing system.
  * Uses feature detection and automatic fallbacks to prevent breaking changes.
  */
 
@@ -8,11 +8,6 @@ class NewFeaturesIntegration {
     constructor() {
         this.features = {
             smartSuggestions: {
-                enabled: false,
-                manager: null,
-                available: false
-            },
-            batchOperations: {
                 enabled: false,
                 manager: null,
                 available: false
@@ -77,21 +72,6 @@ class NewFeaturesIntegration {
             console.warn('⚠️ Smart Suggestions API not available:', error.message);
         }
         
-        // Check Batch Operations availability
-        try {
-            const batchResponse = await fetch('/api/batch/health', {
-                method: 'GET',
-                timeout: 5000
-            });
-            
-            if (batchResponse.ok) {
-                this.features.batchOperations.available = true;
-                console.log('✅ Batch Operations API available');
-            }
-        } catch (error) {
-            console.warn('⚠️ Batch Operations API not available:', error.message);
-        }
-        
         // Check if required DOM elements exist
         const hasInput = document.querySelector('#userInput, #user-input, .chat-input, input[type=\"text\"], textarea');
         if (!hasInput) {
@@ -100,8 +80,7 @@ class NewFeaturesIntegration {
         }
         
         console.log('Feature availability:', {
-            smartSuggestions: this.features.smartSuggestions.available,
-            batchOperations: this.features.batchOperations.available
+            smartSuggestions: this.features.smartSuggestions.available
         });
     }
     
@@ -125,23 +104,6 @@ class NewFeaturesIntegration {
             } catch (error) {
                 console.warn('⚠️ Smart Suggestions initialization failed:', error);
                 this.features.smartSuggestions.available = false;
-            }
-        }
-        
-        // Initialize Batch Operations
-        if (this.features.batchOperations.available) {
-            try {
-                // Check if manager already exists (from separate script)
-                if (window.batchOperationsManager) {
-                    this.features.batchOperations.manager = window.batchOperationsManager;
-                    this.features.batchOperations.enabled = true;
-                    console.log('✅ Batch Operations manager found and connected');
-                } else {
-                    console.log('ℹ️ Batch Operations manager will be loaded separately');
-                }
-            } catch (error) {
-                console.warn('⚠️ Batch Operations initialization failed:', error);
-                this.features.batchOperations.available = false;
             }
         }
     }
@@ -347,18 +309,6 @@ class NewFeaturesIntegration {
                 }
             }
             
-            if (errorSource.includes('batch-operations')) {
-                console.warn('Batch Operations error detected, disabling feature');
-                this.features.batchOperations.enabled = false;
-                this.features.batchOperations.manager = null;
-                
-                // Hide batch panel if visible
-                const batchPanel = document.querySelector('.batch-operations-panel');
-                if (batchPanel) {
-                    batchPanel.style.display = 'none';
-                }
-            }
-            
         } catch (error) {
             console.error('Error in error handler:', error);
         }
@@ -379,19 +329,6 @@ class NewFeaturesIntegration {
                 } catch (error) {
                     console.warn('Smart Suggestions health check failed:', error);
                     this.features.smartSuggestions.enabled = false;
-                }
-            }
-            
-            // Check Batch Operations health
-            if (this.features.batchOperations.enabled) {
-                try {
-                    const response = await fetch('/api/batch/health', { timeout: 5000 });
-                    if (!response.ok) {
-                        throw new Error(`Health check failed: ${response.status}`);
-                    }
-                } catch (error) {
-                    console.warn('Batch Operations health check failed:', error);
-                    this.features.batchOperations.enabled = false;
                 }
             }
             
@@ -418,11 +355,9 @@ class NewFeaturesIntegration {
         // Hide all feature UI elements
         try {
             const suggestionContainer = document.querySelector('.smart-suggestions-container');
-            const batchPanel = document.querySelector('.batch-operations-panel');
             const suggestionToggle = document.querySelector('.smart-suggestions-toggle');
-            const batchToggle = document.querySelector('.batch-operations-toggle');
             
-            [suggestionContainer, batchPanel, suggestionToggle, batchToggle].forEach(element => {
+            [suggestionContainer, suggestionToggle].forEach(element => {
                 if (element) {
                     element.style.display = 'none';
                 }
@@ -446,11 +381,6 @@ class NewFeaturesIntegration {
                     available: this.features.smartSuggestions.available,
                     enabled: this.features.smartSuggestions.enabled,
                     hasManager: !!this.features.smartSuggestions.manager
-                },
-                batchOperations: {
-                    available: this.features.batchOperations.available,
-                    enabled: this.features.batchOperations.enabled,
-                    hasManager: !!this.features.batchOperations.manager
                 }
             }
         };

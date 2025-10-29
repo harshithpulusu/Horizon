@@ -68,45 +68,31 @@ class CalendarIntegration {
     
     createCalendarToggle() {
         try {
-            // Find the chat input container
-            const chatInputContainer = document.querySelector('.chat-input-container') ||
-                                     document.querySelector('.input-container') ||
-                                     document.querySelector('.message-input-container') ||
-                                     document.querySelector('.chat-input');
+            // Find the voice controls area (where microphone buttons are)
+            const voiceControls = document.querySelector('.voice-controls');
             
-            if (!chatInputContainer) {
-                console.warn('Chat input container not found, using body');
-                // Fallback to body with different positioning
-                const toggleBtn = document.createElement('button');
-                toggleBtn.className = 'cal-toggle-btn';
-                toggleBtn.id = 'cal-toggle-btn';
-                toggleBtn.innerHTML = '📅';
-                toggleBtn.title = 'Calendar Integration';
-                toggleBtn.style.position = 'fixed';
-                toggleBtn.style.bottom = '20px';
-                toggleBtn.style.right = '20px';
-                
-                toggleBtn.addEventListener('click', () => this.showCalendarModal());
-                document.body.appendChild(toggleBtn);
+            if (!voiceControls) {
+                console.warn('Voice controls not found');
                 return;
             }
             
-            // Make sure the container has relative positioning
-            if (getComputedStyle(chatInputContainer).position === 'static') {
-                chatInputContainer.style.position = 'relative';
-            }
+            // Create small calendar sync button for the input area
+            const syncBtn = document.createElement('button');
+            syncBtn.className = 'voice-btn secondary cal-input-toggle';
+            syncBtn.id = 'cal-input-toggle';
+            syncBtn.innerHTML = '📅';
+            syncBtn.title = 'Quick Calendar Sync';
             
-            // Create toggle button for chat input area
-            const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'cal-toggle-btn';
-            toggleBtn.id = 'cal-toggle-btn';
-            toggleBtn.innerHTML = '📅';
-            toggleBtn.title = 'Calendar Integration';
+            syncBtn.addEventListener('click', () => {
+                if (this.isAuthenticated) {
+                    this.syncCurrentTimer();
+                } else {
+                    this.showCalendarModal();
+                }
+            });
             
-            toggleBtn.addEventListener('click', () => this.showCalendarModal());
-            
-            // Add to chat input container
-            chatInputContainer.appendChild(toggleBtn);
+            // Add to voice controls area
+            voiceControls.appendChild(syncBtn);
             
         } catch (error) {
             console.error('Calendar toggle creation error:', error);
@@ -239,27 +225,17 @@ class CalendarIntegration {
             styles.id = 'cal-integration-styles';
             styles.textContent = `
                 /* Calendar Integration Styles - Modal Design */
-                .cal-toggle-btn {
-                    position: absolute;
-                    top: 50%;
-                    right: 60px;
-                    transform: translateY(-50%);
-                    width: 35px;
-                    height: 35px;
-                    border-radius: 50%;
-                    border: none;
-                    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-                    color: white;
-                    font-size: 1.1rem;
-                    cursor: pointer;
-                    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
-                    z-index: 999;
-                    transition: all 0.3s ease;
+                .cal-input-toggle {
+                    /* Uses existing voice-btn styles */
+                    background: rgba(102, 126, 234, 0.2) !important;
+                    border: 1px solid rgba(102, 126, 234, 0.3) !important;
+                    color: #667eea !important;
                 }
                 
-                .cal-toggle-btn:hover {
-                    transform: scale(1.1);
-                    box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+                .cal-input-toggle:hover {
+                    background: rgba(102, 126, 234, 0.3) !important;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
                 }
                 
                 .cal-modal-overlay {
@@ -584,11 +560,6 @@ class CalendarIntegration {
                     
                     .cal-actions {
                         flex-direction: column;
-                    }
-                    
-                    .cal-toggle-btn {
-                        right: 20px;
-                        top: 80px;
                     }
                 }
             `;
