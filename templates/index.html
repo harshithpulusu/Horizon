@@ -172,10 +172,10 @@
         /* Sidebar Styles */
         .sidebar {
             width: 320px;
-            background: rgba(15, 15, 15, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(15px);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: -2px 0 20px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid var(--border-primary);
+            box-shadow: -2px 0 20px var(--shadow-primary);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -187,11 +187,11 @@
         }
 
         .sidebar-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-accent);
             color: white;
             padding: 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-primary);
             position: sticky;
             top: 0;
             z-index: 1001;
@@ -2282,6 +2282,141 @@ ${summary.performanceMetrics.memory ? `• Memory Usage: ${Math.round(summary.pe
                 }
             }, 5000);
         }
+
+        // Theme Management System
+        class ThemeManager {
+            constructor() {
+                this.currentTheme = 'dark';
+                this.isSystemTheme = true;
+                this.themes = {
+                    dark: { name: 'Dark', icon: '🌙' },
+                    light: { name: 'Light', icon: '☀️' },
+                    ocean: { name: 'Ocean', icon: '🌊' },
+                    forest: { name: 'Forest', icon: '🌲' },
+                    sunset: { name: 'Sunset', icon: '🌅' },
+                    purple: { name: 'Purple', icon: '💜' }
+                };
+                
+                this.init();
+            }
+
+            init() {
+                // Check for saved theme preference
+                const savedTheme = localStorage.getItem('horizon-theme');
+                const savedSystemPreference = localStorage.getItem('horizon-use-system-theme');
+                
+                this.isSystemTheme = savedSystemPreference !== 'false';
+                
+                if (this.isSystemTheme) {
+                    this.detectSystemTheme();
+                } else if (savedTheme && this.themes[savedTheme]) {
+                    this.currentTheme = savedTheme;
+                }
+                
+                this.applyTheme(this.currentTheme);
+                this.setupEventListeners();
+                this.updateUI();
+                
+                // Listen for system theme changes
+                if (window.matchMedia) {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        if (this.isSystemTheme) {
+                            this.detectSystemTheme();
+                            this.applyTheme(this.currentTheme);
+                            this.updateUI();
+                        }
+                    });
+                }
+            }
+
+            detectSystemTheme() {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    this.currentTheme = 'dark';
+                } else {
+                    this.currentTheme = 'light';
+                }
+            }
+
+            applyTheme(themeName) {
+                if (!this.themes[themeName]) return;
+                
+                document.documentElement.setAttribute('data-theme', themeName);
+                this.currentTheme = themeName;
+                
+                // Save preference (only if not using system theme)
+                if (!this.isSystemTheme) {
+                    localStorage.setItem('horizon-theme', themeName);
+                }
+            }
+
+            toggleDarkLight() {
+                // Switch between dark and light themes only
+                const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+                this.isSystemTheme = false;
+                localStorage.setItem('horizon-use-system-theme', 'false');
+                this.applyTheme(newTheme);
+                this.updateUI();
+            }
+
+            setTheme(themeName) {
+                if (!this.themes[themeName]) return;
+                
+                this.isSystemTheme = false;
+                localStorage.setItem('horizon-use-system-theme', 'false');
+                this.applyTheme(themeName);
+                this.updateUI();
+            }
+
+            updateUI() {
+                const themeToggle = document.getElementById('themeToggle');
+                const themeIcon = document.getElementById('themeIcon');
+                const themeSelect = document.getElementById('themeSelect');
+                
+                if (themeIcon) {
+                    themeIcon.textContent = this.themes[this.currentTheme].icon;
+                }
+                
+                if (themeSelect) {
+                    themeSelect.value = this.currentTheme;
+                }
+                
+                if (themeToggle) {
+                    const isDark = this.currentTheme === 'dark';
+                    themeToggle.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+                }
+            }
+
+            setupEventListeners() {
+                const themeToggle = document.getElementById('themeToggle');
+                const themeSelect = document.getElementById('themeSelect');
+                
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', () => {
+                        this.toggleDarkLight();
+                    });
+                }
+                
+                if (themeSelect) {
+                    themeSelect.addEventListener('change', (e) => {
+                        this.setTheme(e.target.value);
+                    });
+                }
+            }
+
+            getStatus() {
+                return {
+                    currentTheme: this.currentTheme,
+                    isSystemTheme: this.isSystemTheme,
+                    availableThemes: Object.keys(this.themes)
+                };
+            }
+        }
+
+        // Initialize Theme Manager
+        const themeManager = new ThemeManager();
+        
+        // Make it globally accessible for debugging
+        window.themeManager = themeManager;
     </script>
 </body>
 </html>
