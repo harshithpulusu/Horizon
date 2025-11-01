@@ -1615,9 +1615,14 @@
         
         // Initialize theme manager when DOM is loaded
         let themeManager;
-        document.addEventListener('DOMContentLoaded', () => {
+        // Initialize theme manager immediately if DOM is ready, otherwise wait for DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                themeManager = new ThemeManager();
+            });
+        } else {
             themeManager = new ThemeManager();
-        });
+        }
 
         // Element references (must be available before attaching listeners)
         const chatMessages = document.getElementById('chatMessages');
