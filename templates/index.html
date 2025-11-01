@@ -1618,7 +1618,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             themeManager = new ThemeManager();
         });
-        
+
+        // Element references (must be available before attaching listeners)
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const conversationCount = document.getElementById('conversationCount');
+        const responseTimeEl = document.getElementById('responseTime');
+        const personalitySelect = document.getElementById('personalitySelect');
+        const sidebar = document.getElementById('sidebar');
+
         let conversationCounter = 0;
         let activeTimers = [];
         let activeReminders = [];
@@ -2364,15 +2374,7 @@ ${summary.performanceMetrics.memory ? `• Memory Usage: ${Math.round(summary.pe
             }, 5000);
         }
 
-        // JavaScript variable declarations
-        const chatMessages = document.getElementById('chatMessages');
-        const userInput = document.getElementById('userInput');
-        const sendButton = document.getElementById('sendButton');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const conversationCount = document.getElementById('conversationCount');
-        const responseTimeEl = document.getElementById('responseTime');
-        const personalitySelect = document.getElementById('personalitySelect');
-        const sidebar = document.getElementById('sidebar');
+        
     </script>
 </body>
 </html>
