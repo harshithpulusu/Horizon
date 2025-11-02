@@ -549,6 +549,35 @@
             color: #e5e5e5;
         }
 
+        /* START: Theme Status Badge Styles */
+        .theme-status-badge {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-accent);
+            border-radius: 15px;
+            padding: 5px 12px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            color: var(--text-accent);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px var(--shadow-accent);
+        }
+
+        .theme-badge-icon {
+            font-size: 14px;
+        }
+
+        .theme-badge-text {
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        /* END: Theme Status Badge Styles */
+
         .status-bar {
             background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
             color: var(--text-primary);
@@ -650,6 +679,27 @@
             transform: scale(1.05);
             box-shadow: 0 4px 12px var(--shadow-accent);
         }
+
+        /* START: Theme Preview on Hover */
+        .theme-toggle-btn:hover::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: var(--border-accent);
+            opacity: 0.3;
+            z-index: -1;
+            animation: themePreviewPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes themePreviewPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.6; }
+        }
+        /* END: Theme Preview on Hover */
 
         .theme-select {
             padding: 8px 12px;
@@ -1588,7 +1638,79 @@
                 const nextIndex = (this.themes.indexOf(this.currentTheme) + 1) % this.themes.length;
                 const nextTheme = this.themes[nextIndex];
                 this.themeToggleBtn.title = `Switch to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)} Theme`;
+                
+                // START: Update Theme Status Badge
+                this.updateThemeStatusBadge();
+                // END: Update Theme Status Badge
             }
+            
+            /* START: Theme Status Badge Update */
+            updateThemeStatusBadge() {
+                const badge = document.getElementById('themeStatusBadge');
+                const badgeIcon = badge?.querySelector('.theme-badge-icon');
+                const badgeText = badge?.querySelector('.theme-badge-text');
+                
+                if (badgeIcon && badgeText) {
+                    const icons = {
+                        dark: '🌙',
+                        ocean: '🌊', 
+                        forest: '🌲',
+                        sunset: '🌅',
+                        purple: '💜'
+                    };
+                    badgeIcon.textContent = icons[this.currentTheme] || '🌙';
+                    badgeText.textContent = this.currentTheme.charAt(0).toUpperCase() + this.currentTheme.slice(1);
+                }
+            }
+            /* END: Theme Status Badge Update */
+            
+            /* START: Theme Change Sound Effects */
+            playThemeChangeSound() {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Different frequencies for each theme
+                    const themeFrequencies = {
+                        dark: [220, 330],      // A3, E4 - deep, mysterious
+                        ocean: [262, 392],     // C4, G4 - flowing, calm
+                        forest: [196, 294],    // G3, D4 - natural, earthy
+                        sunset: [330, 494],    // E4, B4 - warm, uplifting
+                        purple: [247, 370]     // B3, F#4 - mystical, elegant
+                    };
+                    
+                    const frequencies = themeFrequencies[this.currentTheme] || themeFrequencies.dark;
+                    
+                    // Create oscillators for a pleasant chord
+                    const osc1 = audioContext.createOscillator();
+                    const osc2 = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    osc1.frequency.setValueAtTime(frequencies[0], audioContext.currentTime);
+                    osc2.frequency.setValueAtTime(frequencies[1], audioContext.currentTime);
+                    
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    
+                    osc1.connect(gainNode);
+                    osc2.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Gentle envelope
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    osc1.start(audioContext.currentTime);
+                    osc2.start(audioContext.currentTime);
+                    osc1.stop(audioContext.currentTime + 0.3);
+                    osc2.stop(audioContext.currentTime + 0.3);
+                    
+                } catch (error) {
+                    // Silently fail if audio context not supported
+                    console.log('Theme sound not supported in this browser');
+                }
+            }
+            /* END: Theme Change Sound Effects */
         }
         
         // Initialize theme manager when DOM is loaded
