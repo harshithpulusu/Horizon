@@ -1612,6 +1612,9 @@
             setTheme(theme) {
                 this.applyTheme(theme);
                 this.updateControls();
+                // START: Play Theme Change Sound
+                this.playThemeChangeSound();
+                // END: Play Theme Change Sound
             }
             
             cycleTheme() {
