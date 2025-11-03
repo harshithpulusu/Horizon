@@ -1623,6 +1623,14 @@
                 this.setTheme(this.themes[nextIndex]);
             }
             
+            /* START: Backward Theme Cycling */
+            cycleThemeBackward() {
+                const currentIndex = this.themes.indexOf(this.currentTheme);
+                const prevIndex = (currentIndex - 1 + this.themes.length) % this.themes.length;
+                this.setTheme(this.themes[prevIndex]);
+            }
+            /* END: Backward Theme Cycling */
+            
             updateControls() {
                 // Update toggle button icon based on theme
                 const icons = {
@@ -2047,6 +2055,22 @@
                 e.preventDefault();
                 showAnalyticsDetails();
             }
+            // START: Keyboard Theme Switching
+            // Ctrl+Shift+T: Cycle theme forward
+            else if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+                e.preventDefault();
+                if (themeManager) {
+                    themeManager.cycleTheme();
+                }
+            }
+            // Ctrl+Shift+R: Cycle theme backward
+            else if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                if (themeManager) {
+                    themeManager.cycleThemeBackward();
+                }
+            }
+            // END: Keyboard Theme Switching
             // Escape: Close modals
             else if (e.key === 'Escape') {
                 const modal = document.getElementById('shortcutsModal');
