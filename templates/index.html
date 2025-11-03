@@ -1351,6 +1351,16 @@
                             <span class="analytics-label">A/B Variant:</span>
                             <span class="analytics-value" id="abVariant">A</span>
                         </div>
+                        <!-- START: Theme Usage Analytics Display -->
+                        <div class="analytics-row">
+                            <span class="analytics-label">Most Used Theme:</span>
+                            <span class="analytics-value" id="mostUsedTheme">Dark</span>
+                        </div>
+                        <div class="analytics-row">
+                            <span class="analytics-label">Theme Switches Today:</span>
+                            <span class="analytics-value" id="themeSwitchCount">0</span>
+                        </div>
+                        <!-- END: Theme Usage Analytics Display -->
                     </div>
                     <div class="analytics-actions">
                         <button class="analytics-btn" onclick="showAnalyticsDetails()" title="View Detailed Analytics">
@@ -1607,6 +1617,9 @@
                 document.documentElement.setAttribute('data-theme', theme);
                 this.currentTheme = theme;
                 this.saveTheme(theme);
+                // START: Track Theme Usage
+                this.trackThemeUsage(theme);
+                // END: Track Theme Usage
             }
             
             setTheme(theme) {
@@ -1722,6 +1735,61 @@
                 }
             }
             /* END: Theme Change Sound Effects */
+            
+            /* START: Theme Usage Analytics */
+            trackThemeUsage(theme) {
+                // Get today's date as key
+                const today = new Date().toDateString();
+                
+                // Get existing usage data
+                const usageData = JSON.parse(localStorage.getItem('horizonThemeUsage') || '{}');
+                const dailyData = usageData[today] || {};
+                const totalData = usageData.total || {};
+                
+                // Update counters
+                dailyData[theme] = (dailyData[theme] || 0) + 1;
+                totalData[theme] = (totalData[theme] || 0) + 1;
+                
+                // Save updated data
+                usageData[today] = dailyData;
+                usageData.total = totalData;
+                localStorage.setItem('horizonThemeUsage', JSON.stringify(usageData));
+                
+                // Update analytics display if available
+                this.updateThemeAnalytics();
+            }
+            
+            updateThemeAnalytics() {
+                const today = new Date().toDateString();
+                const usageData = JSON.parse(localStorage.getItem('horizonThemeUsage') || '{}');
+                const dailyData = usageData[today] || {};
+                const totalData = usageData.total || {};
+                
+                // Find most used theme
+                const mostUsedTheme = Object.keys(totalData).reduce((a, b) => 
+                    totalData[a] > totalData[b] ? a : b, 'dark');
+                
+                // Count today's switches
+                const todaySwitches = Object.values(dailyData).reduce((sum, count) => sum + count, 0);
+                
+                // Update analytics display
+                const mostUsedEl = document.getElementById('mostUsedTheme');
+                const switchCountEl = document.getElementById('themeSwitchCount');
+                
+                if (mostUsedEl) mostUsedEl.textContent = mostUsedTheme.charAt(0).toUpperCase() + mostUsedTheme.slice(1);
+                if (switchCountEl) switchCountEl.textContent = todaySwitches;
+            }
+            
+            getThemeAnalytics() {
+                const today = new Date().toDateString();
+                const usageData = JSON.parse(localStorage.getItem('horizonThemeUsage') || '{}');
+                return {
+                    today: usageData[today] || {},
+                    total: usageData.total || {},
+                    dailySwitches: Object.values(usageData[today] || {}).reduce((sum, count) => sum + count, 0)
+                };
+            }
+            /* END: Theme Usage Analytics */
         }
         
         // Initialize theme manager when DOM is loaded
