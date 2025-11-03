@@ -722,6 +722,67 @@
             color: var(--text-primary);
         }
 
+        /* START: Theme Color Animation Preview */
+        .theme-select option {
+            position: relative;
+            padding-left: 35px !important;
+        }
+
+        .theme-select option[value="dark"]::before {
+            content: '●●●';
+            position: absolute;
+            left: 8px;
+            color: #667eea;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .theme-select option[value="ocean"]::before {
+            content: '●●●';
+            position: absolute;
+            left: 8px;
+            color: #0ea5e9;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .theme-select option[value="forest"]::before {
+            content: '●●●';
+            position: absolute;
+            left: 8px;
+            color: #059669;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .theme-select option[value="sunset"]::before {
+            content: '●●●';
+            position: absolute;
+            left: 8px;
+            color: #ea580c;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .theme-select option[value="purple"]::before {
+            content: '●●●';
+            position: absolute;
+            left: 8px;
+            color: #8b5cf6;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .theme-select:focus option:hover::before {
+            animation: colorPreviewPulse 0.6s ease-in-out;
+        }
+
+        @keyframes colorPreviewPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+        /* END: Theme Color Animation Preview */
+
         .quick-commands {
             display: flex;
             gap: 10px;
