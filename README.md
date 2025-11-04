@@ -34,6 +34,17 @@ An advanced voice-activated AI assistant built with Python Flask and JavaScript,
 - **Export/Import**: Conversation history management
 - **Analytics**: Usage statistics and insights
 
+### 🎨 Theme & UX Enhancements
+- **5 Beautiful Themes**: Dark, Ocean, Forest, Sunset, Purple with smooth transitions
+- **Theme Status Badge**: Live display of current theme in header
+- **Keyboard Shortcuts**: 
+  - `Ctrl + Shift + T` - Cycle themes forward
+  - `Ctrl + Shift + R` - Cycle themes backward
+- **Sound Effects**: Unique musical chords for each theme using Web Audio API
+- **Visual Previews**: Color-coded theme options with hover animations
+- **Usage Analytics**: Track theme preferences and switching patterns
+- **Persistent Preferences**: Themes saved across browser sessions
+
 ## 🚀 Quick Start
 
 ### Prerequisites
