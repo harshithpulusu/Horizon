@@ -1285,6 +1285,130 @@
             0%, 100% { background: rgba(255, 255, 255, 0.2); }
             50% { background: rgba(16, 185, 129, 0.3); }
         }
+
+        /* START: Split-screen Mode CSS */
+        .split-screen-toggle {
+            background: var(--bg-glass);
+            border: 2px solid var(--border-accent);
+            border-radius: 12px;
+            color: var(--text-accent);
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        .split-screen-toggle:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow-accent);
+        }
+
+        .split-screen-toggle.active {
+            background: var(--bg-accent);
+            color: white;
+        }
+
+        .split-screen-container {
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .split-screen-container.single-mode {
+            gap: 0;
+        }
+
+        .split-screen-container.split-mode .main-chat {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .split-screen-container.split-mode .main-chat:last-of-type {
+            margin-right: 340px;
+            margin-left: 10px;
+        }
+
+        .split-screen-panel {
+            display: none;
+            flex-direction: column;
+            background: var(--bg-tertiary);
+            backdrop-filter: blur(20px);
+            margin: 20px 10px 20px 0;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px var(--shadow-primary);
+            border: 1px solid var(--border-primary);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .split-mode .split-screen-panel {
+            display: flex;
+            flex: 1;
+        }
+
+        .split-panel-header {
+            background: var(--bg-accent);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .split-panel-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(15, 15, 15, 0.8);
+        }
+
+        .comparison-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive split-screen */
+        @media (max-width: 1200px) {
+            .split-screen-container.split-mode {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .split-screen-container.split-mode .main-chat,
+            .split-screen-container.split-mode .main-chat:last-of-type {
+                margin: 10px 340px 10px 20px;
+                flex: none;
+                height: calc(50vh - 20px);
+            }
+            
+            .split-screen-panel {
+                margin: 0 340px 10px 20px;
+                height: calc(50vh - 20px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .split-screen-toggle {
+                display: none; /* Hide on mobile for simplicity */
+            }
+        }
+        /* END: Split-screen Mode CSS */
     </style>
 </head>
 <body>
@@ -1438,7 +1562,9 @@
             </div>
         </div>
 
-        <div class="main-chat">
+        <!-- START: Split-screen Container -->
+        <div class="split-screen-container single-mode" id="splitScreenContainer">
+            <div class="main-chat" id="mainChatPanel">
             <!-- Header -->
             <div class="header">
                 <div class="feature-indicator feature-indicator-left">
@@ -1545,6 +1671,12 @@
                     <button class="quick-btn" onclick="sendQuickCommand('What are your capabilities?')">🚀 Features</button>
                     <button class="quick-btn" onclick="toggleShortcutsModal()" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
                     <button class="quick-btn" onclick="if(window.calendarIntegration) window.calendarIntegration.showCalendarModal();" title="Calendar Integration">📅 Calendar</button>
+                    <!-- START: Split-screen Toggle Button -->
+                    <button class="split-screen-toggle" id="splitScreenToggle" onclick="toggleSplitScreen()" title="Toggle Split-screen Mode">
+                        <span id="splitScreenIcon">⚡</span>
+                        <span>Split</span>
+                    </button>
+                    <!-- END: Split-screen Toggle Button -->
                 </div>
             </div>
 
@@ -1632,6 +1764,28 @@
                 </div>
             </div>
         </div>
+
+        <!-- Split-screen Panel -->
+        <div class="split-screen-panel" id="splitScreenPanel">
+            <div class="split-panel-header">
+                <span>🔄 Comparison Panel</span>
+                <div class="comparison-badge">Panel B</div>
+            </div>
+            <div class="split-panel-messages" id="splitPanelMessages">
+                <div class="message ai">
+                    <div class="message-avatar">H</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-content">
+                            👋 <strong>Split-screen mode activated!</strong><br><br>
+                            This panel will show alternative responses for comparison. Send a message to see different AI perspectives side-by-side.
+                        </div>
+                        <div class="message-metadata">🔄 Split Panel Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        <!-- END: Split-screen Container -->
     </div>
 
     <script src="/static/analytics-session-manager.js"></script>
