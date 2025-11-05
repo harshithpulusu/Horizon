@@ -1409,6 +1409,369 @@
             }
         }
         /* END: Split-screen Mode CSS */
+        
+        /* START: Mini-mode Floating Window Styles */
+        .mini-mode-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(2px);
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .mini-mode-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .mini-window {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            width: 320px;
+            height: 450px;
+            background: var(--bg-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            display: none;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            resize: both;
+            min-width: 280px;
+            min-height: 350px;
+            max-width: 600px;
+            max-height: 80vh;
+        }
+        
+        .mini-window.active {
+            display: flex;
+            flex-direction: column;
+            animation: miniWindowSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mini-window.minimized {
+            height: 40px !important;
+            resize: none;
+        }
+        
+        .mini-window.dragging {
+            user-select: none;
+            cursor: grabbing;
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        @keyframes miniWindowSlideIn {
+            from {
+                transform: translateX(100%) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .mini-header {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+            color: white;
+            padding: 8px 12px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 10px 10px 0 0;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .mini-header:active {
+            cursor: grabbing;
+        }
+        
+        .mini-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 
+                10px 0 rgba(255, 255, 255, 0.8),
+                20px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .mini-title {
+            flex: 1;
+            text-align: center;
+            margin: 0 30px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .mini-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .mini-control-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .mini-minimize {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .mini-minimize:hover {
+            background: #ffb300;
+            transform: scale(1.1);
+        }
+        
+        .mini-close {
+            background: #f44336;
+            color: white;
+        }
+        
+        .mini-close:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        
+        .mini-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .mini-chat-area {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+            scroll-behavior: smooth;
+        }
+        
+        .mini-chat-area::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .mini-chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .mini-chat-area::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        
+        .mini-message {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        .mini-message.user {
+            background: var(--accent-color);
+            color: white;
+            margin-left: 20px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .mini-message.ai {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            margin-right: 20px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .mini-input-area {
+            padding: 8px;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .mini-input-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+        }
+        
+        .mini-input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-color);
+            font-size: 12px;
+            resize: none;
+            min-height: 24px;
+            max-height: 60px;
+            line-height: 1.3;
+            transition: border-color 0.2s ease;
+        }
+        
+        .mini-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+        }
+        
+        .mini-send-btn {
+            padding: 6px 10px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-width: 40px;
+        }
+        
+        .mini-send-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        
+        .mini-send-btn:active {
+            transform: translateY(0);
+        }
+        
+        .mini-send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .mini-status-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+        
+        .mini-status-indicator.thinking {
+            background: #ff9800;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .mini-resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, transparent 50%, var(--accent-color) 50%);
+            cursor: se-resize;
+            border-radius: 0 0 10px 0;
+        }
+        
+        .mini-mode-toggle {
+            position: relative;
+            background: linear-gradient(135deg, #9c27b0, #673ab7);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        
+        .mini-mode-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .mini-mode-toggle:hover::before {
+            left: 100%;
+        }
+        
+        .mini-mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        }
+        
+        .mini-mode-toggle.active {
+            background: linear-gradient(135deg, #f44336, #e91e63);
+        }
+        
+        .mini-mode-toggle.active:hover {
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+        
+        /* Responsive mini-mode */
+        @media (max-width: 768px) {
+            .mini-window {
+                width: calc(100vw - 40px);
+                height: calc(100vh - 80px);
+                top: 40px;
+                left: 20px;
+                right: 20px;
+                max-width: none;
+                border-radius: 8px;
+            }
+            
+            .mini-window.minimized {
+                height: 50px !important;
+                width: 200px !important;
+                right: 20px;
+                left: auto;
+            }
+        }
+        /* END: Mini-mode Floating Window Styles */
     </style>
 </head>
 <body>
@@ -1677,6 +2040,13 @@
                         <span>Split</span>
                     </button>
                     <!-- END: Split-screen Toggle Button -->
+                    
+                    <!-- START: Mini-mode Toggle Button -->
+                    <button class="mini-mode-toggle" onclick="toggleMiniMode()" title="Toggle Mini-mode">
+                        <span id="miniModeIcon">🪟</span>
+                        <span>Mini</span>
+                    </button>
+                    <!-- END: Mini-mode Toggle Button -->
                 </div>
             </div>
 
@@ -1786,6 +2156,38 @@
         </div>
         </div>
         <!-- END: Split-screen Container -->
+        
+        <!-- START: Mini-mode Floating Window -->
+        <div class="mini-mode-overlay" id="miniModeOverlay"></div>
+        <div class="mini-window" id="miniWindow">
+            <div class="mini-header" id="miniHeader">
+                <div class="mini-title">Horizon Mini</div>
+                <div class="mini-controls">
+                    <button class="mini-control-btn mini-minimize" onclick="minimizeMiniWindow()" title="Minimize">
+                        −
+                    </button>
+                    <button class="mini-control-btn mini-close" onclick="closeMiniMode()" title="Close">
+                        ×
+                    </button>
+                </div>
+                <div class="mini-status-indicator" id="miniStatusIndicator"></div>
+            </div>
+            <div class="mini-content">
+                <div class="mini-chat-area" id="miniChatArea">
+                    <!-- Mini chat messages will be dynamically added here -->
+                </div>
+                <div class="mini-input-area">
+                    <div class="mini-input-wrapper">
+                        <textarea class="mini-input" id="miniInput" placeholder="Ask me anything..." rows="1"></textarea>
+                        <button class="mini-send-btn" id="miniSendBtn" onclick="sendMiniMessage()">
+                            💬
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mini-resize-handle"></div>
+        </div>
+        <!-- END: Mini-mode Floating Window -->
     </div>
 
     <script src="/static/analytics-session-manager.js"></script>
