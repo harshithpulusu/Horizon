@@ -2620,6 +2620,287 @@
         }
         /* END: Split-screen Mode JavaScript */
         
+        /* START: Mini-mode Floating Window JavaScript */
+        class MiniModeManager {
+            constructor() {
+                this.isActive = false;
+                this.isMinimized = false;
+                this.isDragging = false;
+                this.dragOffset = { x: 0, y: 0 };
+                
+                this.overlay = document.getElementById('miniModeOverlay');
+                this.window = document.getElementById('miniWindow');
+                this.header = document.getElementById('miniHeader');
+                this.chatArea = document.getElementById('miniChatArea');
+                this.input = document.getElementById('miniInput');
+                this.sendBtn = document.getElementById('miniSendBtn');
+                this.toggle = document.querySelector('.mini-mode-toggle');
+                this.icon = document.getElementById('miniModeIcon');
+                this.statusIndicator = document.getElementById('miniStatusIndicator');
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadSavedState();
+                this.addWelcomeMessage();
+            }
+            
+            setupEventListeners() {
+                // Drag functionality
+                this.header.addEventListener('mousedown', (e) => this.startDrag(e));
+                document.addEventListener('mousemove', (e) => this.drag(e));
+                document.addEventListener('mouseup', () => this.stopDrag());
+                
+                // Input handling
+                this.input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                this.input.addEventListener('input', () => this.autoResize());
+                
+                // Prevent main app interactions when mini is active
+                this.overlay.addEventListener('click', () => this.closeMiniMode());
+                
+                // Focus management
+                this.window.addEventListener('click', (e) => e.stopPropagation());
+            }
+            
+            loadSavedState() {
+                const saved = localStorage.getItem('horizonMiniMode');
+                const position = localStorage.getItem('horizonMiniPosition');
+                const size = localStorage.getItem('horizonMiniSize');
+                
+                if (saved === 'true') {
+                    this.activate();
+                }
+                
+                if (position) {
+                    const pos = JSON.parse(position);
+                    this.window.style.top = pos.top + 'px';
+                    this.window.style.left = pos.left + 'px';
+                }
+                
+                if (size) {
+                    const sz = JSON.parse(size);
+                    this.window.style.width = sz.width + 'px';
+                    this.window.style.height = sz.height + 'px';
+                }
+            }
+            
+            toggle() {
+                if (this.isActive) {
+                    this.deactivate();
+                } else {
+                    this.activate();
+                }
+            }
+            
+            activate() {
+                this.isActive = true;
+                this.overlay.classList.add('active');
+                this.window.classList.add('active');
+                this.toggle.classList.add('active');
+                this.icon.textContent = '🔲';
+                
+                localStorage.setItem('horizonMiniMode', 'true');
+                
+                // Focus input after animation
+                setTimeout(() => {
+                    this.input.focus();
+                }, 400);
+            }
+            
+            deactivate() {
+                this.isActive = false;
+                this.overlay.classList.remove('active');
+                this.window.classList.remove('active');
+                this.toggle.classList.remove('active');
+                this.icon.textContent = '🪟';
+                
+                localStorage.setItem('horizonMiniMode', 'false');
+            }
+            
+            minimize() {
+                this.isMinimized = !this.isMinimized;
+                this.window.classList.toggle('minimized');
+                
+                if (this.isMinimized) {
+                    this.window.style.resize = 'none';
+                } else {
+                    this.window.style.resize = 'both';
+                }
+            }
+            
+            startDrag(e) {
+                if (this.isMinimized) return;
+                
+                this.isDragging = true;
+                this.window.classList.add('dragging');
+                
+                const rect = this.window.getBoundingClientRect();
+                this.dragOffset.x = e.clientX - rect.left;
+                this.dragOffset.y = e.clientY - rect.top;
+                
+                e.preventDefault();
+            }
+            
+            drag(e) {
+                if (!this.isDragging) return;
+                
+                const x = e.clientX - this.dragOffset.x;
+                const y = e.clientY - this.dragOffset.y;
+                
+                // Constrain to viewport
+                const maxX = window.innerWidth - this.window.offsetWidth;
+                const maxY = window.innerHeight - this.window.offsetHeight;
+                
+                const constrainedX = Math.max(0, Math.min(x, maxX));
+                const constrainedY = Math.max(0, Math.min(y, maxY));
+                
+                this.window.style.left = constrainedX + 'px';
+                this.window.style.top = constrainedY + 'px';
+                this.window.style.right = 'auto';
+            }
+            
+            stopDrag() {
+                if (!this.isDragging) return;
+                
+                this.isDragging = false;
+                this.window.classList.remove('dragging');
+                
+                // Save position
+                const rect = this.window.getBoundingClientRect();
+                localStorage.setItem('horizonMiniPosition', JSON.stringify({
+                    top: rect.top,
+                    left: rect.left
+                }));
+            }
+            
+            addWelcomeMessage() {
+                const welcomeMsg = "Hi! I'm your mini assistant. Ask me anything! 🚀";
+                this.addMessage(welcomeMsg, 'ai');
+            }
+            
+            sendMessage() {
+                const message = this.input.value.trim();
+                if (!message) return;
+                
+                this.addMessage(message, 'user');
+                this.input.value = '';
+                this.autoResize();
+                
+                this.showTyping();
+                
+                // Send to backend
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        personality: personalitySelect.value,
+                        context_type: 'mini_mode'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.hideTyping();
+                    this.addMessage(data.response, 'ai');
+                })
+                .catch(error => {
+                    this.hideTyping();
+                    this.addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+                    console.error('Mini mode error:', error);
+                });
+            }
+            
+            addMessage(message, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `mini-message ${type}`;
+                messageDiv.innerHTML = message;
+                
+                this.chatArea.appendChild(messageDiv);
+                this.chatArea.scrollTop = this.chatArea.scrollHeight;
+                
+                // Visual feedback
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transform = 'translateY(10px)';
+                
+                requestAnimationFrame(() => {
+                    messageDiv.style.transition = 'all 0.3s ease';
+                    messageDiv.style.opacity = '1';
+                    messageDiv.style.transform = 'translateY(0)';
+                });
+            }
+            
+            showTyping() {
+                this.statusIndicator.classList.add('thinking');
+                this.sendBtn.disabled = true;
+                this.sendBtn.textContent = '⏳';
+                
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'mini-message ai typing';
+                typingDiv.id = 'miniTyping';
+                typingDiv.innerHTML = '🤔 Thinking...';
+                
+                this.chatArea.appendChild(typingDiv);
+                this.chatArea.scrollTop = this.chatArea.scrollHeight;
+            }
+            
+            hideTyping() {
+                this.statusIndicator.classList.remove('thinking');
+                this.sendBtn.disabled = false;
+                this.sendBtn.textContent = '💬';
+                
+                const typingDiv = document.getElementById('miniTyping');
+                if (typingDiv) {
+                    typingDiv.remove();
+                }
+            }
+            
+            autoResize() {
+                this.input.style.height = 'auto';
+                this.input.style.height = Math.min(this.input.scrollHeight, 60) + 'px';
+            }
+            
+            closeMiniMode() {
+                this.deactivate();
+            }
+        }
+        
+        // Initialize mini-mode manager
+        let miniModeManager;
+        
+        // Global functions for mini-mode
+        function toggleMiniMode() {
+            if (miniModeManager) {
+                miniModeManager.toggle();
+            }
+        }
+        
+        function minimizeMiniWindow() {
+            if (miniModeManager) {
+                miniModeManager.minimize();
+            }
+        }
+        
+        function closeMiniMode() {
+            if (miniModeManager) {
+                miniModeManager.closeMiniMode();
+            }
+        }
+        
+        function sendMiniMessage() {
+            if (miniModeManager) {
+                miniModeManager.sendMessage();
+            }
+        }
+        /* END: Mini-mode Floating Window JavaScript */
+        
         // Initialize theme manager when DOM is loaded
         let themeManager;
         // Initialize theme manager immediately if DOM is ready, otherwise wait for DOMContentLoaded
@@ -3267,6 +3548,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             userInput.focus();
             splitScreenManager = new SplitScreenManager();
+            miniModeManager = new MiniModeManager();
             
             // Update analytics dashboard periodically
             setInterval(updateAnalyticsDashboard, 5000); // Every 5 seconds
