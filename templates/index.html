@@ -2016,6 +2016,207 @@
             }
             /* END: Theme Usage Analytics */
         }
+
+        /* START: Split-screen Mode JavaScript */
+        class SplitScreenManager {
+            constructor() {
+                this.isActive = false;
+                this.container = document.getElementById('splitScreenContainer');
+                this.toggle = document.getElementById('splitScreenToggle');
+                this.icon = document.getElementById('splitScreenIcon');
+                this.splitPanel = document.getElementById('splitScreenPanel');
+                this.splitMessages = document.getElementById('splitPanelMessages');
+                this.originalSendMessage = null;
+                
+                this.init();
+            }
+            
+            init() {
+                // Save original send message function
+                this.originalSendMessage = window.sendMessage;
+                
+                // Load saved state
+                const saved = localStorage.getItem('horizonSplitScreen');
+                if (saved === 'true') {
+                    this.activate();
+                }
+            }
+            
+            toggle() {
+                if (this.isActive) {
+                    this.deactivate();
+                } else {
+                    this.activate();
+                }
+            }
+            
+            activate() {
+                this.isActive = true;
+                this.container.classList.remove('single-mode');
+                this.container.classList.add('split-mode');
+                this.toggle.classList.add('active');
+                this.icon.textContent = '⚡';
+                this.toggle.title = 'Exit Split-screen Mode';
+                localStorage.setItem('horizonSplitScreen', 'true');
+                
+                // Override sendMessage to send to both panels
+                window.sendMessage = () => this.dualSendMessage();
+            }
+            
+            deactivate() {
+                this.isActive = false;
+                this.container.classList.remove('split-mode');
+                this.container.classList.add('single-mode');
+                this.toggle.classList.remove('active');
+                this.icon.textContent = '⚡';
+                this.toggle.title = 'Toggle Split-screen Mode';
+                localStorage.setItem('horizonSplitScreen', 'false');
+                
+                // Restore original sendMessage
+                window.sendMessage = this.originalSendMessage;
+            }
+            
+            dualSendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // Add user message to both panels
+                this.addMessageToPanel('main', message, 'user');
+                this.addMessageToPanel('split', message, 'user');
+                
+                // Clear input
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                
+                // Send to main panel (original logic)
+                this.sendToMainPanel(message);
+                
+                // Send to split panel with variation
+                this.sendToSplitPanel(message);
+                
+                conversationCounter++;
+                conversationCount.textContent = conversationCounter;
+            }
+            
+            sendToMainPanel(message) {
+                // Use original send logic for main panel
+                this.showTypingIndicator('main');
+                
+                // Simulate original API call
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        personality: personalitySelect.value,
+                        context_type: 'split_main'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.hideTypingIndicator('main');
+                    this.addMessageToPanel('main', data.response, 'ai');
+                })
+                .catch(error => {
+                    this.hideTypingIndicator('main');
+                    this.addMessageToPanel('main', 'Sorry, I encountered an error. Please try again.', 'ai');
+                });
+            }
+            
+            sendToSplitPanel(message) {
+                // Send alternative request for comparison
+                this.showTypingIndicator('split');
+                
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `Please provide an alternative perspective: ${message}`,
+                        personality: personalitySelect.value,
+                        context_type: 'split_comparison'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.hideTypingIndicator('split');
+                    this.addMessageToPanel('split', data.response, 'ai');
+                })
+                .catch(error => {
+                    this.hideTypingIndicator('split');
+                    this.addMessageToPanel('split', 'Alternative response unavailable. Please try again.', 'ai');
+                });
+            }
+            
+            addMessageToPanel(panel, message, type) {
+                const container = panel === 'main' ? chatMessages : this.splitMessages;
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = type === 'user' ? 'U' : 'H';
+                
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'message-content-wrapper';
+                
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                content.innerHTML = message;
+                
+                const metadata = document.createElement('div');
+                metadata.className = 'message-metadata';
+                metadata.textContent = type === 'user' ? 'You' : 
+                    (panel === 'split' ? '🔄 Alternative Response' : '🤖 Primary Response');
+                
+                contentWrapper.appendChild(content);
+                contentWrapper.appendChild(metadata);
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentWrapper);
+                
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            showTypingIndicator(panel) {
+                const container = panel === 'main' ? chatMessages : this.splitMessages;
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message ai typing-message';
+                typingDiv.id = `typing-${panel}`;
+                typingDiv.innerHTML = `
+                    <div class="message-avatar">H</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-content">
+                            <div class="typing-indicator">
+                                <span>Thinking</span>
+                                <div class="typing-dots">
+                                    <div></div><div></div><div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(typingDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            hideTypingIndicator(panel) {
+                const typingDiv = document.getElementById(`typing-${panel}`);
+                if (typingDiv) {
+                    typingDiv.remove();
+                }
+            }
+        }
+        
+        // Initialize split-screen manager
+        let splitScreenManager;
+        
+        // Global toggle function
+        function toggleSplitScreen() {
+            if (splitScreenManager) {
+                splitScreenManager.toggle();
+            }
+        }
+        /* END: Split-screen Mode JavaScript */
         
         // Initialize theme manager when DOM is loaded
         let themeManager;
@@ -2663,6 +2864,7 @@
         // Focus input on load
         document.addEventListener('DOMContentLoaded', function() {
             userInput.focus();
+            splitScreenManager = new SplitScreenManager();
             
             // Update analytics dashboard periodically
             setInterval(updateAnalyticsDashboard, 5000); // Every 5 seconds
