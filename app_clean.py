@@ -233,6 +233,39 @@ def home():
 def chat():
     return render_template('simple_chat.html')
 
+@app.route('/chat', methods=['POST'])
+def chat_api():
+    """Chat API endpoint - matches frontend expectations"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'message' not in data:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        user_input = data.get('message', '').strip()
+        personality = data.get('personality', 'friendly')
+        session_id = data.get('session_id')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not user_input:
+            return jsonify({'error': 'Empty message provided'}), 400
+        
+        # Process the input
+        start_time = time.time()
+        response, session_id = process_user_input(user_input, personality, session_id, user_id)
+        response_time = round(time.time() - start_time, 2)
+        
+        return jsonify({
+            'response': response,
+            'session_id': session_id,
+            'response_time': response_time,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        print(f"❌ Chat API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/simple')
 def simple():
     return render_template('simple_chat.html')
