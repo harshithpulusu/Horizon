@@ -1,13 +1,16 @@
 # Configuration for Horizon AI Assistant
+# NOTE: Temporary debug comment for commit tracking - safe to remove
 import os
 import secrets
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
+# DEBUG: Environment loading for configuration management
 load_dotenv()
 
 class Config:
     # Core AI APIs
+    # TEMP: API key configuration - no functional changes
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAFl8KrjvNuafGJc03CZqr8Cqzdki9z2AA')
     
