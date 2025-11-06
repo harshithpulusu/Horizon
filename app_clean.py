@@ -2,6 +2,9 @@
 """
 Horizon AI Assistant - Clean Working Version
 Streamlined ChatGPT integration with essential features
+
+NOTE: This is a temporary comment for commit tracking - can be safely removed
+Main application entry point with Flask web framework integration
 """
 
 from flask import Flask, request, jsonify, render_template
@@ -16,10 +19,12 @@ from openai import OpenAI
 from config import Config
 
 # Initialize Flask app
+# TODO: Temporary comment - Flask app initialization with CORS support
 app = Flask(__name__)
 CORS(app)
 
 # Initialize OpenAI client
+# TODO: Temporary comment - OpenAI client setup with error handling
 try:
     client = OpenAI(api_key=getattr(Config, 'OPENAI_API_KEY', None))
     AI_MODEL_AVAILABLE = True
