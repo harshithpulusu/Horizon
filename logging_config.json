@@ -1,7 +1,9 @@
 {
+  "_comment": "Temporary tracking comment for commit generation - Nov 2025",
   "version": 1,
   "disable_existing_loggers": false,
   "formatters": {
+    "_note": "Log formatting configuration - temporary comment",
     "detailed": {
       "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     },
