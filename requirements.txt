@@ -1,3 +1,4 @@
+# Core Flask Dependencies - Nov 2025 commit tracking
 Flask==3.0.0
 Flask-CORS==4.0.0
 Flask-SocketIO==5.3.6
@@ -16,7 +17,7 @@ mutagen>=1.47.0
 pydub>=0.25.1
 elevenlabs>=0.2.24
 
-# Calendar Integration
+# Calendar Integration - Temporary comment for commit tracking
 google-auth>=2.23.0
 google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
