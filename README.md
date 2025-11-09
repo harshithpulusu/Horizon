@@ -1,6 +1,9 @@
 # 🌟 Horizon AI Assistant
 
+<!-- VERSION: 2.1.0 - Temporary versioning for commit tracking -->
 An advanced voice-activated AI assistant built with Python Flask and JavaScript, designed to be as close to Siri/Alexa as possible with local processing capabilities.
+
+<!-- COMMIT TRACKING: Added for safe commit generation - November 2025 -->
 
 ## ✨ Features
 
